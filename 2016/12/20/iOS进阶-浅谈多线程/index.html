@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2016-12-20</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">iOS</span>
+      
+    </div>
+    
+    <h1 class="detail-title">iOS进阶-浅谈多线程</h1>
+    <p class="detail-content"><p>对于ios系统中的某个App来讲，是单进程多线程方式来工作。一般来说，使用多线程的好处是可以把程序分成相对独立的几个模块，可以有效的防止某个模块堵塞的时候导致整个程序卡死；还有就是提高运行效率，现在CPU都是多核，多个核可以同时跑，可以同时执行多条线程。</p>
+<p>谈细节之前里，我们得说下有关多线程的几个概念。</p>
+<a id="more"></a>
+
+<h4 id="串行和并发"><a href="#串行和并发" class="headerlink" title="串行和并发"></a>串行和并发</h4><p>串行的意思是在多个任务下，每次只会有一个任务被执行，并发的意思是同一时间多个任务同时发生。并发是一种现象，解决并发现象的技术，叫做并行。我们经常说的多线程编程，说的就是并行技术，可以让多个CPU同时执行，加快执行速度，提高执行效率。</p>
+<h4 id="同步和异步"><a href="#同步和异步" class="headerlink" title="同步和异步"></a>同步和异步</h4><p>同步的意思是在多任务中，一个任务只能等待另一个任务完成之后，他才可以进行，而异步的意思是一个任务的执行，不需要等待上一个任务的执行，不会发生堵塞。</p>
+<h4 id="临界区"><a href="#临界区" class="headerlink" title="临界区"></a>临界区</h4><p>临界区是一种资源，这块资源不能并发执行，就叫做临界区。我们一般所看到的，临界区就是一个代码块。因为临界区资源如果可以被多个线程同时进行操作，比如读写，就可能出现异常。</p>
+<h4 id="死锁"><a href="#死锁" class="headerlink" title="死锁"></a>死锁</h4><p>死锁就是指两条线程互相都在等待对方执行完毕，才能进入下一步操作。由于两条线程都不能执行下一步，所以造成死锁，卡住不动了。</p>
+<h4 id="线程安全"><a href="#线程安全" class="headerlink" title="线程安全"></a>线程安全</h4><p>线程安全在iOS开发中应该听到多很多次，指的是在多线程中或者并发任务中可以被安全地调用，就称为线程安全。比如<code>NSDictionary</code>就是线程安全的，可以在多线程中使用它，不会出现问题，而<code>NSMutableDictionary</code>是线程不安全的，所以使用<code>NSMutableDictionary</code>的时候应该保证每次只能有一个线程访问它。</p>
+<h4 id="上下文切换"><a href="#上下文切换" class="headerlink" title="上下文切换"></a>上下文切换</h4><p>上下文切换指的是在一条进程中切换不同线程时，线程的等待和恢复执行的过程。这一过程中会带来一些额外的开销。</p>
+<h3 id="iOS多线程方案"><a href="#iOS多线程方案" class="headerlink" title="iOS多线程方案"></a>iOS多线程方案</h3><h4 id="Pthreads"><a href="#Pthreads" class="headerlink" title="Pthreads"></a>Pthreads</h4><p><code>Pthreads</code>是基于C语言的通用多线程API，在日常开发中基本上用不到，并且目前在Swift中貌似并不能直接调用这套API。所以这种方案只提一下，不过多介绍。</p>
+<h4 id="NSThread"><a href="#NSThread" class="headerlink" title="NSThread"></a>NSThread</h4><p><code>NSThread</code>是一套比较轻量级的多线程方案，可以直观地控制线程对象，一个<code>NSThread</code>代表一条线程，但是需要自己管理线程的生命周期，线程同步等问题，</p>
+<p>创建thread目前所了解到的有4种方式，其中类方法两个，实例方法两个。类方法创建线程后会自动启动该线程，而实例方法只会创建线程，启动需要手动去做。</p>
+<pre><code>// 第一种类方法
+[NSThread detachNewThreadSelector:@selector(threadHandler) toTarget:self withObject:nil];
+
+- (void)threadHandler {
+    NSThread *currentThread = [NSThread currentThread];
+    NSLog(@&quot;current thread: %@&quot;, currentThread);
+}
+
+// 第二个类方法
+[NSThread detachNewThreadWithBlock:^{
+    NSLog(@&quot;block current thread: %@&quot;, [NSThread currentThread]);
+}];
+</code></pre><p>下面是两种实例方法：</p>
+<pre><code>// 第一个实例方法
+NSThread *thread1 = [[NSThread alloc] initWithBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+}];
+[thread1 start];
+
+// 第二个实例方法
+NSThread *thread2 = [[NSThread alloc] initWithTarget:self selector:@selector(threadHandler:) object:@{@&quot;title&quot; : @&quot;2123&quot;}];
+[thread2 start];
+
+- (void)threadHandler:(NSDictionary *)dic {
+    NSThread *currentThread = [NSThread currentThread];
+    NSLog(@&quot;current thread: %@&quot;, currentThread);
+}
+</code></pre><p>除了上面的之外，<code>NSThread</code>还提供了一个<code>NSObject+NSThreadPerformAdditions</code>，用于在NSObject中执行线程调用：</p>
+<pre><code>// 在主线程执行一个任务，后者区别在于可以指定在哪种Runloop模式下运行，有关Runloop可以参考上篇文章。
+[self performSelectorOnMainThread:@selector(threadHandler:) withObject:@{@&quot;title&quot; : @&quot;123&quot;} waitUntilDone:YES];
+[self performSelectorOnMainThread:@selector(threadHandler:) withObject:@{@&quot;title&quot; : @&quot;123&quot;} waitUntilDone:YES modes:@[NSDefaultRunLoopMode]];
+
+// 在指定的线程中执行一个任务。
+[self performSelector:@selector(threadHandler:) onThread:[NSThread currentThread] withObject:@{@&quot;title&quot; : @&quot;123&quot;} waitUntilDone:YES];
+[self performSelector:@selector(threadHandler:) onThread:[NSThread currentThread] withObject:@{@&quot;title&quot; : @&quot;123&quot;} waitUntilDone:YES modes:@[NSDefaultRunLoopMode]];
+
+// 在后台隐形创建线程，执行一个任务
+[self performSelectorInBackground:@selector(threadHandler:) withObject:@{@&quot;title&quot; : @&quot;123&quot;}];
+
+- (void)threadHandler:(NSDictionary *)dic {
+    NSThread *currentThread = [NSThread currentThread];
+    NSLog(@&quot;current thread: %@&quot;, currentThread);
+}
+</code></pre><p>另外，NSThread还提供了设置线程优先级功能，叫做NSQualityOfService，一共分为一下几种：</p>
+<ul>
+<li>NSQualityOfServiceUserInteractive。用于用户交互，最高优先级</li>
+<li>NSQualityOfServiceUserInitiated。用于执行需要立即返回的的任务，次高优先级</li>
+<li>NSQualityOfServiceDefault。线程默认优先级</li>
+<li>NSQualityOfServiceUtility。用于执行普通任务，普通优先级</li>
+<li>NSQualityOfServiceBackground。最低优先级，用于执行不重要的任务</li>
+</ul>
+<p>还有其他一些线程操作，具体如下：</p>
+<pre><code>// 线程休眠，休眠线程会阻塞当前线程
+[NSThread sleepForTimeInterval:5.0];
+[NSThread sleepUntilDate:[NSDate dateWithTimeIntervalSinceNow:5.0]];
+
+// 线程取消，调用此方法并不会马上停止线程运行，只仅仅是线程状态记录
+[thread cancel];
+
+// 线程停止，执行此方法会立即终止主线程外其他所有线程，所以调用请慎用。
+[NSThread exit];
+
+// 获取当前线程
+[NSThread currentThread];
+
+// 获取主线程
+[NSThread mainThread];
+
+// 停止当前线程的Runloop
+CFRunLoopStop(CFRunLoopGetCurrent());
+</code></pre><p>如果有多个线程共享一块资源，对资源进行操作时候，还涉及到线程同步问题，一段时间只允许一条线程来操作资源，不然会引起冲突，iOS实现线程加锁有NSLock和@synchronized两种方式。其用法也比较简单，在这里就不过多介绍。</p>
+<h4 id="GCD"><a href="#GCD" class="headerlink" title="GCD"></a>GCD</h4><p>GCD全称是Grand Central Dispatch，是为了给iOS和mac的多核硬件上执行支持，其实现方式是一套底层C API。通过GCD，开发者不用和线程打交道，只需要使用一个Block就可以实现多线程操作。GCD提供的API简单易懂，提供了一个易于使用的并发模型，对于开发者来说，并不需要关心多线程的并发问题，GCD底层自动处理这些逻辑。</p>
+<p>出了这些之外，GCD其实还可以根据当前的系统负载来增减线程数量，我们都知道线程的创建切换都是需要代价的，是有消耗的，所以使用GCD还可以增加效率，提供更高的性能。</p>
+<p>GCD操作是需要通过队列来操作的，有三种队列可以使用。</p>
+<ul>
+<li>串行队列(Serial)。串行队列的特点是以先进先出的顺序来执行的，队列内的东西是以顺序执行的，但是多个串行队列直接是以并发执行的。</li>
+<li>并行队列(Concurrent)。并行队列和串行队列相反，可以同时执行多个任务，但是多个任务之间，仍然是以先进先出的顺序执行的，区别在于，并行队列会跟酒系统负载，尽可能多地创建线程去执行这些任务。但是哪个任务先执行完毕是不确定的。</li>
+<li>主线程队列(Main dispatch queue)。实际上，主线程队列是一个和主线程相关的串行队列。这个队列中的任务每次只会有一个执行。可以保证所有的任务都会在主线程执行，所以涉及到UI操作的需要使用这个队列来完成。</li>
+</ul>
+<p>创建一个串行队列，如下所示：</p>
+<pre><code>dispatch_queue_t queue = dispatch_queue_create(@&quot;com.hyyy.gcd&quot;, DISPATCH_QUEUE_SERIAL);
+
+// 这种也可以，NULL默认就是串行
+dispatch_queue_t queue = dispatch_queue_create(&quot;com.hyyy.gcd&quot;, NULL);
+</code></pre><p>创建一个并行队列，如下所示：</p>
+<pre><code>dispatch_queue_t queue = dispatch_queue_create(&quot;coml.hyyy.gcd&quot;, DISPATCH_QUEUE_CONCURRENT);
+
+// 也可以用下面这种
+dispatch_queue_t queue = dispatch_get_global_queue(0, 0);</code></pre><p>主线程队列：</p>
+<pre><code>dispatch_queue_t queue = dispatch_get_main_queue();</code></pre><p>GCD往队列里添加任务有两种方式，一种是异步，一种是同步。</p>
+<ul>
+<li>异步(dispatch_async)。是一个异步添加操作，dispatch_async会立即返回；</li>
+<li>同步(dispatch_sync)。是一个同步添加操作，dispatch_sync区别是会阻塞当前线程，会等待block里的任务执行完毕之后才会返回。</li>
+</ul>
+<p>dispatch_async添加任务，会立即返回，所以下面的打印顺序不确定。</p>
+<pre><code>dispatch_async(dispatch_get_main_queue(), ^{
+    NSLog(@&quot;========1&quot;);
+
+});
+NSLog(@&quot;========2&quot;);
+
+// 执行结果：
+ThreadTest[17614:2597588] ========2
+ThreadTest[17614:2597588] ========1</code></pre><p>如果是dispatch_sync，由于是同步，所以打印结果是有顺序的。</p>
+<pre><code>dispatch_queue_t queue = dispatch_queue_create(&quot;com.hyyy.gcd&quot;, NULL);
+dispatch_sync(queue, ^{
+    NSLog(@&quot;========1&quot;);
+
+});
+NSLog(@&quot;========2&quot;);
+
+// 执行结果
+ThreadTest[17599:2595130] ========1
+ThreadTest[17599:2595130] ========2</code></pre><p>但是dispatch_sync尽量少用，使用不当会造成死锁。比如下面的代码就会造成死锁：</p>
+<pre><code>dispatch_sync(dispatch_get_main_queue(), ^(void){
+    NSLog(@&quot;这里死锁了&quot;);
+});</code></pre><p>需要注意的是，死锁并不是这里使用了主线程造成的，不用主线程，照样可以造成死锁。如下：</p>
+<pre><code>dispatch_queue_t serialQueue = dispatch_queue_create(&quot;com.hyyy.thread&quot;, DISPATCH_QUEUE_SERIAL);
+NSLog(@&quot;========1&quot;);
+dispatch_async(serialQueue, ^{
+    NSLog(@&quot;========2&quot;);
+    dispatch_sync(serialQueue, ^{
+        NSLog(@&quot;========3&quot;);
+    });
+});</code></pre><p>这种也会发生死锁，所以不要听信什么主线程的问题，不是主线程照样可以发生死锁。死锁真的发生的原因是dispatch_sync添加进的queue队列是当前queue队列。在主线程死锁的那段代码中，我们调用的dispatch_sync是添加在主线程queue中，使主线程堵塞，而我们的Block又需要主线程queue来执行，所以相互等待，造成死锁了。</p>
+<p>但是为什么添加队列换成并行队列就不会有问题呢？还是上面的概念，对于并行队列中任务的执行，其执行开始和结束并不取决于上一个任务的结束时间，只仅仅取决于任务的耗时。即便任务是以同步的方式添加进去，但是在并行队列中也会在另外一个线程去跑这个任务。</p>
+<p>这里还需要提一个题外话，在并发队列里的Block何时执行，开发者是不用知道的，完全取决于GCD，但是我们也是有方法可以让其按照顺序执行。</p>
+<p>GCD的使用场景有很多，我们一个一个举例来说明。</p>
+<p><strong>后台下载显示图片</strong></p>
+<pre><code>dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    NSURL * url = [NSURL URLWithString:@&quot;http://www.yourimage.com&quot;];
+    NSError * error;
+    NSString * data = [NSString stringWithContentsOfURL:url encoding:NSUTF8StringEncoding error:&amp;error];
+    if (data != nil) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.imageView.image = [UIImage imageWithData:data];
+        });
+    } else {
+        NSLog(@&quot;error when download:%@&quot;, error);
+    }
+});</code></pre><p>这是一个经典的使用场景，有时候我们需要后台处理一个任务，然后在主线程进行UI渲染，可以这么干。</p>
+<p><strong>单例模式</strong></p>
+<p>单例模式是设计模式中最简单的一种了，它的目的是创建的类对象在系统中是唯一的，一个类只有一个实例，节约系统资源。一般我们创建一个单例会这么做：</p>
+<pre><code>//Singleton.h
+@interface Singleton : NSObject
++ (Singleton *)sharedInstance;
+@end
+
+//Singleton.m
+@implementation Singleton
+static Singleton * sharedSingleton = nil;
++ (Singleton *) sharedInstance {
+    static dispatch_once_t onceToken;
+    dispatch_once(&amp;onceToken, ^{
+        sharedSingleton = [[Singleton alloc] init];
+    });
+    return sharedSingleton;
+}
+@end</code></pre><p>这里我们用到了dispatch_once_t，对于给定的token来说，Block里的代码必定会执行，并且会仅执行一次。最重要的一点是，这里的操作是线程安全的，十分高效。但是需要注意的是token这个东西是应该声明称static或者global，这样来保证每次传进去的token是相同的。</p>
+<p><strong>dispatch_after延后执行</strong></p>
+<p>dispatch_after可以做到使一块代码延时执行，但是需要注意的是，这里的延时是有歧义的，dispatch_after做到的仅是延时把这一项任务提交到队列中去，至于什么时候执行，是和GCD内部处理逻辑有关的。</p>
+<p>比如我想0.5秒之后发送一条通知，可以这么干。</p>
+<pre><code>dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    [[NSNotificationCenter defaultCenter] postNotificationName:HY_AFTER_NOTIFICATION object:nil];
+});</code></pre><p><strong>dispatch_apply快速迭代</strong></p>
+<p>dispatch_apply和遍历的效果差不多，其作用是把指定次数的block添加到queue中，好处是dispatch_apply可以不用管理线程方面的问题，GCD会自动处理并发现象。</p>
+<pre><code>NSArray *array = @[@&quot;a&quot;, @&quot;b&quot;, @&quot;c&quot;, @&quot;d&quot;, @&quot;e&quot;, @&quot;f&quot;, @&quot;g&quot;];
+dispatch_queue_t queue = dispatch_queue_create(&quot;queue&quot;, DISPATCH_QUEUE_CONCURRENT);
+dispatch_apply(array.count, queue, ^(size_t i) {
+    NSString *str = [array objectAtIndex:i];
+    NSLog(@&quot;number: %@&quot;, str);
+});</code></pre><p><strong>Dispatch_groups</strong></p>
+<p>Dispatch_groups作用是用来监视多个并行任务的执行，来进行线程同步的。在多个任务执行完毕后，想要执行结束处理，就可以使用Dispatch_groups来完成。</p>
+<pre><code>dispatch_queue_t queue1 = dispatch_queue_create(&quot;com.hyyy.gcd&quot;, DISPATCH_QUEUE_CONCURRENT);
+dispatch_queue_t queue2 = dispatch_get_global_queue(0, 0);
+dispatch_group_t group = dispatch_group_create();
+dispatch_group_async(group, queue1, ^{
+    NSLog(@&quot;========1&quot;);
+});
+dispatch_group_async(group, queue1, ^{
+    NSLog(@&quot;========2&quot;);
+});
+dispatch_group_async(group, queue2, ^{
+    NSLog(@&quot;========3&quot;);
+});
+dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+    NSLog(@&quot;========end&quot;);
+});
+
+// 运行结果
+========3
+========1
+========2
+========end</code></pre><p>可以看到，上面三个任务执行完毕之后，才会走最后一个block回调，我们可以利用这种模式做很多事。但是千万不要像下面这么写：</p>
+<pre><code>dispatch_queue_t queue1 = dispatch_queue_create(&quot;com.hyyy.gcd&quot;, DISPATCH_QUEUE_CONCURRENT);
+dispatch_queue_t queue2 = dispatch_get_global_queue(0, 0);
+dispatch_group_t group = dispatch_group_create();
+dispatch_group_async(group, queue1, ^{
+    dispatch_async(queue2, ^{
+        NSLog(@&quot;========1&quot;);
+    });
+});
+dispatch_group_async(group, queue1, ^{
+    dispatch_async(queue2, ^{
+        NSLog(@&quot;========2&quot;);
+    });
+});
+dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+    NSLog(@&quot;========end&quot;);
+});</code></pre><p>这么写会有问题，dispatch_group_async里执行的是异步任务，而dispatch_group_notify并不会等待异步任务完成，如果真的这么做，那就需要dispatch_group_enter和dispatch_group_leave来进行约束，也是我用的比较多的一种。</p>
+<pre><code>dispatch_queue_t queue = dispatch_get_global_queue(0, 0);
+dispatch_group_t group = dispatch_group_create();
+dispatch_group_enter(group);
+dispatch_async(queue, ^{
+    sleep(3);
+    NSLog(@&quot;========1&quot;);
+    dispatch_group_leave(group);
+});
+dispatch_group_enter(group);
+dispatch_async(queue, ^{
+    sleep(3);
+    NSLog(@&quot;========2&quot;);
+    dispatch_group_leave(group);
+});
+dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+    sleep(3);
+    NSLog(@&quot;========end&quot;);
+});</code></pre><p>需要注意的事，dispatch_group_enter和dispatch_group_leave总是对应出现的，类似于引用计数原理，有加有减。</p>
+<p><strong>dispatch_barrier并发问题</strong></p>
+<p>在并行队列里，有时候我们需要每次只单独执行一个任务，也就是当有个任务执行的时候，不允许其他任务执行，类似于多线程读写问题，这时候Dispatch Barrier就发挥了作用。</p>
+<p>Dispatch Barrier可以保证提交的block是指定队列里某个时段唯一执行的一个，下面用一个示例来演示一下：</p>
+<pre><code>dispatch_queue_t dataQueue = dispatch_queue_create(&quot;com.hyyy.gcd&quot;, DISPATCH_QUEUE_CONCURRENT);
+dispatch_async(dataQueue, ^{
+    [NSThread sleepForTimeInterval:2.f];
+    NSLog(@&quot;读数据&quot;);
+});
+dispatch_async(dataQueue, ^{
+    NSLog(@&quot;读数据&quot;);
+});
+//等待前面的都完成，在执行barrier后面的
+dispatch_barrier_async(dataQueue, ^{
+    NSLog(@&quot;写数据&quot;);
+    [NSThread sleepForTimeInterval:1];
+});
+dispatch_async(dataQueue, ^{
+    [NSThread sleepForTimeInterval:1.f];
+    NSLog(@&quot;读数据&quot;);
+});
+dispatch_async(dataQueue, ^{
+    NSLog(@&quot;读数据&quot;);
+});</code></pre><p>在进行写数据的时候，因为使用了Dispatch Barrier，不会发生读数据的操作，所以保证了每次写入数据只会有一个任务在执行。</p>
+<h4 id="NSOperation"><a href="#NSOperation" class="headerlink" title="NSOperation"></a>NSOperation</h4><p>相比于GCD，NSOperation显得并没有那么流行，但是称得上是先进的面向对象的多线程解决办法。同样，对于开发者来讲，我们根本不用考虑线程的生命周期、同步，加锁等晦涩问题。</p>
+<p>使用NSOperation有三种方式，NSInvocationOperation、NSBlockOperation和自定义子类继承NSOperation。</p>
+<p><strong>NSInvocationOperation</strong></p>
+<pre><code>NSInvocationOperation *operation = [[NSInvocationOperation alloc] initWithTarget:self selector:@selector(operationHandler) object:nil];
+[operation start];
+
+- (void)operationHandler {
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+    NSLog(@&quot;main thread: %@&quot;, [NSThread mainThread]);
+}
+
+// 运行结果
+current thread: &lt;NSThread: 0x60000007a840&gt;{number = 1, name = main}
+main thread: &lt;NSThread: 0x60000007a840&gt;{number = 1, name = main}</code></pre><p>NSInvocationOperation默认情况下，并不会新开一个线程去跑，而是在当前线程去执行任务，可以将NSInvocationOperation放到NSOperationQueue中，即可实现异步操作。</p>
+<pre><code>NSInvocationOperation *operation = [[NSInvocationOperation alloc] initWithTarget:self selector:@selector(operationHandler) object:nil];
+
+NSOperationQueue *queue = [[NSOperationQueue alloc] init];
+[queue addOperation:operation];
+
+- (void)operationHandler {
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+    NSLog(@&quot;main thread: %@&quot;, [NSThread mainThread]);
+}
+
+// 运行结果
+current thread: &lt;NSThread: 0x600000077140&gt;{number = 3, name = (null)}
+main thread: &lt;NSThread: 0x60800006e440&gt;{number = 1, name = (null)}</code></pre><p><strong>NSBlockOperation</strong></p>
+<pre><code>NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+    NSLog(@&quot;main thread: %@&quot;, [NSThread mainThread]);
+}];
+[operation start];
+
+// 运行结果
+current thread: &lt;NSThread: 0x6000000753c0&gt;{number = 1, name = main}
+main thread: &lt;NSThread: 0x6000000753c0&gt;{number = 1, name = main}</code></pre><p>和NSInvocationOperation一样，默认NSBlockOperation只会在当前线程上执行。如果需要新开线程操作，可以添加到NSOperationQueue中即可。</p>
+<pre><code>NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+    NSLog(@&quot;main thread: %@&quot;, [NSThread mainThread]);
+}];
+NSOperationQueue *queue = [[NSOperationQueue alloc] init];
+[queue addOperation:operation];
+
+// 运行结果
+current thread: &lt;NSThread: 0x60800007d7c0&gt;{number = 3, name = (null)}
+main thread: &lt;NSThread: 0x6000000767c0&gt;{number = 1, name = (null)}</code></pre><p>另外，可以使用addExecutionBlock添加额外的操作。</p>
+<pre><code>NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+}];
+[operation addExecutionBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+}];
+[operation addExecutionBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+}];
+[operation addExecutionBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+}];
+[operation start];
+
+// 运行结果
+current thread: &lt;NSThread: 0x6000000771c0&gt;{number = 1, name = main}
+current thread: &lt;NSThread: 0x600000264280&gt;{number = 5, name = (null)}
+current thread: &lt;NSThread: 0x608000260980&gt;{number = 4, name = (null)}
+current thread: &lt;NSThread: 0x6000002640c0&gt;{number = 3, name = (null)}</code></pre><p>可以看到，使用addExecutionBlock会在新线程中去执行。但是并不是每次都会创建，我们可以试下多创建几个：</p>
+<pre><code>NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+}];
+[operation addExecutionBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+}];
+[operation addExecutionBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+}];
+[operation addExecutionBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+}];
+[operation addExecutionBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+}];
+[operation addExecutionBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+}];
+[operation addExecutionBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+}];
+[operation addExecutionBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+}];
+[operation addExecutionBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+}];
+[operation addExecutionBlock:^{
+    NSLog(@&quot;current thread: %@&quot;, [NSThread currentThread]);
+}];
+[operation start];
+
+// 运行结果
+current thread: &lt;NSThread: 0x600000065600&gt;{number = 1, name = main}
+current thread: &lt;NSThread: 0x600000065600&gt;{number = 1, name = main}
+current thread: &lt;NSThread: 0x600000065600&gt;{number = 1, name = main}
+current thread: &lt;NSThread: 0x600000065600&gt;{number = 1, name = main}
+current thread: &lt;NSThread: 0x608000071bc0&gt;{number = 4, name = (null)}
+current thread: &lt;NSThread: 0x600000065600&gt;{number = 1, name = main}
+current thread: &lt;NSThread: 0x600000065600&gt;{number = 1, name = main}
+current thread: &lt;NSThread: 0x600000065600&gt;{number = 1, name = main}
+current thread: &lt;NSThread: 0x608000072040&gt;{number = 3, name = (null)}
+current thread: &lt;NSThread: 0x6000000706c0&gt;{number = 5, name = (null)}</code></pre><p>所以，如果NSBlockOperation封装的操作数大于1的时候,才会执行异步操作.不然也是在当前线程下执行的。</p>
+<p>另外，NSOperation可以取消的，这个算是一大特色了，也是NSOperation的使用场景之一了。NSOperation有三种状态，isReady -&gt; isExecuting -&gt; isFinish， 如果在Ready的状态中对NSOperation进行取消，NSOperation会进入Finish状态。但是Operation已经开始执行了，就会一直运行到结束，或者由我们进行取消。也就是说Operation已经在executing状态，我们调用cancle方法系统不会中止线程的，这需要我们在任务过程中检测取消事件，并中止线程的执行，还要注意一点我们要释放内存或资源。</p>
+<p>需要注意的是，调用cancel并不会退出线程，需要自行终止线程的运行。</p>
+<pre><code>if (![operation isCancelled]) {
+    [operation cancel];
+}</code></pre><p>还有，NSOpertion可以设置优先级，从而改变其执行顺序，我们举个例子。</p>
+<pre><code>NSOperationQueue *queue = [[NSOperationQueue alloc] init];
+NSBlockOperation *operation1 = [NSBlockOperation blockOperationWithBlock:^{
+    NSLog(@&quot;operation1后执行&quot;);
+}];
+NSBlockOperation *operation2 = [NSBlockOperation blockOperationWithBlock:^{
+    NSLog(@&quot;operation2先执行&quot;);
+}];
+[operation1 addDependency:operation2];
+[queue addOperation:operation1];
+[queue addOperation:operation2];
+
+// 运行结果
+operation2先执行
+operation1后执行</code></pre><p>但是不能互相添加依赖，不然就死锁了，两个永远都不会执行。</p>
+<pre><code>[operation1 addDependency:operation2];
+[operation2 addDependency:operation1];</code></pre><p>有些时候，我们需要监听到任务完成后的回调事件，NSOperation也提供了这个方法，叫CompletionBlock。</p>
+<pre><code>NSOperationQueue *queue = [[NSOperationQueue alloc] init];
+NSBlockOperation *operation1 = [NSBlockOperation blockOperationWithBlock:^{
+    NSLog(@&quot;operation1执行&quot;);
+}];
+[operation1 setCompletionBlock:^{
+    NSLog(@&quot;operation1执行完毕&quot;);
+}];
+NSBlockOperation *operation2 = [NSBlockOperation blockOperationWithBlock:^{
+    NSLog(@&quot;operation2执行&quot;);
+}];
+[operation2 setCompletionBlock:^{
+    NSLog(@&quot;operation2执行完毕&quot;);
+}];
+[queue addOperation:operation1];
+[queue addOperation:operation2];
+
+// 运行结果
+operation2执行
+operation1执行
+operation2执行完毕
+operation1执行完毕</code></pre><p>还有自定义NSOperation，由于不是经常能用到，所以就不多做介绍了。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>iOS多线程就总结到这里了，不过一般开发中用的GCD比较多，偶尔会用到NSOperation，这两个理解了就够用了，根据需求来定技术方案。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2016/12/20/iOS%E8%BF%9B%E9%98%B6-%E6%B5%85%E8%B0%88%E5%A4%9A%E7%BA%BF%E7%A8%8B/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

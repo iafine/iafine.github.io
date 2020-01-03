@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2017-10-24</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">iOS</span>
+      
+    </div>
+    
+    <h1 class="detail-title">iOS进阶-Framework实现</h1>
+    <p class="detail-content"><p>最近由于工作需要，需要定制一个依赖第三方的SDK，翻了翻网上的讲解，感觉都是在讲动态库和静态库的区别，并没有讲清楚在制作SDK中的一些细节东西。这篇来记录一下iOS SDK的制作过程。</p>
+<a id="more"></a>
+
+<h4 id="前期准备"><a href="#前期准备" class="headerlink" title="前期准备"></a>前期准备</h4><p>开始之前，首先先要想清楚自己需要制作出一个动态库还是静态库，双方各有优点：</p>
+<ul>
+<li>动态库。动态库优点比较多，支持Swift和extension。动态加载，但是缺点是App Store审核目前还不能去除模拟器架构，上架需要增加脚本，或者去处模拟器架构；</li>
+<li>静态库。目前大部分第三方SDK都是静态库，可能和历史原因有点关系。静态库缺点就是Swift目前不支持。</li>
+</ul>
+<p>如果是开源项目的话，建议以动态库的方式加载；但如果是以商用为目的，还是建议静态库，比较成熟。</p>
+<h4 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h4><p>新建一个Project，并选择Cocoa Touch Framework，这样，不管是动态库还是静态库，打包出来的都是frameowrk形式的，如果选择Cocoa Touch Static Library，那么打包出来的是以a结尾的形式，我们将项目名称命名为<code>ios_framework</code> 。</p>
+<p><img src="/images/Snipaste_2018-12-24_19-43-55.png" alt=""></p>
+<p>我们新增一个叫<code>HYAIManager</code>文件，用于测试SDK的调用。</p>
+<pre><code class="objective-c">// HYAIManager.h
+#import &lt;Foundation/Foundation.h&gt;
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface HYAIManager : NSObject
+
++ (void)start;
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+// HYAIManager.m
+@implementation HYAIManager
+
++ (void)start {
+    NSLog(@&quot;Hello World, frameowrk!&quot;);
+}
+
+@end</code></pre>
+<p>写完测试代码之后，还需要将该头文件放在Public里，已提供给外部调用。</p>
+<p><img src="/images/Snipaste_2018-12-25_15-13-31.png" alt=""></p>
+<p>然后选择动态库还是静态库，这里我选择静态库，优缺点就不再这里重复提及了。</p>
+<p><img src="/images/Snipaste_2018-12-25_15-17-24.png" alt=""></p>
+<p>基本功能已经搭建完成了，接下来我们搭建测试Demo，用于调试SDK的基本功能。</p>
+<h4 id="Demo测试"><a href="#Demo测试" class="headerlink" title="Demo测试"></a>Demo测试</h4><p>测试Demo和app项目类似，我们就直接新建个Target来测试，不用一个Project了。新建一个Target，选后选择Single View App，命名为<code>ios_framework_demo</code>。</p>
+<p> <img src="/images/Snipaste_2018-12-25_15-20-52.png" alt=""></p>
+<p>首先，我们需要将SDK项目build生成的framework给引入到demo中，用来测试。选中Product文件夹里的ios_frameowrk.framework，然后修改Target Membership。</p>
+<p><img src="/images/Snipaste_2018-12-25_15-26-42.png" alt=""></p>
+<p>然后在<code>ViewController.m</code>里导入<code>HYAIManager.h</code>，如下：</p>
+<pre><code class="objective-c">#import &quot;ViewController.h&quot;
+#import &quot;HYAIManager.h&quot;
+
+@interface ViewController ()
+
+@end
+
+@implementation ViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+
+    [HYAIManager start];
+}
+
+
+@end</code></pre>
+<p>接下来运行demo，如果没有报错的话，那么控制台会打印出<code>Hello World, framework!</code>。说明我们SDK的基本流程已经走通了。</p>
+<p>但是这里有个问题，在demo中导入<code>HYAIManager.h</code>的时候，会出现一个<code>Missing submodule &#39;ios_framework.HYAIManager&#39;</code>的警告，这个是因为没有将对外开放的头文件添加到自动生成的.h文件里。需要修改下<code>ios_framework.h</code>：</p>
+<pre><code class="objective-c">#import &lt;UIKit/UIKit.h&gt;
+
+#if __has_include(&lt;YiConnectSDK/YiConnectSDK.h&gt;)
+
+//! Project version number for ios_framework.
+FOUNDATION_EXPORT double ios_frameworkVersionNumber;
+
+//! Project version string for ios_framework.
+FOUNDATION_EXPORT const unsigned char ios_frameworkVersionString[];
+
+// In this header, you should import all the public headers of your framework using statements like #import &lt;ios_framework/PublicHeader.h&gt;
+
+#import &lt;ios_framework/HYAIManager.h&gt;
+
+#else
+
+#import &quot;HYAIManager.h&quot;
+
+#endif</code></pre>
+<p>Demo制作还有另外一种常用的方式是用workspace的概念，具体网上例子很多，在这里就不说了。</p>
+<h4 id="依赖第三方库"><a href="#依赖第三方库" class="headerlink" title="依赖第三方库"></a>依赖第三方库</h4><p>在特殊情况下，会有一些奇葩的需求，要求SDK依赖于第三方SDK，这时如果没做过，听起来就有点懵逼。参考网上的绝大部分资料，只能说越看越懵，接下来一步步来完成这个依赖。</p>
+<p>我们以科大讯飞的SDK为例，我们的目的是自制的SDK使用了科大讯飞的语音识别和合成技术，并根据返回结果做了一些封装操作。开发者在做集成的时候，科大讯飞的SDK是必须集成，然后再引入自制的SDK。自制的SDK并不包含科大讯飞的SDK，否则更新是个麻烦。</p>
+<p>我们需要现在Demo中集成第三方SDK，具体引入就不在这里细谈了，一般第三方的SDK文档都会介绍，不过需要注意的是，Demo里集成的第三方SDK，是需要选中demo的target的。</p>
+<p>然后重新运行，应该没什么问题。</p>
+<p>我们再来修改下<code>HYAIManager.m</code>里的代码，增加调用第三方调用代码：</p>
+<pre><code class="objective-c">#import &quot;HYAIManager.h&quot;
+#import &lt;AIPIFlyMSC/AIPIFlySpeechUtility.h&gt;
+
+@implementation HYAIManager
+
++ (void)start {
+    NSLog(@&quot;Hello World, frameowrk!&quot;);
+
+    [AIPIFlySpeechUtility createUtility:@&quot;123123&quot;];
+}
+
+@end</code></pre>
+<p>以此来验证，是否第三方SDK可以调用成功。如果报错的话，绝大部分原因是Demo中的第三方库集成有问题。</p>
+<p>这里有个问题，如果SDK的头文件里引入第三方库的话，那么会出现错误。</p>
+<pre><code class="objc">error: include of non-modular header inside framework module</code></pre>
+<p>就需要把<code>Build Settings</code>里的<code>Allow Non-modular Includes In Framework Modules</code>设为<code>YES</code>。</p>
+<h4 id="build打包"><a href="#build打包" class="headerlink" title="build打包"></a>build打包</h4><p>打包这种事情，手动去做就未免太浪费时间了。一般SDK打包都是使用脚本完成的。实现的方式有很多种，这里的只能是借鉴借鉴。</p>
+<p>首先，新建一个target，选中Aggregate，来创建一个target用于自动打包，命名为script。</p>
+<p><img src="/images/Snipaste_2018-12-26_15-23-01.png" alt=""></p>
+<p>然后添加依赖target。</p>
+<p><img src="/images/Snipaste_2018-12-26_15-24-55.png" alt=""></p>
+<p>接下来新增脚本用于打包，仅供参考。</p>
+<pre><code class="shell">######################
+# Options
+######################
+REVEAL_ARCHIVE_IN_FINDER=true
+FRAMEWORK_NAME=&quot;${PROJECT_NAME}&quot;
+SIMULATOR_LIBRARY_PATH=&quot;${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/${FRAMEWORK_NAME}.framework&quot;
+DEVICE_LIBRARY_PATH=&quot;${BUILD_DIR}/${CONFIGURATION}-iphoneos/${FRAMEWORK_NAME}.framework&quot;
+UNIVERSAL_LIBRARY_DIR=&quot;${BUILD_DIR}/${CONFIGURATION}-iphoneuniversal&quot;
+FRAMEWORK=&quot;${UNIVERSAL_LIBRARY_DIR}/${FRAMEWORK_NAME}.framework&quot;
+DESKTOP_FOLDER=&quot;${HOME}/Desktop/${FRAMEWORK_NAME}-${CONFIGURATION}-iphoneuniversal/&quot;
+
+######################
+# Build Frameworks
+######################
+
+xcodebuild -project ${PROJECT_NAME}.xcodeproj -sdk iphonesimulator BITCODE_GENERATION_MODE=bitcode OTHER_CFLAGS=&quot;-fembed-bitcode&quot; -target ${PROJECT_NAME} -configuration ${CONFIGURATION} -arch x86_64 -arch i386 clean build CONFIGURATION_BUILD_DIR=${BUILD_DIR}/${CONFIGURATION}-iphonesimulator | echo
+
+xcodebuild -project ${PROJECT_NAME}.xcodeproj -sdk iphoneos BITCODE_GENERATION_MODE=bitcode OTHER_CFLAGS=&quot;-fembed-bitcode&quot; -target ${PROJECT_NAME} -configuration ${CONFIGURATION} clean build CONFIGURATION_BUILD_DIR=${BUILD_DIR}/${CONFIGURATION}-iphoneos | echo
+xcodebuild BITCODE_GENERATION_MODE=bitcode OTHER_CFLAGS=&quot;-fembed-bitcode&quot; -target ${PROJECT_NAME} ONLY_ACTIVE_ARCH=NO -configuration ${CONFIGURATION} -sdk iphoneos BUILD_DIR=&quot;${BUILD_DIR}&quot; BUILD_ROOT=&quot;${BUILD_ROOT}&quot; | echo
+
+xcodebuild BITCODE_GENERATION_MODE=bitcode OTHER_CFLAGS=&quot;-fembed-bitcode&quot; -target ${PROJECT_NAME} ONLY_ACTIVE_ARCH=NO -configuration ${CONFIGURATION} -sdk iphonesimulator BUILD_DIR=&quot;${BUILD_DIR}&quot; BUILD_ROOT=&quot;${BUILD_ROOT}&quot; | echo
+
+######################
+# Create directory for universal
+######################
+rm -rf &quot;${UNIVERSAL_LIBRARY_DIR}&quot;
+mkdir &quot;${UNIVERSAL_LIBRARY_DIR}&quot;
+mkdir &quot;${FRAMEWORK}&quot;
+######################
+# Copy files Framework
+######################
+cp -r &quot;${DEVICE_LIBRARY_PATH}/.&quot; &quot;${FRAMEWORK}&quot;
+######################
+# Make fat universal binary
+######################
+lipo &quot;${SIMULATOR_LIBRARY_PATH}/${FRAMEWORK_NAME}&quot; &quot;${DEVICE_LIBRARY_PATH}/${FRAMEWORK_NAME}&quot; -create -output &quot;${FRAMEWORK}/${FRAMEWORK_NAME}&quot; | echo
+######################
+# On Release, copy the result to desktop folde
+######################
+if [ &quot;${CONFIGURATION}&quot; == &quot;Release&quot; ]; then
+[[ -d &quot;${DESKTOP_FOLDER}&quot; ]] &amp;&amp; rm -rf &quot;${DESKTOP_FOLDER}&quot;
+mkdir &quot;${DESKTOP_FOLDER}&quot;
+cp -r &quot;${FRAMEWORK}&quot; &quot;${DESKTOP_FOLDER}&quot;
+fi
+######################
+# If needed, open the Framework folder
+######################
+if [ ${REVEAL_ARCHIVE_IN_FINDER} = true ]; then
+if [ &quot;${CONFIGURATION}&quot; == &quot;Release&quot; ]; then
+open &quot;${HOME}/Desktop/${FRAMEWORK_NAME}-${CONFIGURATION}-iphoneuniversal/&quot;
+else
+open &quot;${UNIVERSAL_LIBRARY_DIR}/&quot;
+fi
+fi
+</code></pre>
+<p>以上代码是如果release打包的话，会将多架构的framework合成为一个，提供给开发者使用，并且会拷贝到桌面。</p>
+<p>不过以上操作，需要和打上架包一样，点击Product -&gt; Archive来进行，我们希望的应该是执行一个脚本，这样可以对接CI这样的平台。</p>
+<p>其实脚本实现也不难， 利用<code>xcodebuild</code>对外暴露的命令即可实现。首先我们<code>cd</code>到项目的根目录，然后执行<code>xcodebuild -list -project ios_framework.xcodeproj</code>来查看下所有的target。</p>
+<pre><code class="shell">% xcodebuild -list -project ios_framework.xcodeproj
+Information about project &quot;ios_framework&quot;:
+    Targets:
+        ios_framework
+        ios_framework_demo
+        script
+
+    Build Configurations:
+        Debug
+        Release
+
+    If no build configuration is specified and -scheme is not passed then &quot;Release&quot; is used.
+
+    Schemes:
+        ios_framework
+        ios_framework_demo
+        script</code></pre>
+<p>我们的目的是利用命令行运行release下的script target，所以，应该这么写。</p>
+<pre><code class="shell">xcodebuild -project ios_framework.xcodeproj -scheme script -destination &#39;generic/platform=iOS&#39; -configuration &#39;Release&#39; archive</code></pre>
+<p>其中<code>destination</code>是用来标记设备的，就和你Xcode选中设备一个意思，<code>generic/platform=iOS</code>是指 Generic iOS Device，这样应该清楚一点。</p>
+<p>我们新建一个文件，命名为<code>archive.sh</code>，然后把上面的代码粘贴进去，接下来在命令行里进行测试。</p>
+<pre><code class="shell">chmod 777 archive.sh
+./archive.sh</code></pre>
+<p>运行成功之后，桌面上应该就多了一个<code>ios_framework-Release-iphoneuniversal</code>文件夹，这个就是我们交付出去的SDK包。</p>
+<p>接下来就可以使用一些CI工具来进行自动打包了，是不是很方便呢。</p>
+<h4 id="文档制作"><a href="#文档制作" class="headerlink" title="文档制作"></a>文档制作</h4><p>文档制作这里，应该包括两部分，一部分是对外的集成文档，建议用markdown格式来写，然后生成pdf对外使用；另一种是代码文档，用于查看代码注释和结构。</p>
+<ul>
+<li><p>第一种的对外集成文档，一般我的做法是及时更新markdown文档，然后利用node或者python，在打包的同时对markdown进行pdf格式转换，然后同步到对外使用的文件夹里。这样的好处是，实现了一键打包；</p>
+</li>
+<li><p>第二种的话，推荐jazzy，功能十分强大，生成格式也会整齐。然后增加jazzy生成文档的脚本，在打包的时候也去跑这个脚本，很省事。</p>
+</li>
+</ul>
+<p>这样做的好处的文档制作来纳入到自动打包的行列中，开发手动去做复制粘贴，只要及时更新markdown就行。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>基本的SDK开发流程就到这里了，其实SDK是否好用，文档和技术支持可以说十分重要，如果文档都对不上，很多开发者内心就开始骂了，哈哈。不过SDK开发中，经常会遇到下面的问题，来总结一下。</p>
+<ul>
+<li><p>bitcode</p>
+<p>bitcode的好处是可以减少用户下载app的体积，最好支持。</p>
+</li>
+<li><p>-Objc</p>
+<p> <code>-Objc</code>是用来告诉编译器，定义好的类和Category都是需要加载的。如果是静态库的话，并且包含Category，那么一定不要忘记这个。</p>
+<p>还有一个是<code>-all_load</code>，这个和<code>-Objc</code>有点区别，前者会加载静态库里所有的类和Category，后者只会加载静态库中实现的类和Category。</p>
+</li>
+<li><p>Build Active  Architecture only</p>
+<p>这个值如果是YES，会编译支持的所有架构的版本；如果是NO，只会编译当前架构的版本。一般来说，DEBUG是NO，是为了加快开发效率，Release设为YES，需要使用全架构的版本包。</p>
+</li>
+<li><p>如何判断一个framework是静态库还是动态库</p>
+<p>动态库和静态库都可以用framework为后缀，所以外表上是判别不出来framework是动态库还是静态库的，这里我们需要<code>file</code>命令来判别，我们先看静态库的file返回内容。</p>
+<pre><code class="shell">ios_framework: Mach-O universal binary with 4 architectures: [i386:current ar archive random library] [arm64:current ar archive random library]
+ios_framework (for architecture i386):    current ar archive random library
+ios_framework (for architecture armv7):    current ar archive random library
+ios_framework (for architecture x86_64):    current ar archive random library
+ios_framework (for architecture arm64):    current ar archive random library</code></pre>
+<p>再来看下动态库的返回内容:</p>
+<pre><code class="shell">ios_framework: Mach-O universal binary with 4 architectures: [x86_64:Mach-O 64-bit dynamically linked shared library x86_64] [arm64]
+ios_framework (for architecture x86_64):    Mach-O 64-bit dynamically linked shared library x86_64
+ios_framework (for architecture armv7):    Mach-O dynamically linked shared library arm_v7
+ios_framework (for architecture armv7s):    Mach-O dynamically linked shared library arm_v7s
+ios_framework (for architecture arm64):    Mach-O 64-bit dynamically linked shared library arm64</code></pre>
+<p>动态库的返回会多<code>dynamically</code>这样的文本，所以只要使用<code>file</code>命令去查看framework，如果有<code>dynamically</code>，那么就是动态库，没有则是静态库。</p>
+</li>
+</ul>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2017/10/24/iOS%E8%BF%9B%E9%98%B6-Framework%E5%AE%9E%E7%8E%B0/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

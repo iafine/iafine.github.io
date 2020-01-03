@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2018-06-04</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">Vue系列-知识总结</h1>
+    <p class="detail-content"><p>本篇是一个Vue体系知识的回顾篇，主要是想对Vue的体系知识有一个大概的总结，在自己脑海里梳理成一个体系。</p>
+<a id="more"></a>
+
+<h4 id="Vue生命周期"><a href="#Vue生命周期" class="headerlink" title="Vue生命周期"></a>Vue生命周期</h4><p><img src="/images/Vue%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F.png" alt="Vue生命周期"></p>
+<h4 id="官方生命周期图示"><a href="#官方生命周期图示" class="headerlink" title="官方生命周期图示"></a>官方生命周期图示</h4><p><img src="https://cn.vuejs.org/images/lifecycle.png" alt="Vue生命周期图"></p>
+<p>可以看到，在Vue实例的生命周期的各个阶段中，都会有相应的钩子函数提供给开发者来操作。我们来一一解读这些钩子。</p>
+<ul>
+<li>beforeCreate。钩子触发的时机是实例创建之后，但是数据和事件还未配置之前调用；</li>
+<li>created。如果实例创建完成，并且data，prop，方法和watch等已经配置完成，就会触发该钩子；</li>
+<li>beforeMount。在挂载之前触发，相关的render函数会首次被调用；</li>
+<li>mounted。新创建的虚拟DOM替换掉真实DOM，并挂载在实例上之后，就会触发该钩子；</li>
+<li>beforeUpdate。当数据发生变化，在虚拟DOM重新渲染之前，会触发该钩子；</li>
+<li>updated。由于数据发生变化，并且虚拟DOM重新渲染完毕，就会触发该钩子，这时DOM已经更新完毕；</li>
+<li>activated。当keep-alive组件激活时调用，如果是网络请求，可以放在此处；</li>
+<li>deactivated。当keep-alive组件停用时会调用，如果需要取消网络请求，可以放在此处；</li>
+<li>beforeDestroy。Vue实例被销毁之前调用，但是该钩子内部，实例还是存在的，可以做一些业务销毁动作；</li>
+<li>destroyed。Vue实例销毁之后调用，此时所有的子实例也会被销毁。</li>
+</ul>
+<h4 id="子组件的生命周期"><a href="#子组件的生命周期" class="headerlink" title="子组件的生命周期"></a>子组件的生命周期</h4><p>如果是单个Vue实例的生命周期，如同上图那样，但是，如果存在子组件，那么其执行顺序到底是什么样的呢，我们来一探究竟。</p>
+<ul>
+<li><p>渲染过程</p>
+<pre><code class="javascript">父组件(beforeCreate) -&gt; 父组件(created) -&gt; 父组件(beforeMount) -&gt; 
+子组件(beforeCreate) -&gt; 子组件(created) -&gt; 子组件(beforeMount) -&gt;
+子组件(mounted) -&gt; 父组件(mounted)</code></pre>
+</li>
+<li><p>更新过程</p>
+<pre><code class="javascript">父组件(beforeUpdate) -&gt; 子组件(beforeUpdate) -&gt; 子组件(updated) -&gt; 父组件(updated)
+
+// 如果只是父组件更新
+父组件(beforeUpdate) -&gt; 父组件(updated)</code></pre>
+</li>
+<li><p>销毁过程</p>
+<pre><code class="javascript">父组件(beforeDestroy) -&gt; 子组件(beforeDestroy) -&gt; 子组件(destroyed) -&gt; 父组件(destroyed)</code></pre>
+</li>
+</ul>
+<h4 id="Vue指令"><a href="#Vue指令" class="headerlink" title="Vue指令"></a>Vue指令</h4><p><img src="/images/Vue%E6%8C%87%E4%BB%A4.png" alt="Vue指令"></p>
+<h4 id="Vue组件属性"><a href="#Vue组件属性" class="headerlink" title="Vue组件属性"></a>Vue组件属性</h4><p><img src="/images/Vue%E7%BB%84%E4%BB%B6%E5%B1%9E%E6%80%A7.png" alt="Vue组件属性"></p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2018/06/04/Vue%E7%B3%BB%E5%88%97-%E7%9F%A5%E8%AF%86%E6%80%BB%E7%BB%93/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

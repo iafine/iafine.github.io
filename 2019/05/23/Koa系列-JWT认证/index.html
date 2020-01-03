@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2019-05-23</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">Koa系列-JWT认证</h1>
+    <p class="detail-content"><p>JWT全名JSON Web Token，是目前比较流行的认证解决方案。当然，还有一种是通过session记录用户状态，但是随着分布式的流行，这种做法成本越来越大，需要同步各个服务器的session缓存。</p>
+<a id="more"></a>
+
+<h4 id="session机制"><a href="#session机制" class="headerlink" title="session机制"></a>session机制</h4><p>当然，这篇文章并不是说JWT可以替代session，事实是根本也替代不了，只是说两者的使用场景不同。</p>
+<p>我们先来看看通常的流程是怎么做的，以用户登录为例：</p>
+<ul>
+<li>用户将密码和用户名发送给服务端；</li>
+<li>服务端验证后，会生成一个session ID，并记录用户相关信息，一般存储在redis中，用户端将session ID存放在cookie中；</li>
+<li>接下来的每次请求，都会将这个session ID返回给服务端，用于服务端获取用户信息；</li>
+</ul>
+<p>这就是通用的session机制，可以看到，服务端对用户状态有绝对的控制权，想要让某个用户状态失效，服务端是完全可以做到的。</p>
+<p>但是，传统的seesion机制有个问题就是，当服务端环境是分布式集群的话，那就需要多余的资源去同步session，也就是上面的redis层，如果redis挂了，那么所有的状态验证就失效了。所以，在JWT中，干脆服务端就不保存状态了，只仅仅做个验证。</p>
+<h4 id="JWT实现"><a href="#JWT实现" class="headerlink" title="JWT实现"></a>JWT实现</h4><p>关于JWT的原理知识，目前网络上的文章很多，可以花点时间去看看，这里只着重讲一下Koa实现JWT的方式。</p>
+<p>首先需要引入相关依赖库。</p>
+<pre><code class="shell">npm i koa-jwt -S
+npm i jsonwebtoken -S</code></pre>
+<p>首先在入口文件中引入jwt中间件:</p>
+<pre><code class="javascript">const Koa = require(&#39;koa&#39;)
+const jwt = require(&#39;koa-jwt&#39;)
+const app = new Koa()
+
+const secret = &#39;jwt_secret&#39;
+app.use(jwt({
+    secret,
+}).unless({
+    path: [/^\/api\/user\/login/, /^\/api\/user\/registaer/, /^\/page/, /\//]
+}))</code></pre>
+<p>其中，unless是不参与校验的路由集合，接下来我们生成token。</p>
+<p>当用户登录或者注册的时候，将信息提交给服务端，服务端通过一些参数生成token，返回给用户端。</p>
+<pre><code class="javascript">const jsonwebtoken = require(&#39;jsonwebtoken&#39;)
+
+ // 生成token
+const token = jsonwebtoken.sign({
+    data: param,
+    exp: Math.floor(Date.now() / 1000) + (60 * 60)  // 一小时
+}, constant.JWT_SECRET)
+
+response.success(ctx, { token })</code></pre>
+<p>生成token的时候可以设置过期时间，如果在超过过期时间后访问，那么返回401错误。</p>
+<h4 id="UI层传递Token"><a href="#UI层传递Token" class="headerlink" title="UI层传递Token"></a>UI层传递Token</h4><p>UI层采用vue和vue-router实现。当UI层获取到服务端返回的token之后，需要存在本地，如下：</p>
+<pre><code class="javascript">try {
+   const result = await this.$api.post(&#39;/api/user/login&#39;, {
+     username: this.loginForm.username,
+     password: this.loginForm.password
+   })
+
+   // 将token存在本地缓存当中
+   localStorage.setItem(&#39;token&#39;, result.data.token)
+   this.$router.push(&#39;/&#39;)
+ } catch(error) {
+   this.$message.error(&#39;用户名或密码输入错误&#39;)
+ }</code></pre>
+<p>并且，需要前端路由对token进行校验，如果本地没有token，那么返回到登录页面。</p>
+<pre><code class="javascript">import Vue from &#39;vue&#39;
+
+import Router from &#39;vue-router&#39;
+import Hello from &#39;../page/hello&#39;
+import Home from &#39;../page/home&#39;
+import Login from &#39;../page/login&#39;
+
+// dashboard
+import DashBoard from &#39;../page/dashboard&#39;
+
+// flexbox
+import FlexBoxBasic from &#39;../page/flexbox/basic.vue&#39;
+import FLexBoxDice from &#39;../page/flexbox/dice.vue&#39;
+
+Vue.use(Router)
+
+const router = new Router({
+  base: &#39;/page/&#39;,
+  mode: &#39;history&#39;,
+  routes: [
+    {
+      path: &#39;/&#39;,
+      redirect: &#39;/dashboard&#39;
+    },
+    {
+      path: &#39;/&#39;,
+      name: &#39;home&#39;,
+      component: Home,
+      meta: { isAuth: true }
+    },
+    {
+      path: &#39;/login&#39;,
+      name: &#39;login&#39;,
+      component: Login,
+      meta: {
+        isAuth: false
+      }
+    }
+  ]
+})
+
+// 拦截路由，校验token
+router.beforeEach((to, from, next) =&gt; {
+  if (to.meta.isAuth) {
+    const token = localStorage.getItem(&#39;token&#39;)
+    if (token) {
+      next()
+    } else {
+      next(&#39;/login&#39;)
+    }
+  } else {
+    next()
+  }
+})
+
+export default router</code></pre>
+<p>并且，对API的访问进行校验，如果请求结果是401，那么跳转到登录页面去进行登录操作。</p>
+<pre><code class="javascript">import axios from &#39;axios&#39;
+import Vue from &#39;vue&#39;
+import router from &#39;../router/router&#39;
+
+// 拦截http请求
+axios.interceptors.request.use(config =&gt; {
+    const token = localStorage.getItem(&#39;token&#39;)
+    config.headers.common[&#39;Authorization&#39;] = &#39;Bearer &#39; + token
+    return config
+})
+
+// 拦截http响应
+axios.interceptors.response.use(res =&gt; {
+    return res.data
+}, err =&gt; {
+    // 401错误，跳转到登录页
+    if (err.response.status === 401) {
+        if (router.currentRoute.path !== &#39;/login&#39;) {
+            router.replace({
+                path: &#39;/login&#39;,
+                query: { redirect: router.currentRoute.path}
+            })
+        }
+    }
+    return Promise.reject(err)
+})
+
+Vue.prototype.$api = axios
+
+export default axios</code></pre>
+<p>至此，一个完整的JWT应用就完成了。</p>
+<h4 id="JWT缺点"><a href="#JWT缺点" class="headerlink" title="JWT缺点"></a>JWT缺点</h4><p>jwt目前来说，最明显的缺点就是服务端不保存状态，如果想在状态使用过程中废除某个token，需要做到很难，也就是如果签发了token，到过期时间之前都是有效的。</p>
+<p>所以，这就是很多人不采用JWT的原因，也是为什么替代不了session机制。如果强制加上服务端缓存token，那么又与JWT的思想产生歧义。</p>
+<p>当然，JWT还是有用武之地的，比如注册链接验证邮件，过期1小时，并不需要服务端做过多的逻辑判断，使用JWT很容易实现。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2019/05/23/Koa%E7%B3%BB%E5%88%97-JWT%E8%AE%A4%E8%AF%81/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

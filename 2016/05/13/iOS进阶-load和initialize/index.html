@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2016-05-13</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">iOS</span>
+      
+    </div>
+    
+    <h1 class="detail-title">iOS进阶-load和initialize</h1>
+    <p class="detail-content"><blockquote>
+<p>在NSObject.h中提供了两个特殊的类方法，<code>load</code>和<code>initialize</code>。帮助我们进行类的加载和初始化。</p>
+</blockquote>
+<p>既然是进行类的加载和初始化的，那么它们的调用时机是什么，又有什么区别呢？我们一起来看下。</p>
+<a id="more"></a>
+
+<h3 id="load"><a href="#load" class="headerlink" title="+load"></a>+load</h3><p>我们先做以下实验：</p>
+<pre><code>// Son.h (继承Father类)
++ (void)load {
+    NSLog(@&quot;Son is loaded&quot;);
+}
+
+// Father.h
++ (void)load {
+    NSLog(@&quot;Father is loaded&quot;);
+}
+
+// Son+Load.h
++ (void)load {
+    NSLog(@&quot;Son+Load is loaded&quot;);
+}</code></pre><p>可以看到打印结果如下：</p>
+<pre><code>iOSTest[1120:83646] Father is loaded
+iOSTest[1120:83646] Son is loaded
+iOSTest[1120:83646] Son+Load is loaded</code></pre><p>说明，一个类如果实现了<code>load</code>方法，那么调用该方法之前，会先找父类的<code>load</code>方法，然后在调用自己的<code>load</code>方法。</p>
+<p>如果是这个类的<code>category</code>的话，那么会先调用自己的<code>load</code>方法，然后再调用<code>category</code>的<code>load</code>方法。</p>
+<p>需要注意的事，load方法的本质是直接执行函数指针的，因此不像普通方法调用，会走<code>objc_msgSend</code>这套流程，<code>load</code>方法并不会走<code>objc_msgSend</code>这套流程，有兴趣的同学可以看下源码，这里就不讨论那么多了。</p>
+<p>另外就是有关执行顺序的问题，<code>load</code>方法执行，先是父类方法执行，然后是子类，最后是<code>category</code>中的方法执行。如果是不相关的两个类中<code>load</code>方法的执行顺序，和Build Phases中的Compile Sources文件顺序有关，放在前面的先执行。</p>
+<p>还有一点很关键，<code>load</code>方法只会被调用一次，<code>initialize</code>也是的。</p>
+<p>对于<code>load</code>方法的实践，大多是基于它开发中调用时间最早的特性。目前用的最多的就是Method Swizzling。比如经常用的Controller方法替换。</p>
+<pre><code>#import &lt;objc/runtime.h&gt;
+
+@implementation UIViewController (Tracking)
+
++ (void)load {
+    static dispatch_once_t onceToken;
+    dispatch_once(&amp;onceToken, ^{
+        Class class = [self class];
+        SEL originalSelector = @selector(viewWillAppear:);
+        SEL swizzledSelector = @selector(xxx_viewWillAppear:);
+        Method originalMethod = class_getInstanceMethod(class, originalSelector);
+        Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);
+        // When swizzling a class method, use the following:
+        // Class class = object_getClass((id)self);
+        // ...
+        // Method originalMethod = class_getClassMethod(class, originalSelector);
+        // Method swizzledMethod = class_getClassMethod(class, swizzledSelector);
+        BOOL didAddMethod =
+            class_addMethod(class,
+                originalSelector,
+                method_getImplementation(swizzledMethod),
+                method_getTypeEncoding(swizzledMethod));
+        if (didAddMethod) {
+            class_replaceMethod(class,
+                swizzledSelector,
+                method_getImplementation(originalMethod),
+                method_getTypeEncoding(originalMethod));
+        } else {
+            method_exchangeImplementations(originalMethod, swizzledMethod);
+        }
+    });
+}
+
+#pragma mark - Method Swizzling
+- (void)xxx_viewWillAppear:(BOOL)animated {
+    [self xxx_viewWillAppear:animated];
+    NSLog(@&quot;viewWillAppear: %@&quot;, self);
+}
+@end</code></pre><p>不过，除了Method Swizzling，其他的东西还是少放，调用load方法的时候环境并不安全，也不要放线程堵塞的代码上去。</p>
+<h3 id="initialize"><a href="#initialize" class="headerlink" title="initialize"></a>initialize</h3><p>一样，我们先做个实验：</p>
+<pre><code>// Son.h (继承Father类)
++ (void)initialize {
+    NSLog(@&quot;Son is initialized&quot;);
+}
+
+// Father.h
++ (void)initialize {
+    NSLog(@&quot;Father is initialized&quot;);
+}
+
+// Son+Initialize.h
++ (void)initialize {
+    NSLog(@&quot;Son+Load is initialized&quot;);
+}</code></pre><p>我们什么先都不做，运行可以发现，什么都没打印。于<code>load</code>不同，<code>initialize</code>是惰性的，只会在第一次调用类的方法时去调用。</p>
+<p>然后我们在修改一下上面的代码，去掉<code>category</code>那块，然后在主函数里创建一个Father对象，查看打印：</p>
+<pre><code>// Son.h (继承Father类)
++ (void)initialize {
+    NSLog(@&quot;Son is initialized&quot;);
+}
+
+// Father.h
++ (void)initialize {
+    NSLog(@&quot;Father is initialized&quot;);
+}
+
+// main.h
+Father *father = [[Father alloc] init];</code></pre><p>运行可以发现，控制台打印出了一条，如下：</p>
+<pre><code>Father is initialized</code></pre><p>然后，我们修改主函数，创建一个Son对象，运行之后发现，打印了两条：</p>
+<pre><code>Father is initialized
+Son is initialized</code></pre><p>可以看到，创建子类对象会调用父类的<code>initialize</code>方法，并且是先执行父类的，然后执行子类的。那么我们可以得出，<code>initialize</code>方法的执行顺序是先执行父类的，然后执行子类的。</p>
+<p>接下来我们还原代码，添加上<code>catagory</code>那块，在main函数里创建一个Son对象，代码如下：</p>
+<pre><code>// Son.h (继承Father类)
++ (void)initialize {
+    NSLog(@&quot;Son is initialized&quot;);
+}
+
+// Father.h
++ (void)initialize {
+    NSLog(@&quot;Father is initialized&quot;);
+}
+
+// Son+Initialize.h
++ (void)initialize {
+    NSLog(@&quot;Son+Initialize is initialized&quot;);
+}
+
+// main.h
+Son *son = [[Son alloc] init];</code></pre><p>运行后，发现，控制台仍然只打印了两条日志，如下：</p>
+<pre><code>Father is initialized
+Son+Initialize is initialized</code></pre><p>关键点来了，我们发现，和<code>load</code>方法不一样，并没有打印三条日志，并且没有打印出Son子类的<code>initialize</code>方法。这是比较关键的，是因为<code>initialize</code>方法只会在第一次调用当前类的时候被调用，并且只会调用一次。既然走了Son的<code>category</code>的方法，那么就并不会走其本身的<code>initialize</code>方法了。</p>
+<p>接下来我们继续修改代码，在主函数里多创建几个Son对象，发现日志没有变化，仍旧只是两条打印：</p>
+<pre><code>Father is initialized
+Son+Initialize is initialized</code></pre><p>这说明<code>initialize</code>方法只会走一次，这块和<code>load</code>方法还是有点像的。</p>
+<p>一般<code>initialize</code>的使用场景比较少，如果需要在类调用前需要定义一些常量，可以在这里做。并且<code>initialize</code>方法内部也是线程安全的，这个也很关键。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2016/05/13/iOS%E8%BF%9B%E9%98%B6-load%E5%92%8Cinitialize/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

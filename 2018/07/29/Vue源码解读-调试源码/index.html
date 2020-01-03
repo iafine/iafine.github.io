@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2018-07-29</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">Vue源码解读-调试源码</h1>
+    <p class="detail-content"><p>最近准备写一个Vue源码解读的系列，用来加深自己对Vue的理解。本篇也是一个开始，记录下阅读Vue源码的方式，方便其他同学。</p>
+<a id="more"></a>
+
+<h4 id="获取源码"><a href="#获取源码" class="headerlink" title="获取源码"></a>获取源码</h4><p>首先进入Vue仓库<a href="https://github.com/vuejs/vue" target="_blank" rel="noopener">https://github.com/vuejs/vue</a>，本身Vue的默认分支就是Dev分支，所有可以直接checkout这个分支到本地就行。</p>
+<p>然后执行<code>yarn install</code>，安装相关依赖。</p>
+<h4 id="开启SourceMap"><a href="#开启SourceMap" class="headerlink" title="开启SourceMap"></a>开启SourceMap</h4><p>首先，我们修改下<code>package.json</code>里的脚本命令:</p>
+<pre><code class="javascript">&quot;dev&quot;: &quot;rollup -w -c scripts/config.js --environment TARGET:web-full-dev --sourcemap&quot;,</code></pre>
+<p>增加<code>--sourcemap</code>，来支持sourcemap。</p>
+<p>然后，修改examples里的vue引用，我们以commits为例，将引用修改为：</p>
+<pre><code class="html">&lt;script src=&quot;../../dist/vue.js&quot;&gt;&lt;/script&gt;</code></pre>
+<p>将 <code>vue.min.js</code>修改成<code>vue.js</code>。</p>
+<p>接下来，执行<code>npm run dev</code>命令，然后打开例子里的<code>index.html</code>，查看效果。</p>
+<p>当然，如果只是打开本地文件，sourcemap是不会生效的。这里我们需要一个VSCode插件，来本地启动一个服务运行静态文件，当然，你也可以选择其他的本地服务。</p>
+<p>安装<code>Live Server</code>插件，可以实现本地启动一个静态文件服务。可以从右下角的Go Live按钮直接打开html文件。</p>
+<p>此时， 重新打开html文件，发现已经可以看到Vue源码了。如下图：</p>
+<p><img src="/images/Snipaste_2019-06-18_16-01-31.png" alt=""></p>
+<p>至此，我们就开启了sourcemap，可以愉快地查看Vue源码了，但是有个疑问，上面的<code>npm run dev</code>到底做了什么操作。我们来一步步分析。</p>
+<h4 id="dev命令执行过程"><a href="#dev命令执行过程" class="headerlink" title="dev命令执行过程"></a>dev命令执行过程</h4><p>我们以<code>npm run dev</code>为入口，来大致了解下Vue的源码结构。首先先看下完整的dev命令：</p>
+<pre><code class="javascript">&quot;dev&quot;: &quot;rollup -w -c scripts/config.js --environment TARGET:web-full-dev --sourcemap&quot;,</code></pre>
+<p>可以看到，它是去以<code>web-full-dev</code>方式获取<code>script/config.js</code>相关配置，然后运行程序。这里<code>rollup</code>可以先看做是<code>webpack</code>，并不是核心代码的关键，只是个打包工具，后面我们再做详细介绍。我们可以看下这个配置细节：</p>
+<pre><code class="javascript">// runtime-only build (Browser)
+&#39;web-runtime-dev&#39;: {
+    entry: resolve(&#39;web/entry-runtime.js&#39;),
+    dest: resolve(&#39;dist/vue.runtime.js&#39;),
+    format: &#39;umd&#39;,
+    env: &#39;development&#39;,
+    banner
+},</code></pre>
+<p>这个配置类似于webpack的配置，我们一行行解读它。</p>
+<h5 id="Entry"><a href="#Entry" class="headerlink" title="Entry"></a>Entry</h5><pre><code class="javascript">entry: resolve(&#39;web/entry-runtime.js&#39;),</code></pre>
+<p>entry是程序的入口文件，那么这个<code>web/entry-runtime.js</code>是在哪里呢？</p>
+<p>其实，可以看<code>script/alias.js</code>文件，定义了一系列的别名。</p>
+<pre><code class="javascript">web: resolve(&#39;src/platforms/web&#39;),</code></pre>
+<p>所以，entry具体就是：</p>
+<pre><code class="javascript">entry: resolve(&#39;src/platforms/web/entry-runtime.js&#39;),</code></pre>
+<p>其中，platforms有两个，一个是web，另外一个weex，weex这个不在我们的讨论之中，可以忽略。所以，<code>src/platforms/web</code>里存放的就是web平台和核心代码。以后我们会常和它打交道。</p>
+<h5 id="Dest"><a href="#Dest" class="headerlink" title="Dest"></a>Dest</h5><pre><code class="javascript">dest: resolve(&#39;dist/vue.runtime.js&#39;),</code></pre>
+<p>dest是一个输出目录文件，是打包后的存放地，可以理解为webpack的output。</p>
+<h5 id="Format"><a href="#Format" class="headerlink" title="Format"></a>Format</h5><p>format其实JS的模块规范，这方面可以看下网上的详细介绍。Vue源码里的配置有三种：</p>
+<ul>
+<li>cjs。CommanJS规范，主要用于Node服务器环境；</li>
+<li>umd。通用的模块规范。主要用于浏览器或服务器环境；</li>
+<li>es。ES Module，主要用于主流浏览器环境。</li>
+</ul>
+<h5 id="Banner"><a href="#Banner" class="headerlink" title="Banner"></a>Banner</h5><p>banner的作用是在打包好的文件的块的外部(wrapper外部)的最顶部插入一段内容，比如<code>dist/vue.js</code>的顶部，就生成了如下注释：</p>
+<pre><code class="javascript">/*!
+ * Vue.js v2.6.10
+ * (c) 2014-2018 Evan You
+ * Released under the MIT License.
+ */</code></pre>
+<p>这个注释来源于<code>scripts/config.js</code>：</p>
+<pre><code class="javascript">const banner =
+  &#39;/*!\n&#39; +
+  ` * Vue.js v${version}\n` +
+  ` * (c) 2014-${new Date().getFullYear()} Evan You\n` +
+  &#39; * Released under the MIT License.\n&#39; +
+  &#39; */&#39;</code></pre>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本篇我们主要是教会大家怎么阅读源码，当然，这种阅读源码方式因人而异，并且开启sourcemap在chrome上直接断点调试。另外，我们利用<code>npm run dev</code>命令一步步了解Vue的源码结构，为以后的深入了解打下基础。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2018/07/29/Vue%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-%E8%B0%83%E8%AF%95%E6%BA%90%E7%A0%81/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

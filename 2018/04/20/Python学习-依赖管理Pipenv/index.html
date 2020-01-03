@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2018-04-20</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">Python</span>
+      
+    </div>
+    
+    <h1 class="detail-title">Python学习-依赖管理Pipenv</h1>
+    <p class="detail-content"><p>Pipenv是一个可以自动管理虚拟环境和依赖的工具，操作上来讲，会方便很多，类似于Node的npm，iOS的cocoaPods，从使用上来讲，感觉和npm有点相似。不过相比之前搭建Python虚拟环境，利用Pipenv来实现，还是简单很多。</p>
+<a id="more"></a>
+
+<h4 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h4><p>我们以Mac为类，一般Mac用户电脑上都会默认安装一个Python2.7版本，所以首先我们安装Python3。</p>
+<pre><code class="shell">brew install python3</code></pre>
+<p>然后安装pip工具，如果有了的话，强制更新。</p>
+<pre><code class="shell">python3 -m pip install --upgrade --force-reinstall pip</code></pre>
+<p>这个时候终端输入pip3应该会有相应提示，然后安装今天的主角pipenv。</p>
+<pre><code class="shell">pip3 install pipenv --user    // 安装在用户目录</code></pre>
+<p>成功之后，终端输入pipenv可能会提示命令找不到，如果你的终端选用的是zsh的话，需要修改.zshrc，在最后一行添加下面代码。</p>
+<pre><code class="shell">export PATH=${PATH}:/Users/{your name}/Library/Python/3.7/bin</code></pre>
+<p>保存之后，让配置文件生效。</p>
+<pre><code class="shell">source ~/.zshrc    </code></pre>
+<p>接下来就可以操作了。</p>
+<h4 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h4><p>Pipenv使用起来和npm很像，首先我们先创建一个文件夹。</p>
+<pre><code class="shell">mkdir pipenv_test
+cd pipenv_test    </code></pre>
+<p>然后，执行安装操作，和<code>npm install</code>比较像。</p>
+<pre><code class="shell">pipenv install    </code></pre>
+<p>安装成功之后，会在当前文件夹下生成两个文件，<code>Pipfile</code>和<code>Pipfile.lock</code>，是不是和npm的类似？</p>
+<p>我们先验证下Python版本，新建个<code>hello.py</code>。</p>
+<pre><code class="python">import platform
+
+print(platform.python_version())</code></pre>
+<p>然后终端输入<code>python hello.py</code>，可以看到，版本是安装的python3。</p>
+<p>接下来，我们安装个第三方库，来看看有什么变化。</p>
+<pre><code class="shell">pipenv install flask</code></pre>
+<p>成功之后，Pipfile发生了一些变化。</p>
+<pre><code class="shell">[packages]
+flask = &quot;*&quot;</code></pre>
+<p>我们在<code>hello.py</code>里添加一些代码，来看下flask是否可用。</p>
+<pre><code class="python">import platform
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route(&#39;/&#39;)
+def hello():
+    str = &#39;Hello World &#39; + platform.python_version()
+    return str
+
+if __name__ == &quot;__main__&quot;:
+    app.run()
+</code></pre>
+<p>使用<code>python hello.py</code>运行一下，然后浏览器输入地址，会看到打印出来<code>Hello World 3.7.1</code>。</p>
+<p>是不是很简单呢，基本使用到这里就结束了，Pipenv在使用上会更加方便简单，以后就是我的标配了。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2018/04/20/Python%E5%AD%A6%E4%B9%A0-%E4%BE%9D%E8%B5%96%E7%AE%A1%E7%90%86Pipenv/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

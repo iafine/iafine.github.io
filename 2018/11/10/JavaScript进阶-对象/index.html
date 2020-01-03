@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2018-11-10</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">JavaScript进阶-对象</h1>
+    <p class="detail-content"><p>在面向对象语言中，对象一直是最重要的概念。一个个产品演化实现，都是基于对象的概念实现出来的。本篇我们通过对《你不知道的JavaScript》一书的学习，来总结下对象的知识。</p>
+<a id="more"></a>
+
+<h4 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h4><p>在JavaScript中，实现对象有两种方式：</p>
+<ul>
+<li><p>声明形式：</p>
+<pre><code class="javascript">var obj = {
+    name: &#39;iafine&#39;,
+    age: 18
+}</code></pre>
+</li>
+<li><p>构造形式：</p>
+<pre><code class="javascript">var obj = new Object()
+obj.name = &#39;iafine&#39;
+obj.age = 12</code></pre>
+</li>
+</ul>
+<p>声明形式和构造形式生成的对象都是一样的，只是说对象的属性书写上不同。不过一般都不会使用构造形式来定义对象的。</p>
+<h4 id="类型"><a href="#类型" class="headerlink" title="类型"></a>类型</h4><p>在JavaScript中，一种有6种语言类型：</p>
+<ul>
+<li>string;</li>
+<li>number;</li>
+<li>boolean;</li>
+<li>null;</li>
+<li>undefined;</li>
+<li>object.</li>
+</ul>
+<p>其中简单基本类型有：</p>
+<ul>
+<li>string;</li>
+<li>boolean;</li>
+<li>number;</li>
+<li>null;</li>
+<li>undefined;</li>
+</ul>
+<p>所有的简单基本类型都不是对象，null有时候会被当作对象类型，比如<code>typeod null</code>是<code>object</code>，但这其实是因为，由于所有的对象都是二进制表示的，在JavaScript中，如果二进制的前三位都是0的话会被判定为object类型，null比较特殊，其二进制全是0，所以自然执行typeof判定时为object，这其实是JavaScript的一个语言bug。</p>
+<p>除了简单的基本类型，还有些是特殊的对象子类型，比如函数，作为一等公民，其实它们的本质上和对象是一样的，所以可以像操作对象一样操作函数。</p>
+<p>还有数组，只不过内容的组织方式不同，会比普通对象要稍微复杂一些。所以，JavaScript中万物皆是对象这句话，显然是不对的。</p>
+<p>JavaScript中有一些对象子类型，通常会被称为内置对象，和简单基础类型比较相似，但实际上往往差别很大。</p>
+<ul>
+<li>String;</li>
+<li>Number;</li>
+<li>Boolean;</li>
+<li>Object;</li>
+<li>Function;</li>
+<li>Array;</li>
+<li>Date;</li>
+<li>RegExp;</li>
+<li>Error.</li>
+</ul>
+<p>这看起来和Java里的String类或者是Date类很像，但实际上，在JavaScript里，它们实际上是一些内置对象。这些内置函数可以当作构造函数，通过new来使用，从而可以构造一个对应子类型的新对象。</p>
+<p>比如：</p>
+<pre><code class="javascript">var strPrimitive = &quot;I am a string&quot;; 
+console.log(typeof strPrimitive); // &quot;string&quot; 
+console.log(strPrimitive instanceof String); // false</code></pre>
+<p>通过基础简单类型创建的string，和String并不一样：</p>
+<pre><code class="javascript">var strObject = new String( &quot;I am a string&quot; ); 
+console.log(typeof strObject); // &quot;object&quot;
+console.log(strObject instanceof String); // true</code></pre>
+<p>也就是说基础简单类型所创建的并不是一个对象，只是一个字面量，并且是一个不可变的值。而String所创建的是一个对象。</p>
+<p>但是，如果想在字面量上执行一些操作，比如获取长度，访问某个字符等等，就需要把字面量转化成String对象，好在，JavaScript会在必要的时候自动将字符串转换成一个String对象。这一步在开发的时候，开发者是无感知的，很多人就误以为字面量和String对象是一样的。</p>
+<pre><code class="javascript">var strPrimitive = &quot;I am a string&quot;;
+console.log(strPrimitive.length); // 13 
+console.log(strPrimitive.charAt(3)); // &quot;m&quot;</code></pre>
+<p>就如上面一样，字面量可以访问属性和调用方法，是因为JavaScript引擎自动把字面量转换成了String对象。</p>
+<p>如果是Object、Array、Function和RegExp的话，它们都全部是对象，并不存在字面量一说。</p>
+<h4 id="内容"><a href="#内容" class="headerlink" title="内容"></a>内容</h4><p>对象的内容可以称之为属性，不过在理解上，并不能说该属性存储在对象内部，而是类似指针一样，对象只是存储了该属性的引用，指向了真正的存储位置。</p>
+<p>获取对象的属性可以通过属性名称来获取，比如：</p>
+<pre><code class="javascript">var myObject = {
+    a: 2
+};
+console.log(myObject.a); // 2
+console.log(myObject[&quot;a&quot;]); // 2</code></pre>
+<p>可以有两种方式，第一种比较好理解，第二种的话，称为键访问，访问键在使用的过程中会被转化成字符串，比如：</p>
+<pre><code class="javascript">var myObject = {};
+
+myObject[true] = &quot;foo&quot;;
+myObject[3] = &quot;bar&quot;;
+myObject[myObject] = &quot;baz&quot;;
+
+console.log(myObject[&quot;true&quot;]); // &quot;foo&quot;
+console.log(myObject[&quot;3&quot;]); // &quot;bar&quot;
+console.log(myObject[&quot;[object Object]&quot;]); // &quot;baz&quot;</code></pre>
+<p>其实数组里也是可以这么做的：</p>
+<pre><code class="javascript">var arr = [&#39;Bei&#39;, &#39;Jing&#39;]
+console.log(arr[&#39;1&#39;])   // Jing</code></pre>
+<p>如果你学过其他语言的话，会感觉匪夷所思。</p>
+<h5 id="可计算属性名称"><a href="#可计算属性名称" class="headerlink" title="可计算属性名称"></a>可计算属性名称</h5><p>在有的需求中，我们需要动态获取相关属性值，可能属性名称有一定规律，可以通过计算得出，在ES6中，支持了这一做法。</p>
+<pre><code class="javascript">var prefix = &quot;foo&quot;;
+var myObject = {
+    [prefix + &quot;bar&quot;]: &quot;hello&quot;,
+    [prefix + &quot;baz&quot;]: &quot;world&quot;
+};
+console.log(myObject[&quot;foobar&quot;]); // hello
+console.log(myObject[&quot;foobaz&quot;]); // world</code></pre>
+<h5 id="属性和方法"><a href="#属性和方法" class="headerlink" title="属性和方法"></a>属性和方法</h5><p>在一些语言中，我们通常称对象里的函数为方法，其实，JavaScript里将对象里的函数称为方法有点不妥，其实仍然可以作为属性对待。</p>
+<p>我们先看个例子：</p>
+<pre><code class="javascript">function foo() {
+    console.log(&quot;foo&quot;);
+}
+var someFoo = foo; // 对 foo 的变量引用
+var myObject = {
+    someFoo: foo
+};
+console.log(foo); // function foo(){..}
+console.log(someFoo); // function foo(){..} 
+console.log(myObject.someFoo); // function foo(){..}
+
+console.log(foo === someFoo);   // true
+console.log(foo === myObject.someFoo);   // true
+console.log(someFoo === myObject.someFoo);   // true</code></pre>
+<p>从上面结果可以看出，对象内部的方法只能说是对于函数的一个引用。和对象内部的方法调用意义完全不一样。</p>
+<h5 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h5><p>数组是一个特殊的对象子类型，它只是拥有了更加结构化的值存储机制，但本质上还是对象。</p>
+<pre><code class="javascript">var myArray = [ &quot;foo&quot;, 42, &quot;bar&quot; ]; 
+myArray.baz = &quot;baz&quot;;
+
+console.log(myArray.length); // 3
+console.log(myArray.baz); // &quot;baz&quot;</code></pre>
+<p>数组也可以进行对象赋值，但是这其实是没有任何意义的，并且可以发现，对数组增加属性，并没有改变该length值。但是，如果是下面这种赋值，还是会发生变化的。</p>
+<pre><code class="javascript">var myArray = [&quot;foo&quot;, 42, &quot;bar&quot;];
+myArray[&quot;3&quot;] = &quot;baz&quot;;
+
+console.log(myArray.length); // 4
+console.log(myArray[3]); // &quot;baz&quot;</code></pre>
+<h5 id="复制对象"><a href="#复制对象" class="headerlink" title="复制对象"></a>复制对象</h5><p>通常，都会有一个copy方法或者协议来实现复制对象功能，但是这其实是比较复杂的一个需求，涉及到了深复制和浅复制。</p>
+<p>浅复制的话， 只会对对象中的值类型进行复制，像Object、Function或者Array这类，都只是引用，深复制的话，那就是彻底地全部复制，但是处理不好，容易发生循环引用，一般不建议自己实现。</p>
+<p>实现浅复制的话，ES6里定义了Object.assign()方法来做，我们可以测试一下：</p>
+<pre><code class="javascript">function anotherFunction() { /*..*/ }
+var anotherObject = {
+    c: true
+};
+var anotherArray = [];
+var myObject = {
+    a: 2,
+    b: anotherObject, // 引用，不是复本! 
+    c: anotherArray, // 另一个引用!
+    d: anotherFunction
+};
+
+var newObj = Object.assign({}, myObject);   // 浅复制
+
+console.log(newObj.a); // 2
+console.log(newObj.b === anotherObject); // true
+console.log(newObj.c === anotherArray); // true
+console.log(newObj.d === anotherFunction); // true
+
+anotherArray.push(&#39;newValue&#39;);
+console.log(anotherArray);  // [ &#39;newValue&#39; ]
+console.log(myObject.c);    // [ &#39;newValue&#39; ]
+console.log(newObj.c);  // [ &#39;newValue&#39; ]
+
+myObject.a = 3;
+console.log(newObj.a);</code></pre>
+<p>可以看到，浅复制其实也是引用关系，引用的对象改变时，相应的，所有的都会发生改变，但是值类型的不会。</p>
+<h5 id="属性描述符"><a href="#属性描述符" class="headerlink" title="属性描述符"></a>属性描述符</h5><p>在ES5之后，所有的属性都具备了属性描述符这一概念。我们可以通过<code>Object.getOwnPropertyDescriptor</code>来获取属性描述。</p>
+<pre><code class="javascript">var myObject = {
+    a: 2
+};
+console.log(Object.getOwnPropertyDescriptor(myObject, &quot;a&quot;));    
+// { value: 2, writable: true, enumerable: true, configurable: true }</code></pre>
+<p>value就不用多说了，其他几个来一一解释下。</p>
+<ul>
+<li><p>Writable。可写性，决定是否可以修改属性的值。</p>
+<pre><code class="javascript">var myObject = {};
+Object.defineProperty(myObject, &quot;a&quot;, {
+    value: 2,
+    writable: false, // 不可写! configurable: true, enumerable: true
+});
+myObject.a = 3;
+console.log(myObject.a);    // 2</code></pre>
+<p>也就是配置为false的话，属性值就不可以修改了。</p>
+</li>
+<li><p>Configurable。是否可以修改属性描述符。</p>
+<pre><code class="javascript">var myObject = {};
+Object.defineProperty(myObject, &quot;a&quot;, {
+    value: 2,
+    writable: false, // 不可写! configurable: true, enumerable: true
+    configurable: false
+});
+
+Object.defineProperty(myObject, &quot;a&quot;, {
+    value: 2,
+    writable: true, // 不可写! configurable: true, enumerable: true
+    configurable: true
+});
+
+myObject.a = 3;
+console.log(myObject.a);    // 2</code></pre>
+<p>如果是false，再次修改属性描述符的话，就会报错。</p>
+</li>
+<li><p>Enumerable。是否会出现在对象的属性枚举中，比如for in中。</p>
+<pre><code class="javascript">var myObject = {};
+Object.defineProperty(myObject, &quot;a&quot;, {
+    value: 2,
+    enumerable: false
+});
+
+Object.defineProperty(myObject, &quot;b&quot;, {
+    value: 2,
+    enumerable: true
+});
+
+for ( const el in myObject) {
+    console.log(el);
+}
+// b</code></pre>
+<p>如果配置成false的话，在枚举中就不会出现了。</p>
+</li>
+</ul>
+<h5 id="GET-和-PUT"><a href="#GET-和-PUT" class="headerlink" title="[[GET]]和[[PUT]]"></a>[[GET]]和[[PUT]]</h5><p>当获取属性值的时候，就会触发[[GET]]操作，当没有找到该属性，会返回undefined。</p>
+<p>当给属性设置新值的时候，就会触发[[PUT]]操作，赋值操作会涉及到属性修饰符和原型，这个以后再来讨论。</p>
+<h5 id="存在性"><a href="#存在性" class="headerlink" title="存在性"></a>存在性</h5><p>当属性的返回值是undefined时，会存在两种情况，一种是不存在这个属性，另外一种是属性存储的值就是undefined。那么如何区分呢？</p>
+<p>其实方式还是蛮多的，这里列举两种：</p>
+<ul>
+<li>利用<code>hasOwnProperty</code>方法来判断，是否存在这个属性；</li>
+<li>利用枚举，比如<code>for...in…</code>来做。</li>
+</ul>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>JavaScript中万物皆为对象，这句话是错误的，因为是有基础类型存在的。另外，对象其实可以理解为键值对的集合，可以通过键访问的形式来获取属性值。</p>
+<p>并且，属性中是存在修饰符的，可以通过修饰符来对属性进行某些控制，来达到需求。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2018/11/10/JavaScript%E8%BF%9B%E9%98%B6-%E5%AF%B9%E8%B1%A1/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2019-05-17</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">Koa系列-错误中间件实现</h1>
+    <p class="detail-content"><p>利用Koa来实现web API的设计时，除了标准的入参出参设计，还避免不了的就是API Error的处理逻辑，如果对接过优秀的第三方API的话，一定会看到一些标准的错误吗，比如-122xxx可能代表Node端报错，-123xxx可能代表着数据服务报错等等，一些都要设计合理，不然对于项目部署成员，或者是项目经理，很难去排查问题。</p>
+<a id="more"></a>
+
+<p>Koa本身可以以中间件的方式实现错误捕获，我们可以实现一个中间件来对Node层逻辑统一捕获，，并输出标准的错误响应。</p>
+<h4 id="Error中间件"><a href="#Error中间件" class="headerlink" title="Error中间件"></a>Error中间件</h4><p>在项目根目录，新建<code>middleware/errorHandler.js</code>，其中<code>middleware</code>用来存放自定义的中间件。细节代码如下：</p>
+<pre><code class="javascript">module.exports = () =&gt; {
+  return async function errorHandler(ctx, next) {
+    try {
+      await next()
+    } catch (error) {
+      if (error.status === 401) {
+        // 自定义401错误
+        ctx.status = 401
+        ctx.body = &#39;Authorization Failure&#39;
+      } else {
+        throw error
+      }
+    }
+  }
+}</code></pre>
+<p>这样就完成了一个401错误全局捕获，如果对路由都做了权限校验，那么校验失败就会走401逻辑。</p>
+<p>当然，这样的代码在现实的业务场景下，远远不够，就如同上面说的，还需要多响应错误封装，直接定义ctx的状态码和body并不是一个良好的习惯，我们需要封装，去定义常用的业务错误代码。</p>
+<h4 id="错误响应工具"><a href="#错误响应工具" class="headerlink" title="错误响应工具"></a>错误响应工具</h4><p>同样是在根目录，新建<code>helper/responseHelper.js</code>，用于封装对ctx的response处理。目的是返回标准化的响应格式。比如：</p>
+<ul>
+<li><p>成功响应：</p>
+<pre><code class="json">{
+    code: 0,
+    message: &#39;success&#39;,
+    data: {
+        token: &#39;sfeiowrwerkwlejrwer==&#39;
+    }
+}</code></pre>
+</li>
+<li><p>错误响应：</p>
+<pre><code class="json">{
+    code: -100401,
+    message: &#39;权限校验失败&#39;,
+    data: {
+        username: &#39;iafine&#39;
+    }
+}</code></pre>
+</li>
+</ul>
+<p>当然，这里的响应格式只是一个参考，由于业务不同，还可以细分。接下来封装成方法，提供给上层调用。</p>
+<pre><code class="javascript">
+const response = {
+
+    /**
+     *  HTTP ERROR响应 
+     */
+    error(ctx, error, data = {}) {
+        const resp = {
+            code: error.code || -100001,
+            data: data || {},
+            message: error.message || &#39;&#39;
+        }
+        ctx.status = error.status || 422
+        ctx.body = resp
+    },
+
+    /**
+     *  HTTP SUCCESS响应 
+     */
+    success(ctx, data = {}) {
+        const resp = {
+            code: 0,
+            data: data || {},
+            message: &#39;success&#39; 
+        }
+        ctx.status = 200
+        ctx.body = resp
+    }
+}
+
+module.exports = response</code></pre>
+<p>提供两个方法，用来对响应进行封装，避免直接定义ctx的status和body。但是，这里还是存在一个问题，如果业务错误code码越来越多，你会发现，代码中并没有有个地方集中管理这些东西，随着版本演进，越来越难以维护。</p>
+<p>此时，就需要对错误响应在封装。</p>
+<h4 id="错误常量定义"><a href="#错误常量定义" class="headerlink" title="错误常量定义"></a>错误常量定义</h4><p>如果项目逻辑简单，这一步其实用处不大，我们的目的是日后维护这些错误码方便点，不需要全局搜索去改。</p>
+<p>在根目录，新建<code>config/constant.js</code>，用来存放项目常量，当然，这里可以根据项目而定，也可以这样定义<code>config/constant/http-error.js</code>。根据自己的需求来做。</p>
+<pre><code class="javascript">const constant = {
+    HTTP_ERROR: {
+        PARAMS_VALIDATE_FAILED: {
+            status: 422,
+            code: -100422,
+            message: &#39;参数非法或为空&#39;
+        },
+        AUTHORIZATION_FAILURE: {
+            status: 401,
+            code: -100401,
+            message: &#39;Token失效，访问被拒绝&#39;
+        }
+    }
+}
+module.exports = constant
+</code></pre>
+<p>这里，只仅仅是提供个参考，定义了请求参数校验失败和token校验失败的错误定义，其他的业务错误响应其实是一样的。</p>
+<p>接下来，上层代码就变成了这样：</p>
+<ul>
+<li><p>当请求参数校验失败：</p>
+<pre><code class="javascript">// 参数校验
+if (Validator.isEmpty(param.username) ||
+    Validator.isEmpty(param.password) ||
+    !Validator.isLength(param.username, { max: 100 }) ||
+    !Validator.isLength(param.password, { min: 5 })) {
+    response.error(ctx, constant.HTTP_ERROR.PARAMS_VALIDATE_FAILED, param)
+    return
+}</code></pre>
+</li>
+<li><p>当token校验失败：</p>
+<pre><code class="javascript">if (error.status === 401) {
+    // 自定义401错误
+    response.error(ctx, constant.HTTP_ERROR.AUTHORIZATION_FAILURE)
+}</code></pre>
+</li>
+</ul>
+<p>这样的改动，短期里可能比较麻烦，但是随着项目的扩大，你会越来越多地体会到它带来的好处。</p>
+<p>当然，那个错误中间件，最后的版本就如下所示：</p>
+<pre><code class="javascript">const response = require(&#39;../helper/responseHelper&#39;)
+const constant = require(&#39;../config/constant.js&#39;)
+
+module.exports = () =&gt; {
+  return async function errorHandler(ctx, next) {
+    try {
+      await next()
+    } catch (error) {
+      if (error.status === 401) {
+        // 自定义401错误
+        response.error(ctx, constant.HTTP_ERROR.AUTHORIZATION_FAILURE)
+      } else {
+        throw error
+      }
+    }
+  }
+}</code></pre>
+<p>然后在入口引入该中间件。</p>
+<pre><code class="javascript">const Koa = require(&#39;koa&#39;)
+const errorHandler = require(&#39;./middleware/errorHandler&#39;)
+const app = new Koa()
+
+app.use(errorHandler())     // 错误中间件</code></pre>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>至此，就完成了一个易用的错误中间件，我们以一个自定义的中间件入手，然后封装响应数据，归类http错误描述，以此来完成对错误的封装操作。</p>
+<p>当然，现实中你可能还需要根据项目做些其他操作，但主体思路就是上面讲的，百变不离其宗。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2019/05/17/Koa%E7%B3%BB%E5%88%97-%E9%94%99%E8%AF%AF%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%AE%9E%E7%8E%B0/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2016-06-10</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">iOS</span>
+      
+    </div>
+    
+    <h1 class="detail-title">iOS进阶-浅谈iOS事件机制</h1>
+    <p class="detail-content"><blockquote>
+<p>在iOS的交互逻辑中，我们做的最多的是事件处理，今天我们就浅谈学习下iOS的事件传递机制。</p>
+</blockquote>
+<p>在iOS中事件分为3类：</p>
+<a id="more"></a>
+
+<ul>
+<li>Touch Events(触摸事件。包括单击、双击等)；</li>
+<li>Motion Events(重力感应、晃动手机等等)；</li>
+<li>Remote Events(远程事件，比如耳机音量按键的触发)。</li>
+</ul>
+<p>不过我们一般接触的Touch Events是最多的，其他两个就不多过介绍了，主要学习下Touch Events。</p>
+<h3 id="事件的产生"><a href="#事件的产生" class="headerlink" title="事件的产生"></a>事件的产生</h3><p>在iOS中看到的UIButton可以点击，UIScrollView可以滑动，其实最根本的是UIResponder对象来实现的，只有继承了UIResponder，才能接收并处理事件响应。</p>
+<p><code>UIResponder</code>并不是一个视图，是继承<code>NSObject</code>的一个对象。</p>
+<p>我们先看下<code>UIResponder</code>对外暴露的属性和方法。</p>
+<pre><code>@interface UIResponder : NSObject &lt;UIResponderStandardEditActions&gt;
+
+#if UIKIT_DEFINE_AS_PROPERTIES
+@property(nonatomic, readonly, nullable) UIResponder *nextResponder;
+#else
+- (nullable UIResponder*)nextResponder;
+#endif
+
+#if UIKIT_DEFINE_AS_PROPERTIES
+@property(nonatomic, readonly) BOOL canBecomeFirstResponder;    // default is NO
+#else
+- (BOOL)canBecomeFirstResponder;    // default is NO
+#endif
+- (BOOL)becomeFirstResponder;
+
+#if UIKIT_DEFINE_AS_PROPERTIES
+@property(nonatomic, readonly) BOOL canResignFirstResponder;    // default is YES
+#else
+- (BOOL)canResignFirstResponder;    // default is YES
+#endif
+- (BOOL)resignFirstResponder;
+
+#if UIKIT_DEFINE_AS_PROPERTIES
+@property(nonatomic, readonly) BOOL isFirstResponder;
+#else
+- (BOOL)isFirstResponder;
+#endif
+
+// Generally, all responders which do custom touch handling should override all four of these methods.
+// Your responder will receive either touchesEnded:withEvent: or touchesCancelled:withEvent: for each
+// touch it is handling (those touches it received in touchesBegan:withEvent:).
+// *** You must handle cancelled touches to ensure correct behavior in your application.  Failure to
+// do so is very likely to lead to incorrect behavior or crashes.
+- (void)touchesBegan:(NSSet&lt;UITouch *&gt; *)touches withEvent:(nullable UIEvent *)event;
+- (void)touchesMoved:(NSSet&lt;UITouch *&gt; *)touches withEvent:(nullable UIEvent *)event;
+- (void)touchesEnded:(NSSet&lt;UITouch *&gt; *)touches withEvent:(nullable UIEvent *)event;
+- (void)touchesCancelled:(NSSet&lt;UITouch *&gt; *)touches withEvent:(nullable UIEvent *)event;
+- (void)touchesEstimatedPropertiesUpdated:(NSSet&lt;UITouch *&gt; *)touches NS_AVAILABLE_IOS(9_1);</code></pre><p>可以说<code>UIResponder</code>是所有可以响应事件的基类，包括<code>UIView</code>、<code>UIViewController</code>、<code>UIWindow</code>和<code>UIApplication</code>。我们可以看下这些类的定义。</p>
+<pre><code>// UIView.h
+NS_CLASS_AVAILABLE_IOS(2_0) @interface UIView : UIResponder
+
+// UIViewController.h
+NS_CLASS_AVAILABLE_IOS(2_0) @interface UIViewController : UIResponder
+
+// UIWindow.h
+NS_CLASS_AVAILABLE_IOS(2_0) @interface UIWindow : UIView
+
+// UIApplication.h
+NS_CLASS_AVAILABLE_IOS(2_0) @interface UIApplication : UIResponder
+</code></pre><p>可以看到，都继承自<code>UIResponder</code>。可以看出，事件响应的产生来自<code>UIResponder</code>，并且系统会自动调用，除了自定义需求。</p>
+<p>比如在自定义的<code>UIView</code>子类中，重写下面的四个方法：</p>
+<pre><code>- (void)touchesBegan:(NSSet&lt;UITouch *&gt; *)touches withEvent:(UIEvent *)event {
+    NSLog(@&quot;UITestView=====touchesBegan触发&quot;);
+}
+
+- (void)touchesMoved:(NSSet&lt;UITouch *&gt; *)touches withEvent:(UIEvent *)event {
+    NSLog(@&quot;UITestView=====touchesMoved触发&quot;);
+}
+
+- (void)touchesEnded:(NSSet&lt;UITouch *&gt; *)touches withEvent:(UIEvent *)event {
+    NSLog(@&quot;UITestView=====touchesEnded触发&quot;);
+}
+
+- (void)touchesCancelled:(NSSet&lt;UITouch *&gt; *)touches withEvent:(UIEvent *)event {
+    // 某个系统事件打断触摸过程，系统会自动调用这个方法，比如电话接入等。
+    NSLog(@&quot;UITestView=====touchesCancelled触发&quot;);
+}</code></pre><p>你会发现，当在这个view上做点击、滑动操作时，会触发某些方法的调用。我们可以在这里处理view的触摸事件。比如我们需要实现自定义view可以进行拖拽，那么可以在<code>touchesMoved</code>方法里做：</p>
+<pre><code>- (void)touchesMoved:(NSSet&lt;UITouch *&gt; *)touches withEvent:(UIEvent *)event {
+    NSLog(@&quot;UITestView=====touchesMoved触发&quot;);
+
+    UITouch *touch = [touches anyObject];
+
+    CGPoint currentPoint = [touch locationInView:self];
+    CGPoint previousPoint = [touch previousLocationInView:self];
+
+    CGFloat offsetX = currentPoint.x - previousPoint.x;
+    CGFloat offsetY = currentPoint.y - previousPoint.y;
+
+    self.transform = CGAffineTransformTranslate(self.transform, offsetX, offsetY);
+}</code></pre><p>好了，我们来总结一下事件响应的产生，从系统底层开始。</p>
+<ol>
+<li>iOS基于Runloop，其实注册了一个Source1用来接收系统事件；</li>
+<li>当手机硬件发生变化，比如触摸、摇晃等，首先通过系统IO来生成一个Event，然后转发给需要的App进程，这时候上面注册的Source1就会触发；</li>
+<li>在Source1回调中，会触发Source0，Source0会对Event进行处理，对该Event进行内部分发，并封装成UIEvent，这时候就会调用基本的UIResponder方法；</li>
+<li>UIEvent会传递给touchesBegin/Move/End/Cancel，或者<code>UIButton</code>点击等，这些方法会被执行。</li>
+</ol>
+<h3 id="事件响应传递"><a href="#事件响应传递" class="headerlink" title="事件响应传递"></a>事件响应传递</h3><p>在iOS视图组成中，可以看到其实是一个树状结构，如下图：</p>
+<p><img src="https://developer.apple.com/library/content/documentation/General/Conceptual/Devpedia-CocoaApp/Art/view_hierarchy_enclose.jpg" alt="image"></p>
+<p>事件响应的传递，其实是参照视图结构，从父控件到子控件这样一个顺序来做的，也就是UIApplication-&gt;UIWindow-&gt;superView-&gt;subView，如果父控件不能接收UIEvent事件，那么其下的子控件肯定不能接收到UIEvent事件。</p>
+<p>不过在传递的过程中，如果遇到：</p>
+<ol>
+<li>该视图不允许交互(userInteractionEnabled = NO);</li>
+<li>该视图hidden是YES;</li>
+<li>该视图透明度在0~0.01之间。</li>
+</ol>
+<p>以上三种情况任意一种，该视图都接收不到Touch事件。</p>
+<h4 id="如何找到合适的view"><a href="#如何找到合适的view" class="headerlink" title="如何找到合适的view"></a>如何找到合适的view</h4><p>当用户点击屏幕后，系统就会生成一个UIEvent对象，这个事件会放在事件队列中，当处理对象的时候，UIApplication对象会从队列取出UIEvent对象，然后进行分发，以UIApplication-&gt;UIWindow-&gt;superView-&gt;subView的顺序来。具体顺序如下：</p>
+<ol>
+<li>首先判断主窗口可不可以接收触摸事件，如果可以，判断触摸点在不在自己身上；</li>
+<li>遍历自己的子控件，看子控件可不可以接收触摸事件，如果可以，判断触摸点在不在自己身上，然后将触摸事件传递给子控件；</li>
+<li>重复上一步操作，判断子控件的子控件可不可以接收触摸事件，如果可以，判断触摸点在不在自己身上，然后将触摸事件传递给子控件；</li>
+<li>循环遍历之后，如果最后没有发现合适的子控件，那么其本身就是合适的view。</li>
+</ol>
+<p>另外，这里涉及到两个两个重要的传递方法，分别是：</p>
+<ul>
+<li><code>hitTest:withEvent:</code>;</li>
+<li><code>pointInside</code>。</li>
+</ul>
+<p>我们一个一个来说。</p>
+<h4 id="hitTest-withEvent"><a href="#hitTest-withEvent" class="headerlink" title="hitTest:withEvent:"></a>hitTest:withEvent:</h4><p><code>hitTest:withEvent:</code>是做事件传递的，下面简称<code>hit-Test</code>。当手指触摸屏幕，发生触摸事件，该UIEvent对象的传递顺序如下所示：</p>
+<blockquote>
+<p>发生触摸事件 -&gt; 生成UIEvent对象 -&gt; UIWindow hit-Test方法触发 -&gt; superView hit-Test方法触发 -&gt; subView hit-Test方法触发 -&gt; 返回合适的view。</p>
+</blockquote>
+<p>事件传递给主窗口后，主窗口会将事件往下传递，然后才会在自身查找合适的view。需要注意的是事件传递给window和view后，就会调用hit-Test方法，所以是先将事件传递给子控件，子控件调用hit-Test方法验证自己有没有合适的View，如果父控件是最合适的view，那子控件的hit-Test还是会走的，这里需要注意一下的。</p>
+<p>有时候我们需要重写hit-Test，来改变最适合的view，那么请记住修改规则，需要谁成为最合适的view，就重写其父视图的hit-Test方法。</p>
+<p>另外，如果去验证问题的话就会发现，每次hit-Test方法会走两次，根据苹果官方的回应，这个是正常的，不用去管。</p>
+<h4 id="pointInside"><a href="#pointInside" class="headerlink" title="pointInside"></a>pointInside</h4><p><code>pointInside</code>方法是用来判断触摸点在不在当前view上，如果返回YES，说明在其坐标上；返回NO，说明不在其坐标上。一般和hit-Test方法是成对出现的。</p>
+<p>这个方法也比较好理解，需要注意的事，和hit-Test类似，也是会调用两次的。</p>
+<p>另外，这两个方法的调用，都是在<code>touchesBegan</code>、<code>touchesMoved</code>、<code>touchesEnded</code>之前发生的，这是因为touch事件的发生，是在已确认合适的view后发生的，所以才会是这样。</p>
+<h3 id="事件机制应用"><a href="#事件机制应用" class="headerlink" title="事件机制应用"></a>事件机制应用</h3><p>对于事件机制的应用，网上已经很多，接下来只说下自己经常用到的场景，其实原理都是一样的。</p>
+<h4 id="查看当前的触摸点"><a href="#查看当前的触摸点" class="headerlink" title="查看当前的触摸点"></a>查看当前的触摸点</h4><p>在日常开发调试中，有时候需要时时去监听当前点击的坐标值。我们可以重写系统<code>UIApplication</code>的<code>sendEvent</code>方法，来实现此操作。</p>
+<p>首先我们继承<code>UIApplication</code>实现一个子类，名为<code>HYApplication</code>，具体代码如下：</p>
+<pre><code>@implementation HYApplication
+
+- (void)sendEvent:(UIEvent *)event {
+    [super sendEvent:event];
+
+    if (event.type == UIEventTypeTouches) {
+        if ([[event.allTouches anyObject] phase] == UITouchPhaseBegan) {
+            // 打印出来屏幕触摸坐标
+            CGPoint point = [[event.allTouches anyObject] locationInView:[self mainWindow]];
+            NSLog(@&quot;touching point: %@&quot;, NSStringFromCGPoint(point));
+        }
+    }
+}
+
+#pragma mark - Private Methods
+// 获取主窗口
+- (UIWindow *)mainWindow {
+    if ([UIApplication sharedApplication].delegate.window) {
+        return [UIApplication sharedApplication].delegate.window;
+    }else {
+        return [UIApplication sharedApplication].windows[0];
+    }
+}
+
+@end</code></pre><p>重写<code>UIApplication</code>的<code>sendEvent</code>方法，进行简单改造，然后修改程序入口main函数，如下：</p>
+<pre><code>#import &lt;UIKit/UIKit.h&gt;
+#import &quot;AppDelegate.h&quot;
+#import &quot;HYApplication.h&quot;
+
+int main(int argc, char * argv[]) {
+    @autoreleasepool {
+        return UIApplicationMain(argc, argv, NSStringFromClass([HYApplication class]), NSStringFromClass([AppDelegate class]));
+    }
+}</code></pre><p>把<code>HYApplication</code>添加进去，运行程序，点击任意位置都会打印出坐标了，是不是很方便呢。</p>
+<p>其实这里还可以实现其他操作，原理都是一样的。</p>
+<h4 id="扩大UIButton的点击区域"><a href="#扩大UIButton的点击区域" class="headerlink" title="扩大UIButton的点击区域"></a>扩大UIButton的点击区域</h4><p>有时候给的设计图上，一个按钮图标会很小，点击区域很小，有时候很别扭。这时候我们就可以重写<code>pointInside</code>方法来实现。</p>
+<pre><code>- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    BOOL isInside = CGRectContainsPoint(HitTestingBounds(self.bounds, CGRectGetWidth(self.bounds) + 50, CGRectGetHeight(self.bounds) + 50), point);
+    return isInside;
+}
+
+CGRect HitTestingBounds(CGRect bounds, CGFloat minimumHitTestWidth, CGFloat minimumHitTestHeight) {
+    CGRect hitTestingBounds = bounds;
+    if (minimumHitTestWidth &gt; bounds.size.width) {
+        hitTestingBounds.size.width = minimumHitTestWidth;
+        hitTestingBounds.origin.x -= (hitTestingBounds.size.width - bounds.size.width)/2;
+    }
+    if (minimumHitTestHeight &gt; bounds.size.height) {
+        hitTestingBounds.size.height = minimumHitTestHeight;
+        hitTestingBounds.origin.y -= (hitTestingBounds.size.height - bounds.size.height)/2;
+    }
+    return hitTestingBounds;
+}
+</code></pre><p>这样以来，我们把范围扩大到+50的范围，使得点击起来不在那么别扭。</p>
+<h4 id="UIResponder分类"><a href="#UIResponder分类" class="headerlink" title="UIResponder分类"></a>UIResponder分类</h4><p>这个最早是在环信的Demo里看到的，个人觉得还是挺好用。是实现了一个<code>UIResponder</code>的category。代码如下：</p>
+<pre><code>@interface UIResponder (AppResponse)
+
+/**
+ 事件路由，层级传递
+
+ @param eventName 事件名
+ @param userInfo 携带信息
+ */
+-(void)routerEvent:(NSString *)eventName userInfo:(id)userInfo;
+
+@end
+
+@implementation UIResponder (AppResponse)
+
+- (void)routerEvent:(NSString *)eventName userInfo:(id)userInfo {
+    [[self nextResponder] routerEvent:eventName userInfo:userInfo];
+}
+
+@end</code></pre><p>一个简单的category，对外暴露了一个方法，用来传递事件。正常开发中，我们传递事件一般都是用delegate或者block去做，比如我们需要从view里传递一个事件到controller层，如果有了这个category，可以这么做：</p>
+<pre><code>// view层添加一个点击事件，然后事件方法内部调用routerEvent实现事件传递。
+- (void)clickedBtnHandler {
+    [self routerEvent:@&quot;clicked_btn&quot; userInfo:param];
+}
+
+// 然后在controller层监听这个方法，然后在回调里处理相关逻辑。
+- (void)routerEvent:(NSString *)eventName userInfo:(id)userInfo {
+    if ([@&quot;clicked_btn&quot; isEqualStirng:eventName]) {
+        // 拿到获取到的userInfo，来处理点击后的事件。
+        ...
+    }
+}</code></pre><p>这样可以使得点击事件和回调有个统一的出发点和着陆点，代码比较好管理，易读。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>关于iOS的事件机制，就说到这里。事件机制代表了我们使用iOS系统的所有操作出发点，也是比较重要的，这块还需要多多理解。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2016/06/10/iOS%E8%BF%9B%E9%98%B6-%E6%B5%85%E8%B0%88iOS%E4%BA%8B%E4%BB%B6%E6%9C%BA%E5%88%B6/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

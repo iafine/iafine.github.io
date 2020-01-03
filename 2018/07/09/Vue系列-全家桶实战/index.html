@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2018-07-09</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">Vue系列-全家桶实战</h1>
+    <p class="detail-content"><p>时至今日，Vue的高效性已经有目共睹，其生态圈也在慢慢变大。但是，对于初学者，对Vue的使用，以及Vue Router和Vuex的实践方面总是充满疑惑。本篇文章的目的就是将相关知识串起来，学以致用，从零开始，搭建一个Vue应用。</p>
+<a id="more"></a>
+
+<p>我们的目的是实现一个答题页面，这个思路来自于<a href="https://github.com/bailicangdu/vue2-happyfri" target="_blank" rel="noopener">vue2-happyfri</a>，有个答题首页，然后是答题环节，最后是个得分页面，是一个很好的实践项目。UI上尽量原生，可以减去布局方面的学习成本。接下来我们就开始动手。</p>
+<h4 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h4><p>我们将跳过基础的vue知识阶段，使用Vue CLI来创建Vue应用，执行命令可以参考Vue相关文档。</p>
+<p>首先我们安装Vue CLI:</p>
+<pre><code class="javascript">npm install -g @vue/cli-service-global</code></pre>
+<p>然后开始创建项目，名字可以随便起，我这里用的是vue-demo:</p>
+<pre><code class="javascript">vue create vue-demo</code></pre>
+<p>接下来你可以选取默认，也可以自定义Preset，如果是默认的话，还需要添加Vue Router和Vuex到项目。</p>
+<pre><code class="javascript">cd vue-demo
+vue add router
+vue add vuex</code></pre>
+<p>添加成功之后，cli会默认添加一些router和view进来，来作为demo参考。</p>
+<p>最后我们运行项目，就可以看到Vue的初始页面了。</p>
+<h4 id="项目结构"><a href="#项目结构" class="headerlink" title="项目结构"></a>项目结构</h4><p>可以运行成功之后，我们开始组织下项目结构，当然，这个并不是必须要的，可以按照你自己的理解来对项目结构进行划分，我喜欢下面的这种结构划分：</p>
+<p><img src="/images/Snipaste_2019-03-19_14-32-00.png" alt=""></p>
+<ul>
+<li>page存放UI页面；</li>
+<li>router存放项目路由；</li>
+<li>store存放vuex相关东西；</li>
+<li>App.vue是根组件，所有的子组件都会在这里被引用；</li>
+<li>main.js是逻辑入口，通过打包会注入到public/index.html里面。</li>
+</ul>
+<h4 id="路由实现"><a href="#路由实现" class="headerlink" title="路由实现"></a>路由实现</h4><p>首先，我们先实现三个简单的页面，分别是home、item和score。</p>
+<pre><code class="html">&lt;!-- page/home/index.vue --&gt; 
+&lt;template&gt;
+    &lt;div&gt;
+        &lt;h1&gt;这个是Home页面&lt;/h1&gt;
+    &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;!-- page/item/index.vue --&gt;
+&lt;template&gt;
+    &lt;div&gt;
+        &lt;h1&gt;这个是Item页面&lt;/h1&gt;
+    &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;!-- page/score/index.vue --&gt;
+&lt;template&gt;
+    &lt;div&gt;
+        &lt;h1&gt;这个是Score页面&lt;/h1&gt;
+    &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<p>然后我们实现路由跳转：</p>
+<pre><code class="javascript">// router/router.js
+import Vue from &#39;vue&#39;
+import Router from &#39;vue-router&#39;
+
+import Home from &#39;../page/home&#39;
+import Item from &#39;../page/item&#39;
+import Score from &#39;../page/score&#39;
+
+Vue.use(Router)
+
+export default new Router({
+  mode: &#39;history&#39;,
+  base: process.env.BASE_URL,
+  routes: [
+    {
+      path: &#39;/&#39;,
+      name: &#39;index&#39;,
+      component: Home
+    },
+    {
+      path: &#39;/home&#39;,
+      name: &#39;home&#39;,
+      component: Home
+    },
+    {
+      path: &#39;/item&#39;,
+      name: &#39;item&#39;,
+      component: Item
+    },
+    {
+      path: &#39;/score&#39;,
+      name: &#39;score&#39;,
+      component: Score
+    }
+  ]
+})
+</code></pre>
+<p>该路由定义中，只有四个路由定义，来完成我们的需求：</p>
+<ul>
+<li><code>/</code>和<code>/home</code>指向Home页面；</li>
+<li><code>/item</code>指向Item页面；</li>
+<li><code>/score</code>指向Score页面。</li>
+</ul>
+<p>然后我们修改<code>main.js</code>，把路由定义添加进去。</p>
+<pre><code class="javascript">import Vue from &#39;vue&#39;
+import App from &#39;./App.vue&#39;
+import router from &#39;./router/router&#39;
+import store from &#39;./store/store&#39;
+
+Vue.config.productionTip = false
+
+new Vue({
+  router,
+  store,
+  render: h =&gt; h(App)
+}).$mount(&#39;#app&#39;)
+</code></pre>
+<p>先不用管store，我们把router添加进去之后，需要App组件去渲染这些子组件，所以还要修改<code>App.vue</code>。</p>
+<pre><code class="html">&lt;template&gt;
+  &lt;div&gt;
+    &lt;router-view/&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<p><code>App.vue</code>很简单，只有一个<code>router-view</code>用于路由匹配到的组件将渲染在这里。</p>
+<p>到此，路由定义已经完成，接下来我们实现基本的UI逻辑。</p>
+<h4 id="UI实现"><a href="#UI实现" class="headerlink" title="UI实现"></a>UI实现</h4><p>首先，我们实现Home页面，Home页面很简单，一个标题，再加上一个按钮，按钮的目的是进入Item页面，开始答题。</p>
+<p>Home页面代码如下：</p>
+<pre><code class="html">&lt;template&gt;
+    &lt;div class=&quot;home_container&quot;&gt;
+        &lt;section&gt;
+            &lt;header class=&quot;top_tips&quot;&gt;
+                &lt;span&gt;{{ title }}&lt;/span&gt;
+            &lt;/header&gt;
+            &lt;div&gt;
+                &lt;button type=&quot;button&quot; @click=&quot;pushItem&quot;&gt;开始做题&lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/section&gt;
+    &lt;/div&gt;
+&lt;/template&gt;
+&lt;script&gt;
+export default {
+  data () {
+    return {
+      title: &#39;点击下方，开始做题吧!&#39;
+    }
+  },
+  methods: {
+    pushItem () {
+      this.$router.push(&#39;/item&#39;)
+    }
+  }
+}
+&lt;/script&gt;
+</code></pre>
+<p>然后实现Item页面，UI目前先写死数据，实现可以单选答案的页面。</p>
+<pre><code class="html">&lt;template&gt;
+  &lt;div class=&quot;item_container&quot;&gt;
+    &lt;div class=&quot;item_list&quot;&gt;
+      &lt;header class=&quot;item_title&quot;&gt;
+          &lt;span&gt;{{ itemDetail.question }}&lt;/span&gt;
+      &lt;/header&gt;
+      &lt;div&gt;
+        &lt;div class=&quot;item_radio&quot; :key=&quot;item.id&quot; v-for=&quot;item in itemDetail.answerList&quot;&gt;
+          &lt;input name=&quot;answer&quot; type=&quot;radio&quot; :value=&quot;item.id&quot; v-model=&quot;picked&quot;&gt;
+          {{ item.answer }}
+        &lt;/div&gt;
+        &lt;button type=&quot;button&quot; @click=&quot;handleClicked&quot;&gt;下一题&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+&lt;script&gt;
+export default {
+  data () {
+    return {
+      picked: &#39;&#39;,
+      itemDetail: {
+        question: &#39;请问世界上最大的湖泊是哪个?&#39;,
+        answerList: [
+          {
+            answer: &#39;贝加尔湖&#39;,
+            id: 1
+          },
+          {
+            answer: &#39;青海湖&#39;,
+            id: 2
+          },
+          {
+            answer: &#39;密西根湖&#39;,
+            id: 3
+          },
+          {
+            answer: &#39;洞庭湖&#39;,
+            id: 4
+          }
+        ]
+      }
+    }
+  },
+  methods: {
+    handleClicked () {
+      alert(&#39;选中的是&#39; + this.picked)
+    }
+  }
+}
+&lt;/script&gt;
+</code></pre>
+<p>最后实现Score页面，也很简单，显示得分情况。</p>
+<pre><code class="html">&lt;template&gt;
+    &lt;div class=&quot;score_container&quot;&gt;
+        &lt;header&gt;
+            &lt;span&gt;80分&lt;/span&gt;
+        &lt;/header&gt;
+        &lt;div class=&quot;result_tip&quot;&gt;
+            还不错，但是还需要继续努力哦！
+        &lt;/div&gt;
+        &lt;button type=&quot;button&quot;&gt;重新开始&lt;/button&gt;
+    &lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<p>目前数据都是写死的，这里先实现基本的UI就行，逻辑放在后面考虑。</p>
+<h4 id="数据操作"><a href="#数据操作" class="headerlink" title="数据操作"></a>数据操作</h4><p>数据操作使用vuex来完成，我们先定义state数据源。</p>
+<pre><code class="javascript">/**
+ * 应用层级状态的定义
+ */
+const state = {
+  itemNum: 1, // 第几题
+  answerIDList: [], // 答案集合
+  questionList: [
+    {
+      question_id: 1,
+      question_name: &#39;藏族人民的主食是()？&#39;,
+      question_answer_list: [
+        {
+          answer_id: 1,
+          answer_name: &#39;馒头&#39;,
+          is_standard_answer: false
+        },
+        {
+          answer_id: 2,
+          answer_name: &#39;米饭&#39;,
+          is_standard_answer: false
+        },
+        {
+          answer_id: 3,
+          answer_name: &#39;糌粑&#39;,
+          is_standard_answer: true
+        },
+        {
+          answer_id: 4,
+          answer_name: &#39;粽子&#39;,
+          is_standard_answer: false
+        }
+      ]
+    },
+    {
+      question_id: 2,
+      question_name: &#39;我国东北三省是指()?&#39;,
+      question_answer_list: [
+        {
+          answer_id: 5,
+          answer_name: &#39;河北省、山东省、湖北省&#39;,
+          is_standard_answer: false
+        },
+        {
+          answer_id: 6,
+          answer_name: &#39;湖北省、广西壮族自治区、山东省&#39;,
+          is_standard_answer: false
+        },
+        {
+          answer_id: 7,
+          answer_name: &#39;黑龙江省、吉林省、辽宁省&#39;,
+          is_standard_answer: true
+        },
+        {
+          answer_id: 8,
+          answer_name: &#39;吉林省、辽宁省、内蒙古自治区&#39;,
+          is_standard_answer: false
+        }
+      ]
+    },
+    {
+      question_id: 3,
+      question_name: &#39;广州的别称是()?&#39;,
+      question_answer_list: [
+        {
+          answer_id: 9,
+          answer_name: &#39;榕城&#39;,
+          is_standard_answer: false
+        },
+        {
+          answer_id: 10,
+          answer_name: &#39;春城&#39;,
+          is_standard_answer: false
+        },
+        {
+          answer_id: 11,
+          answer_name: &#39;羊城&#39;,
+          is_standard_answer: true
+        },
+        {
+          answer_id: 12,
+          answer_name: &#39;雾都&#39;,
+          is_standard_answer: false
+        }
+      ]
+    },
+    {
+      question_id: 4,
+      question_name: &#39;北京的传统民居是()?&#39;,
+      question_answer_list: [
+        {
+          answer_id: 13,
+          answer_name: &#39;土坯房&#39;,
+          is_standard_answer: false
+        },
+        {
+          answer_id: 14,
+          answer_name: &#39;窑洞&#39;,
+          is_standard_answer: false
+        },
+        {
+          answer_id: 15,
+          answer_name: &#39;四合院&#39;,
+          is_standard_answer: true
+        },
+        {
+          answer_id: 16,
+          answer_name: &#39;吊脚楼&#39;,
+          is_standard_answer: false
+        }
+      ]
+    },
+    {
+      question_id: 5,
+      question_name: &#39;世界使用人数最多的语言是？&#39;,
+      question_answer_list: [
+        {
+          answer_id: 17,
+          answer_name: &#39;英语&#39;,
+          is_standard_answer: false
+        },
+        {
+          answer_id: 18,
+          answer_name: &#39;汉语&#39;,
+          is_standard_answer: true
+        },
+        {
+          answer_id: 19,
+          answer_name: &#39;拉丁语&#39;,
+          is_standard_answer: false
+        },
+        {
+          answer_id: 20,
+          answer_name: &#39;阿拉伯语&#39;,
+          is_standard_answer: false
+        }
+      ]
+    }
+  ]
+}</code></pre>
+<p>现在题目列表是本地写死的，这里的数据可以从网络上去获取。<code>itemNum</code>是区分现在正在答第几题，<code>answerIDList</code>是记录答题的id，用来最后计算分数。</p>
+<p>然后定义state数据源操作的事件类型：</p>
+<pre><code class="javascript">// store/mutations-type.js
+const NEXT_QUESTION = &#39;NEXT_QUESTION&#39;    // 进入下一题操作
+const RECORD_ITEM_ANSWER = &#39;RECORD_ITEM_ANSWER&#39;    // 记录答题的id
+const INIT_QUESTION = &#39;INIT_QUESTION&#39;    // 初始化答题数据
+
+export default {
+  NEXT_QUESTION,
+  RECORD_ITEM_ANSWER,
+  INIT_QUESTION
+}
+</code></pre>
+<p>用常量定义类型的优点是便于管理，特别是项目大了以后，可以单独在一个文件里存放事件类型。</p>
+<p>接下来定义事件：</p>
+<pre><code class="javascript">/**
+ * mutations是用来存放数据逻辑处理的，改变state里面的数据。
+ */
+import type from &#39;./mutations-type&#39;
+
+export default {
+
+  [type.NEXT_QUESTION] (state, num) {
+    state.itemNum += num
+  },
+  [type.RECORD_ITEM_ANSWER] (state, id) {
+    state.answerIDList.push(id)
+  },
+  [type.INIT_QUESTION] (state) {
+    state.itemNum = 1
+    state.answerIDList = []
+  }
+}
+</code></pre>
+<p>store里的数据状态修改，唯一方式就是提交mutation，请不要在其他地方直接修改state。</p>
+<p>接下来定义上层调用的action，对于UI层，最好通过action调用mutation，action的好处是，可以是异步操作，类如获取题目列表的网络请求等等。</p>
+<pre><code class="javascript">/**
+ * action是用来提交mutations的，并且可以异步操作。
+ */
+import type from &#39;./mutations-type&#39;
+
+export default {
+  submitAnswer ({ commit, state }, id) {
+    // 记录下当前选择的问题答案
+    commit(type.RECORD_ITEM_ANSWER, id)
+    // 如果不是最后一个，获取下一题目
+    if (state.itemNum &lt; state.questionList.length) {
+      commit(type.NEXT_QUESTION, 1)
+    }
+  },
+  initData ({ commit }) {
+    commit(type.INIT_QUESTION)
+  }
+}
+</code></pre>
+<p>提供两个事件，用于UI层操作状态数据。到此，我们数据定义已经完成了。</p>
+<p>然后修改UI层代码，用于对接state状态数据，完整代码如下：</p>
+<ul>
+<li><p>Home</p>
+<pre><code class="html">&lt;template&gt;
+    &lt;div class=&quot;home_container&quot;&gt;
+        &lt;section&gt;
+            &lt;header class=&quot;top_tips&quot;&gt;
+                &lt;span&gt;{{ title }}&lt;/span&gt;
+            &lt;/header&gt;
+            &lt;div&gt;
+                &lt;button type=&quot;button&quot; @click=&quot;pushItem&quot;&gt;开始做题&lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/section&gt;
+    &lt;/div&gt;
+&lt;/template&gt;
+&lt;script&gt;
+import { mapActions } from &#39;vuex&#39;
+
+export default {
+  data () {
+    return {
+      title: &#39;点击下方，开始做题吧!&#39;
+    }
+  },
+  created () {
+    this.initData()
+  },
+  methods: {
+    ...mapActions([
+      &#39;initData&#39;
+    ]),
+    pushItem () {
+      this.$router.push(&#39;/item&#39;)
+    }
+  }
+}
+&lt;/script&gt;
+</code></pre>
+</li>
+<li><p>Item</p>
+</li>
+</ul>
+<pre><code class="html">&lt;template&gt;
+  &lt;div class=&quot;item_container&quot;&gt;
+    &lt;div class=&quot;item_list&quot;&gt;
+      &lt;header class=&quot;item_title&quot;&gt;
+        &lt;span&gt;{{ questionList[itemNum - 1].question_name }}&lt;/span&gt;
+      &lt;/header&gt;
+      &lt;div&gt;
+        &lt;div
+          :key=&quot;answer.answer_id&quot;
+          class=&quot;item_radio&quot;
+          v-for=&quot;answer in questionList[itemNum - 1].question_answer_list&quot;
+        &gt;
+          &lt;input :value=&quot;answer.answer_id&quot; name=&quot;answer&quot; type=&quot;radio&quot; v-model=&quot;pickAnswer&quot;&gt;
+          {{ answer.answer_name }}
+        &lt;/div&gt;
+        &lt;button @click=&quot;handleClicked&quot; type=&quot;button&quot;&gt;{{ buttonName }}&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+&lt;script&gt;
+import { mapState, mapActions } from &#39;vuex&#39;
+
+export default {
+  data () {
+    return {
+      pickAnswer: &#39;&#39;
+    }
+  },
+  computed: {
+    ...mapState([
+      &#39;itemNum&#39;,
+      &#39;timer&#39;,
+      &#39;questionList&#39;
+    ]),
+    &#39;buttonName&#39;: function () {
+      if (this.itemNum &lt; this.questionList.length) {
+        return &#39;下一题&#39;
+      }
+      return &#39;查看结果&#39;
+    }
+  },
+  methods: {
+    ...mapActions([
+      &#39;submitAnswer&#39;
+    ]),
+    handleClicked () {
+      if (this.itemNum &lt; this.questionList.length) {
+        this.jumpNextQuestionPage()
+      } else {
+        this.jumpScorePage()
+      }
+    },
+    jumpScorePage () {
+      if (this.pickAnswer) {
+        this.submitAnswer(this.pickAnswer)
+        this.$router.push(&#39;/score&#39;)
+      } else {
+        alert(&#39;请选择一个心目中的答案&#39;)
+      }
+    },
+    jumpNextQuestionPage () {
+      if (this.pickAnswer) {
+        this.submitAnswer(this.pickAnswer)
+      } else {
+        alert(&#39;请选择一个心目中的答案&#39;)
+      }
+    }
+  }
+}
+&lt;/script&gt;
+</code></pre>
+<ul>
+<li><p>Score</p>
+<pre><code class="html">&lt;template&gt;
+    &lt;div class=&quot;score_container&quot;&gt;
+        &lt;header&gt;
+            &lt;span&gt;{{ score }}分&lt;/span&gt;
+        &lt;/header&gt;
+        &lt;div class=&quot;result_tip&quot;&gt;
+            学习使人进步！
+        &lt;/div&gt;
+        &lt;button @click=&quot;handleClicked&quot; type=&quot;button&quot;&gt;重新开始&lt;/button&gt;
+    &lt;/div&gt;
+&lt;/template&gt;
+&lt;script&gt;
+import { mapState } from &#39;vuex&#39;
+
+export default {
+  data () {
+    return {
+      score: 0
+    }
+  },
+  computed: mapState([
+    &#39;answerIDList&#39;,
+    &#39;questionList&#39;
+  ]),
+  created () {
+    // 获取正确的答案集合
+    const rightAnswerIDList = this.getRightAnswerList()
+    const list = rightAnswerIDList.filter(id =&gt; {
+      return this.answerIDList.indexOf(id) &gt; -1
+    })
+    this.score = list.length * 20
+  },
+  methods: {
+    getRightAnswerList () {
+      let rightAnswerList = []
+      this.questionList.forEach(question =&gt; {
+        question.question_answer_list.forEach(answer =&gt; {
+          const answerId = answer.is_standard_answer ? answer.answer_id : &#39;&#39;
+          rightAnswerList.push(answerId)
+        })
+      })
+      return rightAnswerList
+    },
+    handleClicked () {
+      this.$router.push(&#39;/home&#39;)
+    }
+  }
+}
+&lt;/script&gt;
+</code></pre>
+<p>基本上到此功能就做完了，我们结合Vuex和Vue Router完成了一个很基础的答题应用。</p>
+</li>
+</ul>
+<h4 id="UI优化"><a href="#UI优化" class="headerlink" title="UI优化"></a>UI优化</h4><p>可以使用Element UI来对UI做些优化，当然，这部分仅仅是UI层操作，和逻辑没有关系。</p>
+<pre><code class="javascript">npm i element-ui -S</code></pre>
+<p>然后修改<code>main.js</code>，引入Element：</p>
+<pre><code class="javascript">import ElementUI from &#39;element-ui&#39;;
+import &#39;element-ui/lib/theme-chalk/index.css&#39;;
+
+Vue.use(ElementUI);
+</code></pre>
+<p>接下来就是UI上的定制，详细的代码可以参考Demo。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>我们从项目的搭建，到路由和数据状态的定义，一步一步完成了一个答题页面。技术涉及到Vue Router和Vuex的基本使用，可以让新手一步步了解Vue的生态。当然，这只是一个简单Demo，正式项目的开发，当然还有一些细节，靠的是慢慢积累。</p>
+<p>最后附上Demo地址，可以参考下：</p>
+<p><a href="https://github.com/iafine/code_snippets/tree/master/vue-demo" target="_blank" rel="noopener">Vue-Demo</a></p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2018/07/09/Vue%E7%B3%BB%E5%88%97-%E5%85%A8%E5%AE%B6%E6%A1%B6%E5%AE%9E%E6%88%98/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

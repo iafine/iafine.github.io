@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2019-08-15</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">深入了解现代web浏览器-事件交互实现</h1>
+    <p class="detail-content"><p>作为前端开发，浏览器的知识是必须掌握的，偶然在Google开发平台上看到如此优秀的文章，特此记录回顾一下，本篇介绍浏览器的事件交互是如何工作的。</p>
+<a id="more"></a>
+
+<ul>
+<li>CPU、GPU、内存和多进程架构；</li>
+<li>站点请求和网页呈现；</li>
+<li>渲染进程的内部运作；</li>
+<li>事件交互实现。</li>
+</ul>
+<p>本篇译文地址：<a href="https://developers.google.com/web/updates/2018/09/inside-browser-part4" target="_blank" rel="noopener">https://developers.google.com/web/updates/2018/09/inside-browser-part4</a></p>
+<p>图片资源来源于Google开发平台。</p>
+<h4 id="从浏览器角度看待输入"><a href="#从浏览器角度看待输入" class="headerlink" title="从浏览器角度看待输入"></a>从浏览器角度看待输入</h4><p>一般听到输入，我们会想到输入框的文本输入，或者是单击鼠标。但是对于浏览器来讲，输入表示用户的任何手势，鼠标的滚动、触摸和悬停等等，都是输入事件。</p>
+<p>当发生用户手势后，浏览器进程将先接收到这个手势，但是浏览器进程不知道这个手势发生在哪里，因为手势发生是在选项卡内部的内容渲染是由渲染进程处理的。因此，浏览器进程会将时间类型及其坐标发送给渲染进程。渲染进程通过时间类型以及坐标，来处理事件。</p>
+<p><img src="/images/input0929.png" alt="111"></p>
+<h4 id="合成器接收输入事件"><a href="#合成器接收输入事件" class="headerlink" title="合成器接收输入事件"></a>合成器接收输入事件</h4><p>之前已经讲过，合成器是用来通过合成栅格化的图层，来处理滚动的。那如果某些事件附加在页面上，那么合成器是如何找到的呢？</p>
+<p>首先有个概念叫“非快速滚动区域”，运行JavaScript是渲染进程中主线程的事情，那如果在合成页面的过程中，合成线程会将页面具有事件处理的区域划分为“非快速滚动区域”。如果接收到的事件发生在此区域，那么合成线程就会将输入事件发送给主线程，如果没有发生在此区域，合成线程就会不等待主线程，直接进行新帧的合成。</p>
+<p><img src="/images/nfsr10929.png" alt="111"></p>
+<p>Web开发中常见的事件处理模式是事件委托。由于事件冒泡，因此您可以在最顶层的元素上附加一个事件处理程序，并根据事件目标委派任务。您可能已经看过或编写了如下代码。</p>
+<pre><code class="javascript">document.body.addEventListener(&#39;touchstart&#39;, event =&gt; {
+    if (event.target === area) {
+        event.preventDefault();
+    }
+});</code></pre>
+<p>由于您只需要为所有元素编写一个事件处理程序，因此此事件委托模式的人体工程学很有吸引力。但是，如果您从浏览器的角度查看此代码，则现在整个页面都被标记为不可快速滚动的区域。这意味着，即使您的应用程序不关心页面某些部分的输入，合成器线程也必须与主线程进行通信，并在每次输入事件发生时等待它。因此，合成器的平滑滚动能力被击败。</p>
+<p><img src="/images/nfsr0929.png" alt="111"></p>
+<p>为了减轻这种情况的发生，您可以<code>passive: true</code>在事件监听器中传递选项。这向浏览器暗示您仍要在主线程中侦听事件，但是合成器也可以继续合成新的框架。</p>
+<pre><code class="javascript">document.body.addEventListener(&#39;touchstart&#39;, event =&gt; {
+    if (event.target === area) {
+        event.preventDefault()
+    }
+ }, {passive: true});</code></pre>
+<h4 id="寻找活动目标"><a href="#寻找活动目标" class="headerlink" title="寻找活动目标"></a>寻找活动目标</h4><p>当合成器线程向主线程发送输入事件时，要运行的第一件事是命中测试以找到事件目标，也就是客户端开发中经常用的hittest，命中测试使用在渲染过程中生成的绘画记录数据来找出事件发生的点坐标下的内容。</p>
+<p><img src="/images/hittest0929.png" alt="111"></p>
+<h4 id="事件分配到主线程"><a href="#事件分配到主线程" class="headerlink" title="事件分配到主线程"></a>事件分配到主线程</h4><p>在上一篇文章中，我们讨论了典型的显示如何每秒刷新屏幕60次，以及如何保持节奏以实现平滑动画。对于输入，典型的触摸屏设备每秒发送60-120次触摸事件，而典型的鼠标则每秒发送100次事件。输入事件的保真度高于我们的屏幕刷新能力。</p>
+<p>如果类似的连续事件<code>touchmove</code>每秒被发送到主线程120次，那么与屏幕刷新的速度相比，它可能会触发大量的hittest和JavaScript执行。</p>
+<p><img src="/images/rawevents0929.png" alt="111"></p>
+<p>为了尽量减少对主线程过度调用，Chrome将连续事件（如 <code>wheel</code>，<code>mousewheel</code>，<code>mousemove</code>，<code>pointermove</code>， <code>touchmove</code>）和延迟调度直到前右侧的下一个<code>requestAnimationFrame</code>，来合并事件。</p>
+<p>但是，任何离散事件，如<code>keydown</code>，<code>keyup</code>，<code>mouseup</code>，<code>mousedown</code>，<code>touchstart</code>，和<code>touchend</code> 被立即触发。</p>
+<p><img src="/images/coalescedevents0929.png" alt="111"></p>
+<h4 id="getCoalescedEvents"><a href="#getCoalescedEvents" class="headerlink" title="getCoalescedEvents"></a>getCoalescedEvents</h4><p>对于大多数Web应用程序，合并事件应足以提供良好的用户体验。但是，如果要构建诸如绘制应用程序之类的东西并基于<code>touchmove</code>坐标放置路径 ，则可能会丢失中间的坐标以绘制平滑线。在这种情况下，可以<code>getCoalescedEvents</code>在指针事件中使用该方法来获取有关那些合并事件的信息。</p>
+<pre><code class="javascript">window.addEventListener(&#39;pointermove&#39;, event =&gt; {
+    const events = event.getCoalescedEvents();
+    for (let event of events) {
+        const x = event.pageX;
+        const y = event.pageY;
+        // draw a line using x and y coordinates.
+    }
+});</code></pre>
+<p><img src="/images/getCoalescedEvents0929.png" alt="111"></p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本系列到此就结束了，在本系列中，我们介绍了Web浏览器的内部工作原理。从硬件配置到操作系统，再到浏览器内部进程线程的利用，最后说明了渲染进程的合成线程，是如何进行渲染的。</p>
+<p>此系列也是能给大家一个大致的介绍，对于前端性能优化或者事件交互，能知道为什么这么去做就会好的实践，能理解浏览器的内部运作机制就行。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2019/08/15/%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%E7%8E%B0%E4%BB%A3web%E6%B5%8F%E8%A7%88%E5%99%A8-%E4%BA%8B%E4%BB%B6%E4%BA%A4%E4%BA%92%E5%AE%9E%E7%8E%B0/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2018-08-20</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">JavaScript进阶-作用域</h1>
+    <p class="detail-content"><p>本系列可以看作是《你不知道的JavaScript》的读书笔记，今天是第一篇，了解作用域。</p>
+<a id="more"></a>
+
+<h4 id="代码的编译执行过程"><a href="#代码的编译执行过程" class="headerlink" title="代码的编译执行过程"></a>代码的编译执行过程</h4><p>在深入理解之前，我们先了解一个基本的东西，从编译角度去分类，编程语言可以分为编译型和解释型两种。编译型的语言是事先需要编译好，然后再去做执行，比如C语言，因为有的时候编译可能和平台挂钩，比如c语言代码是会根据cpu不同，编译出对应的目标文件。</p>
+<p>但是解释型语言就不一样了， 比如Java和Python，只有会在执行的时候才会生成目标平台的指令代码。所以会有一个虚拟机的存在，比如JVM。会先通过虚拟机生成与平台无关的中间代码，然后再根据平台来生成各个平台的代码。</p>
+<p>但是，有一点可能很多人都会忽略，JavaScript并不想Java或者Python那样，事实上是一门编译型语言。JavaScript事先是需要JavaScript引擎(V8)编译为机器码，然后执行。当然，不同的是，JavaScript的编译过程并不是发生在构建之前的，而是在代码执行前几微秒的时间执行，所以JavaScript引擎通过使用各种手段来保证性能最佳(JIT)。</p>
+<p>从代码的编译到执行，有几个重要角色是分不开的。</p>
+<ul>
+<li>引擎。从头到尾负责整个JavaScript程序的编译和执行过程；</li>
+<li>编译器。负责语法/词法分析，代码生成等脏活累活；</li>
+<li>作用域。负责收集变量并且维护变量的查询范围，实施一套严格的规则，来确定当前执行的代码对变量的访问权限。</li>
+</ul>
+<p>一般来讲，程序变量的存储和查找，都是使用作用域来实现，作用域好比是一套规则，可以方便地找到这些变量。我们以<code>var a = 2</code>为例，来一步步解读代码的编译执行过程。</p>
+<ul>
+<li>首先，编译器会遇到<code>var a</code>，编译器会询问作用域，是否有一个同名的变量存在于同一个作用域里，如果是，编译器就会忽略这个声明，否则，编译器会在当前作用域里声明一个新的变量，并命名为a；</li>
+<li>然后，编译器会为引擎生成运行时的代码，用于处理<code>a = 2</code>这个操作。首先引擎会询问作用域，在当前的作用域里是否存在一个a的变量， 如果是，那么引擎就会使用这个变量，否则，引擎继续询问父作用域，是否存在，知道找到这个a变量，并赋值2。</li>
+</ul>
+<p>所以，和传统的编译型语言不同，JavaScript的变量赋值操作分为两部，首先编译器会在当前作用域上声明该变量，然后在运行时引擎会在作用域中查找该变量，做赋值操作。</p>
+<h4 id="LHS和RHS"><a href="#LHS和RHS" class="headerlink" title="LHS和RHS"></a>LHS和RHS</h4><p>在引擎进行查找的时候，其实是有查询方式的，分为两种，LHS(Left-hand Side)和RHS(Right-hand Side)。</p>
+<p>比如上面<code>var a = 2</code>，就是LHS查询，这里的L和R并不能用字面的左右意思来理解。个人的理解是，如果引擎是进行查找变量操作，那么就是RHS，如果是赋值操作，就是LHS。</p>
+<p>两者有个不同之处是：</p>
+<ul>
+<li>如果是RHS查询，没有找到的话，引擎就会抛出一个ReferenceError错误，字面意思就是这个变量不存在，如果是找到了该变量，但是试图对非函数类型的值调用函数的方法，那么会抛出TypeError异常；</li>
+<li>如果是LHS查询，没有找到的话，引擎会在非严格模式下，自动创建一个全局变量来做赋值操作，不会报错，但如果是严格模式，会和RHS一样，报ReferenceError错误。</li>
+</ul>
+<h4 id="作用域嵌套"><a href="#作用域嵌套" class="headerlink" title="作用域嵌套"></a>作用域嵌套</h4><p>当一个作用域块在另外一个作用域块里，那么就会发生作用域嵌套。比如：</p>
+<pre><code class="javascript">function foo(a) {
+    console.log(a + b)
+}
+var b = 2
+foo(2)</code></pre>
+<p>当引擎去查找b变量时，在foo的函数作用域里没有找打b，那么，就会上父作用域进行查找，知道找到为止。</p>
+<h4 id="词法作用域"><a href="#词法作用域" class="headerlink" title="词法作用域"></a>词法作用域</h4><p>词法作用域的生成是在写代码的时候就决定了，比如：</p>
+<pre><code class="javascript">function foo(a) { 
+    var b = a * 2;
+    function bar(c) { 
+        console.log( a, b, c );
+    }
+    bar( b * 3 ); 
+}
+foo( 2 ); // 2, 4, 12</code></pre>
+<p>上面代码在书写的时候，就会有三个作用域生成了。</p>
+<ul>
+<li>全局作用域。只包含一个变量foo；</li>
+<li>foo里所创建的作用域，有三个变量，a、bar和b；</li>
+<li>bar里所创建的作用域，只有一个变量c。</li>
+</ul>
+<p>需要注意的是，作用域的查找始终都是从运行时最内部的作用域开始，然后向外扩展，知道遇到匹配的为止。</p>
+<p>另外，在JavaScript里可以通过某些手段来修改词法作用域，但是这并不是什么好的使用场景，并且会导致性能下降的，最好不要用。</p>
+<ul>
+<li><p>eval。eval会将字符串参数进行执行，如下：</p>
+<pre><code class="javascript">function foo(str, a) { 
+    eval( str ); // 欺骗! 
+    console.log( a, b );
+}
+var b = 2;
+foo( &quot;var b = 3;&quot;, 1 ); // 1, 3</code></pre>
+<p>它其实是间接地声明了一个变量b。对foo的词法作用域做了修改，所以引擎就不会去查找全局作用域的变量b了。</p>
+</li>
+<li><p>with。如果重复引用同一个对象的多个属性，那么可能会用到with，但是它也会影响到词法作用域的。比如：</p>
+<pre><code class="javascript">function foo(obj) { 
+    with (obj) {
+        a = 2; 
+    }
+}
+
+var o1 = { 
+    a: 3
+};
+
+var o2 = { 
+    b: 3
+};
+
+foo( o1 );
+console.log( o1.a ); // 2
+
+foo( o2 );
+console.log( o2.a ); // undefined
+console.log( a ); // 2——不好，a 被泄漏到全局作用域上了!</code></pre>
+<p>本该，是需要正常打印出对象实例的，但是用了with之后，所有对象都会在内部被篡改掉。</p>
+</li>
+</ul>
+<p>所以，eval和with在日常开发中，最好不要用，会导致你的程序编的非常慢。</p>
+<h4 id="函数作用域"><a href="#函数作用域" class="headerlink" title="函数作用域"></a>函数作用域</h4><p>之前，我们已经谈过，JavaScript的编译到执行，都离不开作用域，但是作用域到底是什么时候生成的呢，答案是特定的代码结构就会生成作用域，比如函数。</p>
+<p>函数作用域实现的是，属于这个函数的变量都可以在整个函数的范围内使用，包括嵌套的作用域。当然，这和其他编程语言是差不多的，那么函数的作用域有什么作用呢？</p>
+<p>最大的作用莫过于隐藏实现逻辑，在日常的开发中，一般来讲，都是利用作用域的隐藏方法，来实现最小特权原则。比如一个模块的API设计，应该对外只暴露核心的东西，模块内部的逻辑实现，就不要对外界暴露了。</p>
+<p>我们以一个例子来看：</p>
+<pre><code class="javascript">function doSomething(a) {
+    b = a + doSomethingElse( a * 2 );
+  console.log( b * 3 );
+}
+
+function doSomethingElse(a) { 
+    return a - 1;
+}
+
+var b;
+doSomething( 2 ); // 15</code></pre>
+<p>这串代码最核心的是调用<code>doSomething</code>来打印结果，但是却对外暴露了<code>b</code>变量和<code>doSomethingElse</code>方法，其实外界是根本不关心你这两个东西的，所以这是个糟糕的设计。</p>
+<pre><code class="javascript">function doSomething(a) { 
+    function doSomethingElse(a) {
+        return a - 1; 
+    }
+    var b;
+  b = a + doSomethingElse( a * 2 );
+  console.log( b * 3 );
+}
+doSomething( 2 ); // 15</code></pre>
+<p>我们来看下优秀的设计，利用函数作用域，我们将不想对外暴露的东西，隐藏起来，外界就只要调用<code>doSomething</code>方法即可，不用关心其他变量或者方法。</p>
+<p>这种设计原则，在写第三方库的时候尤为重要，一定要注意的是，要把内部私有函数或者变量隐藏起来，千万别放在全局作用域上，这样很容易引起冲突。</p>
+<p>另外还有一种是函数表达式，也是非常实用的，我们来看下示例代码：</p>
+<pre><code class="javascript">var a = 2;
+function foo() { // &lt;-- 添加这一行
+    var a = 3; 
+    console.log(a); // 3
+} // &lt;-- 以及这一行 
+foo(); // &lt;-- 以及这一行
+console.log(a); // 2</code></pre>
+<p>我们需要实现执行foo打印和外部打印的a变量，那么上面是可以完成需求的，但是有个问题就是，这么做会污染全局作用域，其次是，还需要显示地调用<code>foo()</code>来执行函数，所以函数表达式就派上了用场。</p>
+<pre><code class="javascript">var a = 2;
+(function foo(){ // &lt;-- 添加这一行 
+    var a = 3;
+    console.log( a ); // 3 
+})(); // &lt;-- 以及这一行 
+console.log( a ); // 2</code></pre>
+<p>这样做完美解决了一个问题，就是污染全局作用域。并且，是隐式的调用foo函数。</p>
+<h4 id="块作用域"><a href="#块作用域" class="headerlink" title="块作用域"></a>块作用域</h4><p>块作用域也很常见，比如<code>if</code>或者<code>for</code>代码。</p>
+<pre><code class="javascript">for (var i = 0; i &lt; 10; i++) {
+    console.log(i)
+}
+console.log(&#39;final i: &#39;, i)</code></pre>
+<p>在for循环内部定义了变量i，然后内部会一直输出打印，可以看到，最终也会输出变量i的值，但是，那么由于i是用var声明的，写在哪里都是一样的，属于外部作用域。</p>
+<p>所以，根据最小授权原则，上面代码是有一定缺陷的，变量i污染到了全局作用域，这是不应该的。</p>
+<p>在JS中，会创建块作用域变量的方式有很多种，大概如下：</p>
+<ul>
+<li><p>with。用with创建的作用域仅仅在with内部声明有效；</p>
+</li>
+<li><p>try/catch。catch中的变量仅仅会在内部有效，外部是无法引用的；</p>
+<pre><code class="javascript">try {
+    undefined(); // 执行一个非法操作来强制制造一个异常
+}
+catch (err) {
+    console.log(err); // 能够正常执行! 
+}
+console.log(err); // ReferenceError: err not found</code></pre>
+</li>
+<li><p>let。ES6中的let可以将变量绑定在所在的任意作用域中，上面的for循环会出现问题，那么用let就不会，原因是let的声明不会在块作用域里进行提升；</p>
+</li>
+<li><p>const。同样是ES6的语法，可以创建块作用域变量，相比let，const通常会被定义常量。</p>
+</li>
+</ul>
+<h4 id="声明和赋值"><a href="#声明和赋值" class="headerlink" title="声明和赋值"></a>声明和赋值</h4><p>我们先看一个很有趣的例子：</p>
+<pre><code class="javascript">a = 2;
+var a;
+console.log(a);</code></pre>
+<p>如果是其他语言转过来的，第一眼可能就会觉得，打印的肯定是undefined，那么事实其实并不是，而是2。这样，会以为是赋值在前，声明在后。再看个例子：</p>
+<pre><code class="javascript">console.log(a);
+var a = 2;</code></pre>
+<p>同样，肯定会有人觉得调用a之前，变量a还没声明，所以会报错，而事实是会打印出undefined，说明已经声明了。</p>
+<p>这种思考的方式其实是不正确的，JavaScript并不是这么实现的。有些东西上面已经提及，我们在这里进行总结下，以<code>var a = 2;</code>为例：</p>
+<ul>
+<li>首先，JavaScript会将其拆分成两块<code>var a</code>和<code>a = 2</code>；</li>
+<li>编译阶段，声明<code>var a</code>；</li>
+<li>执行阶段，赋值<code>a = 2</code>。</li>
+</ul>
+<p>所以，包括变量和函数在内的所有声明都会在任何代码被执行前首先被处理。</p>
+<p>我们先看第一个例子，在执行之前，会先处理成如下：</p>
+<pre><code class="javascript">var a;
+a = 2;
+console.log(a);</code></pre>
+<p>同样，第二个例子，在执行之前，会先处理成如下：</p>
+<pre><code class="javascript">var a;
+console.log(a);
+a = 2;</code></pre>
+<p>这个过程，就好像所有声明从代码出现的位置被挪到最上面，所以这个过程叫做提升。那么也可以得出结论。声明在前，赋值在后。</p>
+<p>但是需要注意的是，如果声明中包括变量和函数，那么函数的优先级最高，其次是变量。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文梳理了JavaScript代码从编译到执行的过程，并引入编译器、引擎和作用域，并且对它们的职责一一划分。其中作用域是贯穿一切的，就像一套规则，来约束编译器和引擎该如何做。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2018/08/20/JavaScript%E8%BF%9B%E9%98%B6-%E4%BD%9C%E7%94%A8%E5%9F%9F/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

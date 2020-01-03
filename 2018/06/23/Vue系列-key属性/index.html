@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2018-06-23</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">Vue系列-key属性</h1>
+    <p class="detail-content"><p>当我们使用Vue或者React去实现一个列表组件的时候，通常会需要加上key属性，这个key属性对于这种列表组件，到底做了哪下实质性的优化呢，本篇文章来一一学习下。</p>
+<a id="more"></a>
+
+<h4 id="Vue-React中对key的介绍"><a href="#Vue-React中对key的介绍" class="headerlink" title="Vue/React中对key的介绍"></a>Vue/React中对key的介绍</h4><p>在React中，官方文档是这样说的：</p>
+<pre><code class="javascript">const numbers = [1, 2, 3, 4, 5];
+const listItems = numbers.map((number) =&gt;
+  &lt;li key={number.toString()}&gt;
+    {number}
+  &lt;/li&gt;
+);</code></pre>
+<blockquote>
+<p>Keys可以在DOM中的某些元素被增加或删除的时候帮助React识别哪些元素发生了变化。因此你应当给数组中的每一个元素赋予一个确定的标识;</p>
+<p>一个元素的key最好是这个元素在列表中拥有的一个独一无二的字符串。通常，我们使用来自数据的id作为元素的key:</p>
+<p>当元素没有确定的id时，你可以使用他的序列号索引index作为key;</p>
+<p>如果列表项目的顺序可能会变化，我们不建议使用索引来用作键值，因为这样做会导致性能的负面影响，还可能引起组件状态问题。</p>
+</blockquote>
+<p>在Vue中也有类似的介绍：</p>
+<pre><code class="javascript">&lt;div v-for=&quot;item in items&quot; :key=&quot;item.id&quot;&gt;
+  &lt;!-- 内容 --&gt;
+&lt;/div&gt;</code></pre>
+<blockquote>
+<p>为了给 Vue 一个提示，以便它能跟踪每个节点的身份，从而重用和重新排序现有元素，你需要为每项提供一个唯一 <code>key</code> 属性。理想的 <code>key</code> 值是每项都有的唯一 id。</p>
+<p>建议尽可能在使用 <code>v-for</code> 时提供 <code>key</code>，除非遍历输出的 DOM 内容非常简单，或者是刻意依赖默认行为以获取性能上的提升。</p>
+</blockquote>
+<p>我们看到，使用key可以使框架识别出每个节点，从而可以优化diff算法存在的问题，那么diff算法针对这种列表组件，到底存在什么问题，我们以网上几张图看下：</p>
+<p>当存在很多个列表节点的时候，比如：</p>
+<p><img src="/images/vue-key-01.jpg" alt=""></p>
+<p>想在B和C之间插入一个F节点，如同列表需要新增一项，并且位置在B和C之间，那么，使用diff算法后的结果是：</p>
+<p><img src="/images/vue-key-02.jpg" alt=""></p>
+<p>这样存在一个问题就是，我们的初衷只是想插入一条数据，只需要更新一个节点，但是，diff算法做的改动，需要更新4个节点，即C，D，E，F。这样就很不符合我们的设想。所以，需要在Vue/React的diff算法下，还需要一个唯一的key作为标示，用于找到其对应的节点，如果节点相同，则更新其属性即可。</p>
+<p><img src="/images/vue-key-03.jpg" alt=""></p>
+<p>所以，使用key可以高效地更新虚拟Dom。</p>
+<h4 id="vue中不带key和带key的性能比较"><a href="#vue中不带key和带key的性能比较" class="headerlink" title="vue中不带key和带key的性能比较"></a>vue中不带key和带key的性能比较</h4><p>之前有一种说法是，携带key可以加快渲染速度，这种说法其实是不准确的，我们以一个例子来看：</p>
+<p>假设我们需要同时渲染10w条列表，如果不用key，那么代码如下：</p>
+<pre><code class="javascript">&lt;template&gt;
+    &lt;div&gt;
+        &lt;ul&gt;
+            &lt;li v-for=&quot;item in dataList&quot;&gt;{{ item.name }}&lt;/li&gt;
+        &lt;/ul&gt;
+        &lt;button @click=&quot;addData&quot;&gt;添加数据&lt;/button&gt;
+    &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+export default {
+    data() {
+        return {
+            dataList: [],
+            startTime: 0
+        }
+    },
+    updated() {
+        const nowDate = new Date().getTime()
+        console.log(&#39;update time: &#39; + (nowDate - this.startTime))
+    },
+    beforeUpdate() {
+        this.startTime = new Date().getTime()
+    },
+    methods: {
+        addData() {
+            const list = []
+            for(let i=0; i&lt;100000; i++) {
+                list.push({
+                    name: i * 2,
+                    id: i
+                })
+            }
+            this.dataList = list
+        }
+    },
+}
+&lt;/script&gt;</code></pre>
+<p>运行结果如下：</p>
+<p><img src="/images/Snipaste_2019-04-20_09-48-25.png" alt=""></p>
+<p>那么，如果携带key，修改代码：</p>
+<pre><code class="javascript">&lt;ul&gt;
+    &lt;li v-for=&quot;item in dataList&quot; :key=&quot;item.id&quot;&gt;{{ item.name }}&lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+<p>运行结果如下：</p>
+<p><img src="/images/Snipaste_2019-04-20_09-53-11.png" alt=""></p>
+<p>可以看出，携带key的更新时间，会比不携带key要多，因为不携带key的话，key的值是undefine，相同就可以复用节点，携带key的话，因为每个节点的key都是唯一的，并没有复用，所以更新时间会多点。</p>
+<h4 id="vue官方为什么推荐携带key"><a href="#vue官方为什么推荐携带key" class="headerlink" title="vue官方为什么推荐携带key"></a>vue官方为什么推荐携带key</h4><p>从上面的例子可以看出，并不是说携带key就可以加快渲染速度。但是，为什么官方都是建议携带呢？</p>
+<p>因为上面的例子，是一个简单的无状态组件，如果组件都是这种简单的无状态组件的话，那么确实不携带key，渲染速度会快点。</p>
+<p>但是在现实中的使用场景，大部分类似组件都是有状态的，比如切换tab刷新列表，虽然带上key会增加开销，但是对于用户来讲，这点差距是很难感觉到的，并且可以保证组件的状态正确，所以在绝大多数场景里，还是推荐携带key。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2018/06/23/Vue%E7%B3%BB%E5%88%97-key%E5%B1%9E%E6%80%A7/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

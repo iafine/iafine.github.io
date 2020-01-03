@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2016-07-28</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">iOS</span>
+      
+    </div>
+    
+    <h1 class="detail-title">iOS进阶-浅谈Copy属性</h1>
+    <p class="detail-content"><blockquote>
+<p>一直都想去写个系列出来，总结出自己在日常开发中遇到过的知识点，时不时的回头看看，温故而知新。</p>
+</blockquote>
+<p>小结第一篇，来总结一下iOS开发中有关copy的知识点。</p>
+<a id="more"></a>
+
+<h3 id="iOS中，深拷贝和浅拷贝有什么不同？"><a href="#iOS中，深拷贝和浅拷贝有什么不同？" class="headerlink" title="iOS中，深拷贝和浅拷贝有什么不同？"></a>iOS中，深拷贝和浅拷贝有什么不同？</h3><h4 id="浅拷贝"><a href="#浅拷贝" class="headerlink" title="浅拷贝"></a>浅拷贝</h4><p>所谓的浅拷贝，就是指只是将对象内存地址多了一个引用，也就是说，拷贝结束之后，两个对象的值不仅相同，而且对象所指的内存地址都是一样的。</p>
+<h4 id="深拷贝"><a href="#深拷贝" class="headerlink" title="深拷贝"></a>深拷贝</h4><p>所谓深拷贝，就是指拷贝一个对象的具体内容，拷贝结束之后，两个对象的值虽然是相同的，但是指向的内存地址是不同的。两个对象之间也互不影响，互不干扰。</p>
+<h4 id="非集合类对象的copy和mutableCopy"><a href="#非集合类对象的copy和mutableCopy" class="headerlink" title="非集合类对象的copy和mutableCopy"></a>非集合类对象的copy和mutableCopy</h4><p>我们对一个NSString属性进行copy和mutableCopy。</p>
+<pre><code>NSString *string = @&quot;abc&quot;;
+NSString *stringCopy = [string copy];
+NSMutableString *stringMCopy = [string mutableCopy];
+
+NSLog(@&quot;string: %p, %p&quot;, string, &amp;string);
+NSLog(@&quot;stringCopy: %p, %p&quot;, stringCopy, &amp;stringCopy);
+NSLog(@&quot;stringMCopy: %p, %p&quot;, stringMCopy, &amp;stringMCopy);</code></pre><p>运行之后，可以发现：</p>
+<pre><code>string: 0x1022fe078, 0x7fff5d901a48
+stringCopy: 0x1022fe078, 0x7fff5d901a40
+stringMCopy: 0x608000260240, 0x7fff5d901a38</code></pre><p>可以看出，对NSString进行copy操作，其新对象的内存地址并没有发生变化，改变的只仅仅是指针的地址，但是进行mutableCopy操作，其内存地址已经发生了变化，并且指针地址发生变化。我们将内存地址发生了变化的copy操作，称之为深拷贝，反之，内存地址没有发生了变化，称之为浅拷贝。</p>
+<p>接下来，我们对NSMutableString进行copy和mutableCopy.</p>
+<pre><code>NSMutableString *string = [NSMutableString stringWithFormat:@&quot;abc&quot;];
+NSString *stringCopy = [string copy];
+NSMutableString *stringMCopy = [string mutableCopy];
+
+NSLog(@&quot;string: %p, %p&quot;, string, &amp;string);
+NSLog(@&quot;stringCopy: %p, %p&quot;, stringCopy, &amp;stringCopy);
+NSLog(@&quot;stringMCopy: %p, %p&quot;, stringMCopy, &amp;stringMCopy);</code></pre><p>运行之后，我们可以发现：</p>
+<pre><code>string: 0x608000264680, 0x7fff5526aa48
+stringCopy: 0xa000000006362613, 0x7fff5526aa40
+stringMCopy: 0x608000264940, 0x7fff5526aa38</code></pre><p>对NSMutableString进行copy操作，其内存地址和指针地址都发生了变化，所以操作是深拷贝，和上面有所不同；进行mutableCopy操作，其内存地址和指针地址也都发生了变化，所以也是深拷贝。</p>
+<blockquote>
+<p>以上，我们可以得出，在非集合类对象中，对不可变对象进行copy操作，只仅仅是指针复制，进行mutableCopy操作，是内容复制。</p>
+</blockquote>
+<blockquote>
+<p>对可变对象进行copy和mutableCopy操作，都是内容复制。</p>
+</blockquote>
+<h4 id="集合类对象的copy和mutableCopy"><a href="#集合类对象的copy和mutableCopy" class="headerlink" title="集合类对象的copy和mutableCopy"></a>集合类对象的copy和mutableCopy</h4><p>我们以NSArray为例，对其进行copy和mutableCopy操作。</p>
+<pre><code>NSString *element_01 = @&quot;abc&quot;;
+NSString *element_02 = @&quot;def&quot;;
+NSString *element_03 = @&quot;ghi&quot;;
+NSArray *array = @[element_01, element_02, element_03];
+NSArray *arrayCopy = [array copy];
+NSMutableArray *arrayMCopy = [array mutableCopy];
+
+NSLog(@&quot;array: %p, %p; array.firstObject: %p&quot;, array, &amp;array, array.firstObject);
+NSLog(@&quot;arrayCopy: %p, %p; arrayCopy.firstObject: %p&quot;, arrayCopy, &amp;arrayCopy, arrayCopy.firstObject);
+NSLog(@&quot;arrayMCopy: %p, %p; arrayMCopy.firstObject: %p&quot;, arrayMCopy, &amp;arrayMCopy, arrayMCopy.firstObject);</code></pre><p>运行之后，结果如下：</p>
+<pre><code>array: 0x600000245910, 0x7fff51367a10; array.firstObject: 0x10e898088
+arrayCopy: 0x600000245910, 0x7fff51367a08; arrayCopy.firstObject: 0x10e898088
+arrayMCopy: 0x600000245670, 0x7fff51367a00; arrayMCopy.firstObject: 0x10e898088</code></pre><p>可以发现，规律和非集合类的很像，对NSArray进行copy操作的时候，数组的内存地址没有发生变化，但是进行mutableCopy操作时，其内存地址发生了变化，结论跟非集合类的差不多。</p>
+<p>但是，这里的深拷贝和非集合类的深拷贝还是不太一样的，上面我们打印出了数组的第一个元素的内存地址，可以发现，进行mutableCopy操作时，虽然数组内存地址发生了变化，但是数组元素的内存地址并没有发生变化。</p>
+<p>这个属于一个特例，我们称它为<strong>单层深复制</strong>。并不是理论上的完全深复制。</p>
+<p>接下来，我们以NSMutableArray为例，进行copy和mutableCopy操作。</p>
+<pre><code>NSString *element_01 = @&quot;abc&quot;;
+NSString *element_02 = @&quot;def&quot;;
+NSString *element_03 = @&quot;ghi&quot;;
+NSMutableArray *array = [NSMutableArray arrayWithArray:@[element_01, element_02, element_03]];
+
+NSArray *arrayCopy = [array copy];
+NSMutableArray *arrayMCopy = [array mutableCopy];
+
+NSLog(@&quot;array: %p, %p; array.firstObject: %p&quot;, array, &amp;array, array.firstObject);
+NSLog(@&quot;arrayCopy: %p, %p; arrayCopy.firstObject: %p&quot;, arrayCopy, &amp;arrayCopy, arrayCopy.firstObject);
+NSLog(@&quot;arrayMCopy: %p, %p; arrayMCopy.firstObject: %p&quot;, arrayMCopy, &amp;arrayMCopy, arrayMCopy.firstObject);</code></pre><p>运行之后，结果如下：</p>
+<pre><code>array: 0x6000000460c0, 0x7fff516d3a10; array.firstObject: 0x10e52c088
+arrayCopy: 0x600000046420, 0x7fff516d3a08; arrayCopy.firstObject: 0x10e52c088
+arrayMCopy: 0x600000046000, 0x7fff516d3a00; arrayMCopy.firstObject: 0x10e52c088</code></pre><p>可以看出，对NSMutableArray进行copy和mutableCopy操作，其内存地址都发生了变化，但是，对于数组中的元素，不管是进行的哪种操作，内存地址始终都没有发生变化，所以属于单层深拷贝。</p>
+<blockquote>
+<p>所以，我们可以得出，对于不可变的集合类对象进行copy操作，只是改变了指针，其内存地址并没有发生变化；进行mutableCopy操作，内存地址发生了变化，但是其中的元素内存地址并没有发生变化。</p>
+</blockquote>
+<blockquote>
+<p>对于可变集合类对象，不管是进行copy操作还是mutableCopy操作，其内存地址都发生了变化，但是其中的元素内存地址都没有发生变化，属于单层深拷贝。</p>
+</blockquote>
+<h3 id="为什么我们声明NSString-NSArray或者NSDictionary的时候，经常使用copy关键字，使用strong有什么区别？"><a href="#为什么我们声明NSString-NSArray或者NSDictionary的时候，经常使用copy关键字，使用strong有什么区别？" class="headerlink" title="为什么我们声明NSString, NSArray或者NSDictionary的时候，经常使用copy关键字，使用strong有什么区别？"></a>为什么我们声明NSString, NSArray或者NSDictionary的时候，经常使用copy关键字，使用strong有什么区别？</h3><p>这种场景，在定义model时出现最多，首先我们先来看看用copy和strong有什么区别？</p>
+<pre><code>/********************* test.h **********************/
+@interface test()
+
+@property (nonatomic, strong) NSString *strStrong;
+@property (nonatomic, copy) NSString *strCopy;
+
+@end
+
+/********************* test.m **********************/
+NSMutableString *string = [NSMutableString stringWithFormat:@&quot;abc&quot;];
+self.strStrong = string;
+self.strCopy = string;
+NSLog(@&quot;旧strStrong: %@&quot;, self.strStrong);
+NSLog(@&quot;旧strCopy: %@&quot;, self.strCopy);
+
+[string appendFormat:@&quot;def&quot;];
+NSLog(@&quot;新strStrong: %@&quot;, self.strStrong);
+NSLog(@&quot;新strCopy: %@&quot;, self.strCopy);</code></pre><p>运行之后，可以发现：</p>
+<pre><code>旧strStrong: abc
+旧strCopy: abc
+新strStrong: abcdef
+新strCopy: abc</code></pre><p>可以发现，当将一个可变对象分别赋值给两个使用不同修饰词的属性后，改变可变对象的内容，使用strong修饰的会跟随着改变，但使用copy修饰的没有改变内容。</p>
+<p>知道了strong和copy修饰的区别之后，我们来看为什么要用copy？因为属性需要有封装性，当赋值之后，如果改变其值，会打破本有的封装，所以，在日常大部分开发工作中，我们需要使用copy来修饰NSString等。</p>
+<p>那么，是不是NSMutableString等这些可变对象是不是也需要copy来修饰呢？答案是千万不要这么干，我们可以测试一下：</p>
+<pre><code>/********************* test.h **********************/
+@interface test()
+
+@property (nonatomic, copy) NSMutableString *strCopy;
+
+@end
+
+/********************* test.m **********************/
+NSMutableString *string = [NSMutableString stringWithFormat:@&quot;abc&quot;];
+self.strCopy = string;
+[self.strCopy appendString:@&quot;def&quot;];</code></pre><p>运行上面代码，就会发现，在运行到最后一句的时候会崩溃，因为copy是复制出一个不可变的对象，在不可变对象上运行可变对象的方法，就会找不到执行方法，报下面的错误：</p>
+<pre><code>reason: &#39;-[NSTaggedPointerString appendString:]: unrecognized selector sent to instance 0xa000000006362613&#39;</code></pre><h3 id="自定义对象实现copy"><a href="#自定义对象实现copy" class="headerlink" title="自定义对象实现copy"></a>自定义对象实现copy</h3><p>有时候，我们需要实现自定义的对象进行copy操作，如下所示：</p>
+<pre><code>/********************* CopyModel.h **********************/
+@interface CopyModel : NSObject
+
+@property (nonatomic, copy) NSString *title;
+@property (nonatomic, copy) NSString *name;
+
+@end
+
+/********************* ViewController.m **********************/
+CopyModel *model = [[CopyModel alloc] init];
+model.title = @&quot;title&quot;;
+model.name = @&quot;name&quot;;
+
+CopyModel *modelCopy = [model copy];</code></pre><p>但是，一运行我们发现直接崩溃了，报了一下错误：</p>
+<pre><code>reason: &#39;-[CopyModel copyWithZone:]: unrecognized selector sent to instance 0x608000221c60&#39;</code></pre><p>可以看出，自定义对象实现copy操作，需要重写<code>copyWithZone</code>方法，我们修改下代码，如下：</p>
+<pre><code>/********************* CopyModel.h **********************/
+@interface CopyModel : NSObject
+
+@property (nonatomic, copy) NSString *title;
+@property (nonatomic, copy) NSString *name;
+
+@end
+
+/********************* CopyModel.m **********************/
+@implementation CopyModel
+
+- (instancetype)copyWithZone:(NSZone *)zone {
+    CopyModel *copyModel = [[CopyModel allocWithZone:zone] init];
+    copyModel.title = self.title;
+    copyModel.name = self.name;
+    return copyModel;
+}
+
+@end
+
+/********************* ViewController.m **********************/
+CopyModel *model = [[CopyModel alloc] init];
+model.title = @&quot;title&quot;;
+model.name = @&quot;name&quot;;
+
+CopyModel *modelCopy = [model copy];
+NSLog(@&quot;model: %p, %p&quot;, model, &amp;model);
+NSLog(@&quot;modelCopy: %p, %p&quot;, modelCopy, &amp;modelCopy);</code></pre><p>执行之后，可以发现并没有报错，并且copy也成功了。控制台打印如下：</p>
+<pre><code>model: 0x608000037660, 0x7fff5bd62a48
+modelCopy: 0x60800003afa0, 0x7fff5bd62a40</code></pre><p>说明我们自定义对象copy成功了!</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>这是当前遇到的有关copy问题的总结，应该还算挺全的，希望能帮助到需要的同学！</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2016/07/28/iOS%E8%BF%9B%E9%98%B6-%E6%B5%85%E8%B0%88Copy%E5%B1%9E%E6%80%A7/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

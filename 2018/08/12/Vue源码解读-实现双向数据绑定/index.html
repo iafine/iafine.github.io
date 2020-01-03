@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2018-08-12</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">Vue源码解读-双向数据绑定</h1>
+    <p class="detail-content"><p>本次的目的，是通过Vue源码，理解Vue的双向数据绑定是如何实现的，并以此来实现一个简单的类似Vue框架。</p>
+<a id="more"></a>
+
+<h4 id="双向数据绑定"><a href="#双向数据绑定" class="headerlink" title="双向数据绑定"></a>双向数据绑定</h4><p>如果做过移动端的开发话，会发现，随着数据model的变化，view层视图会相应作出改动，但是倒过来，view层视图的变化，并不会直接映射到model的变化。这个就是经典的单向绑定。</p>
+<p>双向绑定就是不仅仅数据model会影响view层的变动，view层的变动也会影响到数据model层的变动，在Vue中，一个常见的例子就是<code>v-model</code>指令。</p>
+<p>在Vue中，实现双向绑定是基于数据劫持+订阅者模式来实现，数据劫持是通过劫持各个属性的<code>setter</code>和<code>getter</code>。当数据发生变化时，然后通知相关订阅者，来触发相应的监听回调。</p>
+<p><img src="https://cn.vuejs.org/images/data.png" alt=""></p>
+<p>上图可以看出，首先初始化一个Vue实例，然后会生成DOM，当触发一个Touch事件，发生了数据变化，然后就会通知相关监听者，也就是Watcher，当然，每个实例其实对应一个watcher实例。更详细的介绍，可以参考：</p>
+<p><a href="https://cn.vuejs.org/v2/guide/reactivity.html" target="_blank" rel="noopener">Vue深入响应式原理</a></p>
+<h4 id="实现思路"><a href="#实现思路" class="headerlink" title="实现思路"></a>实现思路</h4><p>我们最终的目标是生成一个类似Vue的简单框架，所以整理下实现思路：</p>
+<ul>
+<li>首先需要实现能够对对象的所有数据进行监听Observer，如果有数据变动，可以对外通知出去；</li>
+<li>其次需要实现一个简易的指令解析器Compiler，根据指令来替换相关数据，以及绑定相应的更新函数；</li>
+<li>每个Vue实例需要对应一个Watcher实例，来作为Observer和Compiler的桥梁，能够订阅每个属性的变动，以及分发通知，；</li>
+<li>最后，就是实现Vue实例，整合该过程，对外使用。</li>
+</ul>
+<h4 id="Observer实现"><a href="#Observer实现" class="headerlink" title="Observer实现"></a>Observer实现</h4><p>Observer的实现关键点在于以下几步：</p>
+<ul>
+<li>监听属性的<code>setter</code>和<code>getter</code>；</li>
+<li>将数据变动通知给订阅者。</li>
+</ul>
+<p>我们先实现属性的监听：</p>
+<pre><code class="javascript">
+// 模拟基础数据源
+const data = {
+    message: &#39;Hello World&#39;,
+    person: {
+        name: &#39;Iafine&#39;
+    }
+}
+observe(data)   // 监听属性
+data.person.name = &#39;Iafine3&#39;    // 更改数据
+
+function observe(data) {
+    if (!data || typeof data !== &#39;object&#39;) {
+        return
+    }
+
+    Object.keys(data).forEach(key =&gt; {
+        defineReactive(data, key, data[key])
+    })
+}
+
+function defineReactive(data, key, value) {
+    // 子属性的监听
+    observe(value)
+    Object.defineProperty(data, key, {
+        enumerable: true,
+        configurable: true,
+        get: () =&gt; {
+            return value;
+        },
+        set: (newValue) =&gt; {
+            console.log(&#39;changed:&#39; + value + &#39; ==&gt; &#39; + newValue) // 数据发生变动，打印日志
+            value = newValue
+        }
+    })
+}</code></pre>
+<p>这里是通过<code>Object.defineProperty</code>来实现对属性<code>setter</code>和<code>getter</code>的监听，<code>Object.defineProperty</code>会直接在对象上定义一个新属性，或者是修改现有属性。当属性值发生变化之后，会打印出一行日志。</p>
+<p>接下来，我们需要实现通知订阅者，来实现修改属性后的操作。</p>
+<h4 id="Watcher实现"><a href="#Watcher实现" class="headerlink" title="Watcher实现"></a>Watcher实现</h4><p>当数据发生改动后，Observer会收到变动监听，我们需要一个订阅者来对外传播该通知。在Vue中，是以Dep来实现这步。</p>
+<pre><code class="javascript">/**
+ * 订阅者数组
+ */
+function Dep() {
+    this.subs = []
+}
+
+Dep.prototype = {
+    addSub(sub) {
+        this.subs.push(sub)
+    },
+    notify() {
+        // 通知订阅者调用update
+        console.log(&#39;Dep收到属性改变通知，请求Watcher转发&#39;)
+        this.subs.forEach(sub =&gt; sub.update())
+    }
+}</code></pre>
+<p>可以看到，Dep有个属性是subs，用来存放需要通知的Watcher数组，当数据发生变动时，调用<code>notify</code>来通知每一个Watcher去做更新操作，我们可以看下修改后的<code>defineReactive</code>方法。</p>
+<pre><code class="javascript">function defineReactive(data, key, value) {
+  const dep = new Dep()
+  // 子属性的监听
+  observe(value)
+  Object.defineProperty(data, key, {
+      enumerable: true,
+      configurable: true,
+      get: () =&gt; {
+          Dep.target &amp;&amp; dep.addSub(Dep.target)
+          return value
+      },
+      set: (newValue) =&gt; {
+          if (value === newValue) {
+              return
+          }
+          console.log(&#39;changed:&#39; + value + &#39; ==&gt; &#39; + newValue) // 数据发生变动，打印日志
+          value = newValue
+          dep.notify()
+      }
+  })</code></pre>
+<p>当数据发生变动后，dep实例会去调用notify来实现对Watcher数组的通知。那么，接下来我们看下Watcher的实现。</p>
+<pre><code class="javascript">/**
+ * 用于收到每个订阅者发出的通知，进行转发
+ */
+function Watcher(data, key) {
+    this.data = data
+    this.key = key
+
+    // 指定target，并且获取当前value
+    Dep.target = this
+    this.value = this.data[this.key]
+    Dep.target = null
+}
+
+Watcher.prototype = {
+    update() {
+        console.log(&#39;Watcher接收到Dep的改变通知，请求UI层更新, 新数据是: &#39;, this.data[this.key])
+    }
+}</code></pre>
+<p>当初始化每一个Watcher实例的时候，都会触发该key的get方法，那么，这个时候，我们就把当前的Watcher添加到dep的subs里，然后当改动数据的时候，会触发dep的notify方法，进而会触发Watcher的update。至此，我们就实现了对数据的变动监听。</p>
+<p>完整代码如下：</p>
+<pre><code class="javascript">
+/**
+ * 订阅者数组
+ */
+function Dep() {
+    this.subs = []
+}
+
+Dep.prototype = {
+    addSub(sub) {
+        this.subs.push(sub)
+    },
+    notify() {
+        // 通知订阅者调用update
+        console.log(&#39;Dep收到属性改变通知，请求Watcher转发&#39;)
+        this.subs.forEach(sub =&gt; sub.update())
+    }
+}
+
+/**
+ * 用于收到每个订阅者发出的通知，进行转发
+ */
+function Watcher(data, key) {
+    this.data = data
+    this.key = key
+
+    // 指定target，并且获取当前value
+    Dep.target = this
+    this.value = this.data[this.key]
+    Dep.target = null
+}
+
+Watcher.prototype = {
+    update() {
+        console.log(&#39;Watcher接收到Dep的改变通知，请求UI层更新, 新数据是: &#39;, this.data[this.key])
+    }
+}
+
+/**
+ * 观察者
+ */
+function observe(data) {
+    if (!data || typeof data !== &#39;object&#39;) {
+        return
+    }
+
+    Object.keys(data).forEach(key =&gt; {
+        defineReactive(data, key, data[key])
+    })
+}
+
+function defineReactive(data, key, value) {
+    const dep = new Dep()
+    // 子属性的监听
+    observe(value)
+    Object.defineProperty(data, key, {
+        enumerable: true,
+        configurable: true,
+        get: () =&gt; {
+            Dep.target &amp;&amp; dep.addSub(Dep.target)
+            return value
+        },
+        set: (newValue) =&gt; {
+            if (value === newValue) {
+                return
+            }
+            console.log(&#39;changed:&#39; + value + &#39; ==&gt; &#39; + newValue) // 数据发生变动，打印日志
+            value = newValue
+            dep.notify()
+        }
+    })
+}
+
+/************** Main *******************/
+
+// 模拟基础数据源
+const data = {
+    message: &#39;Hello World&#39;,
+    person: {
+        name: &#39;Iafine&#39;
+    }
+}
+
+observe(data)   // 观察属性
+new Watcher(data, &#39;message&#39;)    // 监听属性
+data.message = &#39;Hello World Updated&#39;    // 更改数据</code></pre>
+<p>在模拟数据里，我们手动监听了<code>message</code>的数据变化，当<code>message</code>发生变化时，那么就会触发Watcher里的<code>udpate</code>的日志打印。</p>
+<p>至此，我们已经完成<code>数据变动 -&gt; UI变动</code>的逻辑实现。</p>
+<p>其实真正的双向绑定，应该是<code>数据变动 &lt;=&gt; UI变动</code>，我们现在还缺少UI变动，带动数据改动，类似于Vue中的<code>v-model</code>当然，这其实不是很难，核心代码如下：</p>
+<pre><code class="javascript">node.addEventListener(&#39;input&#39;, e =&gt; {
+    const newValue = e.target.value
+    if (val === newValue) {
+        return
+    }
+    this._setVMVal(vm, exp, newValue)
+    val = newValue
+})</code></pre>
+<p>其实是对该节点添加了一个<code>input</code>监听来实现的，如果输入发生变化，那么映射到Vue实例上的对应key。详细代码请参考文末链接。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文仅仅只是做了一些思路，核心的实现原理也就是这样，但是，真正在Vue中做的，远远不是这么一点，比如VDOM，数组监听，模版渲染等等。这中间需要大量的时间去思考，去优化算法。并且，现在其实可以利用ES6<br><code>proxy</code>来实现对数据的监听。具体的实现等有空了可以实现一下。</p>
+<p><a href="https://github.com/iafine/vue-source-code" target="_blank" rel="noopener">vue-source-code</a></p>
+<p><a href="https://github.com/DMQ/mvvm" target="_blank" rel="noopener">DMQ/mvvm</a></p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2018/08/12/Vue%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-%E5%AE%9E%E7%8E%B0%E5%8F%8C%E5%90%91%E6%95%B0%E6%8D%AE%E7%BB%91%E5%AE%9A/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

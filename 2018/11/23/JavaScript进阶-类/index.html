@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2018-11-23</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">JavaScript进阶-类</h1>
+    <p class="detail-content"><p>这一篇介绍类相关的面向对象编程，学过Java的都知道，类在开发中是很重要的，都是对现实的具体物体的抽象。本篇我们通过对《你不知道的JavaScript》一书的学习，来总结下类的知识。</p>
+<a id="more"></a>
+
+<h4 id="什么是类"><a href="#什么是类" class="headerlink" title="什么是类"></a>什么是类</h4><p>类是软件中对真实世界中问题领域的建模方法，描述了一种代码的组织结构。但是在JavaScript中，类的语法和传统的Java并不相似，只是通过一些方法，实现近似类的功能，所有在其他语言中的类和JavaScript中的不太一样。</p>
+<p>有了类，就有类的实例，两者的关系就好像类是建筑蓝图，实例是具体的建筑，类不用关心是哪个实例，实例名称是什么，为了类能被使用，就产生了建筑实例。</p>
+<p>接下来，我们一一介绍类的特性，知道的也可以不用看了。</p>
+<h4 id="继承"><a href="#继承" class="headerlink" title="继承"></a>继承</h4><p>引用wiki里的解释，继承（英语：inheritance）是<a href="https://zh.wikipedia.org/wiki/面向对象" target="_blank" rel="noopener">面向对象</a>软件技术当中的一个概念。如果一个类别B“继承自”另一个类别A，就把这个B称为“A的子类”，而把A称为“B的父类别”也可以称“A是B的超类”。继承可以使得子类具有父类别的各种属性和方法，而不需要再次编写相同的代码。在令子类别继承父类别的同时，可以重新定义某些属性，并重写某些方法，即覆盖父类别的原有属性和方法，使其获得与父类别不同的功能。</p>
+<p>其伪代码的话，可以是这样：</p>
+<pre><code class="javascript">class Vehicle {
+    engines = 1
+    ignition() {
+        output(&quot;Turning on my engine.&quot;);
+    }
+    drive() {
+        ignition();
+        output(&quot;Steering and moving forward!&quot;)
+    }
+}
+class Car inherits Vehicle {
+    wheels = 4
+    drive() {
+        inherited: drive()
+        output(&quot;Rolling on all &quot;, wheels, &quot; wheels!&quot;)
+    }
+}
+class SpeedBoat inherits Vehicle {
+    engines = 2
+    ignition() {
+        output(&quot;Turning on my &quot;, engines, &quot; engines.&quot;)
+    }
+    pilot() {
+        inherited: drive()
+        output(&quot;Speeding through the water with ease!&quot;)
+    }
+}</code></pre>
+<p>Car和SpeedBoat都是继承于Vehicle的，用于基本的属性。</p>
+<h4 id="多态"><a href="#多态" class="headerlink" title="多态"></a>多态</h4><p>在传统的Java语言中，多态这一概念大量运用，其意思是指为不同数据类型的实体提供统一的接口。在上个例子中，Vehicle和Car中的drive就是典型的多态。</p>
+<p>多态做到的是，在这一个继承链里的不同层次中，同一个方法被定义多次，当调用方法时会自动选择合适的定义。</p>
+<h4 id="混入"><a href="#混入" class="headerlink" title="混入"></a>混入</h4><p>在继承或者实例化时，JavaScript的对象机制并不会自动执行复制功能，也就是说，JavaScript中只有对象，并不存在可以被实例化的类。如果想实现模拟类的复制行为，那就是混用，混用有两种，显式和隐式。</p>
+<h5 id="显式混入"><a href="#显式混入" class="headerlink" title="显式混入"></a>显式混入</h5><p>我们可以定义一个mixin方法来实现混入，比如改造上面的伪代码。</p>
+<pre><code class="javascript">// 非常简单的 mixin(..) 例子 :
+function mixin(sourceObj, targetObj) {
+    for (var key in sourceObj) {
+        // 只会在不存在的情况下复制 
+        if (!(key in targetObj)) {
+            targetObj[key] = sourceObj[key];
+        }
+    }
+    return targetObj;
+}
+
+var Vehicle = {
+    engines: 1,
+    ignition: function () {
+        console.log(&quot;Turning on my engine.&quot;);
+    },
+    drive: function () {
+        this.ignition();
+        console.log(&quot;Steering and moving forward!&quot;);
+    }
+};
+var Car = mixin(Vehicle, {
+    wheels: 4,
+    drive: function () {
+        Vehicle.drive.call(this);
+        console.log(&quot;Rolling on all &quot; + this.wheels + &quot; wheels!&quot;);
+    }
+});</code></pre>
+<p>利用mixin方法，可以将Vehicle的属性复制到Car对象上面，需要注意的一点是，这不是类，仍然是对象。</p>
+<h5 id="隐式混入"><a href="#隐式混入" class="headerlink" title="隐式混入"></a>隐式混入</h5><p>有显式，一般来讲，就会有隐式，隐式的混入只是隐藏起来了，比如下面：</p>
+<pre><code class="javascript">var Something = {
+    cool: function () {
+        this.greeting = &quot;Hello World&quot;;
+        this.count = this.count ? this.count + 1 : 1;
+    }
+};
+
+Something.cool();
+Something.greeting; // &quot;Hello World&quot;
+Something.count; // 1
+var Another = {
+    cool: function () {
+        // 隐式把 Something 混入 Another
+        Something.cool.call(this);
+    }
+};
+Another.cool();
+Another.greeting; // &quot;Hello World&quot; 
+Another.count; // 1(count 不是共享状态)</code></pre>
+<p>它是利用this隐式把Something混入了Another中，但是需要注意的是，函数的复制，其实只是引用，这一点和对象里的是一致的。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>在JavaScript中使用类，感觉其实是挺别扭的，所有在JavaScript中模拟类是得不偿失的，虽然能解决当前的问题，但是可能会埋下更多的隐患。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2018/11/23/JavaScript%E8%BF%9B%E9%98%B6-%E7%B1%BB/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

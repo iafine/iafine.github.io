@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2016-10-20</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">iOS</span>
+      
+    </div>
+    
+    <h1 class="detail-title">iOS进阶-浅谈Runloop</h1>
+    <p class="detail-content"><p>学过操作系统的同学都知道，一般来说，一条线程只能执行一个任务，当任务结束后，线程就会退出，完成使命。但是，在很多场景中，我们并不想让线程执行完任务就退出，往往，我们需要其保持随时随地听从命令，可以在需要的时候执行任务，不需要的时候处于等待状态。</p>
+<a id="more"></a>
+
+<pre><code>function loop() {
+    initLoop();
+    do {
+        if(message_hasTask()) {
+            message_execute(get_current_message());
+        }
+    } while (message != quit);
+}</code></pre><p>比如，在手游上，我们需要一个模型来一直监听用户的触摸事件，来对游戏画面进行切换和逻辑判断。这种模型一般都具有相似性。比如：当模型被事件唤醒之后，如何快速地进行响应；当模型处于等待状态时，如何减少资源耗用等等。</p>
+<p>这种模型，在iOS中称作Runloop。Runloop所解决的问题，就是实现一个线程，使得可以随时响应用户的事件，而不退出。</p>
+<p>在iOS中，提供了两种有关的对象，一种是<code>NSRunLoop</code>，另外一种是<code>CFRunLoopRef</code>。<code>CFRunLoopRef</code>是基于<code>CoreFoundation</code>框架的，提供了纯C函数的API，所以这些API都是线程安全的。我们一般听到的<code>NSRunLoop</code>，是对<code>CFRunLoopRef</code>的封装，加上了面向对象的东西，所以这些API不是安全的。</p>
+<p>所以，一般讲解<code>Runloop</code>的文章，其实都是在分析<code>CFRunLoopRef</code>这个东西。<code>CFRunLoopRef</code>的具体实现，苹果也将它开源了出来，可以在引用里看到其链接，这里就不再给出。</p>
+<h3 id="Runloop和线程"><a href="#Runloop和线程" class="headerlink" title="Runloop和线程"></a>Runloop和线程</h3><p>上面可以看出，需要实现一个Runloop模型，是基于线程之上的。所以，Runloop和线程是息息相关的，在iOS系统中，Runloop属于线程的基础架构部分。每个线程，包括程序的主线程，都有与之的Runloop模型。</p>
+<p>其实，Runloop和线程的绑定，是保存在一个全局的Dictionary中，线程和Runloop之间是一一对应的。当线程创建后，默认并不会启动Runloop，只有主动获取的时候，Runloop才会被创建，当线程结束后，对应的Runloop也会随之销毁。但是有个例外，就是主线程对应的Runloop默认是启动的。当程序启动的时候，会执行下面的函数：</p>
+<pre><code>int main(int argc, char * argv[]) {
+   @autoreleasepool {
+       return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
+   }
+}</code></pre><p>其中，在<code>UIApplicationMain</code>内部帮我们开启了主线程的Runloop，相当于说，主线程的Runloop是默认启动的。这样我们才可以监听触摸事件、页面刷新等等功能。</p>
+<h3 id="Runloop结构"><a href="#Runloop结构" class="headerlink" title="Runloop结构"></a>Runloop结构</h3><p>Runloop主要由5个类组成。如下所示：</p>
+<ul>
+<li>CFRunLoopRef</li>
+<li>CFRunLoopModeRef</li>
+<li>CFRunLoopSourceRef</li>
+<li>CFRunLoopTimerRef</li>
+<li>CFRunLoopObserverRef</li>
+</ul>
+<p>其关系如下图：</p>
+<p><img src="http://blog.ibireme.com/wp-content/uploads/2015/05/RunLoop_0.png" alt="Runloop关系图"></p>
+<p>一个Runloop包含多个Mode，每个Mode里面又包含多个Source/Timer/Observer。但是，需要注意的是，每次开启Runloop的时候，只会使用其中一个Mode，一般叫做currentMode。有时候实际场景中需要切换Mode，切换的时候，只能先退出Mode，然后再添加上新的Mode。</p>
+<h4 id="Source0-和-Source1"><a href="#Source0-和-Source1" class="headerlink" title="Source0 和 Source1"></a>Source0 和 Source1</h4><p><strong>CFRunLoopSourceRef</strong>有两个版本：Source0和Source1，Source的作用是给线程发送异步事件。其中Source0是接收App内部的事件，比如用户点击滑动等事件，App自己负责处理，需要手动来唤醒Runloop，来处理这个事件；Source1是通过内核和其他线程发送消息用的，可以自动唤醒Runloop的线程。</p>
+<h4 id="CFRunLoopTimerRef"><a href="#CFRunLoopTimerRef" class="headerlink" title="CFRunLoopTimerRef"></a>CFRunLoopTimerRef</h4><p>顾名思义，<strong>CFRunLoopTimerRef</strong>是基于时间来出发的，和NSTimer底层一样。当其加入到Runloop时，Runloop会注册对应的时间点，当时间点到时，Runloop会唤醒执行那个回调。常见的使用场景比如：延迟执行某个方法、CADisplayLink的使用等等。</p>
+<pre><code>- (void)performSelector:(SEL)aSelector withObject:(id)anArgument afterDelay:(NSTimeInterval)delay;
+
++ (CADisplayLink *)displayLinkWithTarget:(id)target selector:(SEL)sel;</code></pre><h4 id="CFRunLoopObserverRef"><a href="#CFRunLoopObserverRef" class="headerlink" title="CFRunLoopObserverRef"></a>CFRunLoopObserverRef</h4><p><strong>CFRunLoopObserverRef</strong>是基于观察者模式，和<code>CFRunLoopTimerRef</code>类似，每个Observer都会包含有一个回调，用于监听Runloop的状态变化。可以监听到的状态变化有如下几个：</p>
+<pre><code>typedef CF_OPTIONS(CFOptionFlags, CFRunLoopActivity) {
+    kCFRunLoopEntry         = (1UL &lt;&lt; 0), // 即将进入Loop
+    kCFRunLoopBeforeTimers  = (1UL &lt;&lt; 1), // 即将处理 Timer
+    kCFRunLoopBeforeSources = (1UL &lt;&lt; 2), // 即将处理 Source
+    kCFRunLoopBeforeWaiting = (1UL &lt;&lt; 5), // 即将进入休眠
+    kCFRunLoopAfterWaiting  = (1UL &lt;&lt; 6), // 刚从休眠中唤醒
+    kCFRunLoopExit          = (1UL &lt;&lt; 7), // 即将退出Loop
+};</code></pre><p>上面所介绍的Source、Timer和Observer都可以添加到多个Model当中，但是如果在一个Mode当中添加多个，是不会起效果的，有一种特殊情况，就是当一个Mode里什么都没有，则这个Runloop就会直接退出。</p>
+<h3 id="Runloop-Mode"><a href="#Runloop-Mode" class="headerlink" title="Runloop Mode"></a>Runloop Mode</h3><p>上面已经说过，Runloop的运行是基于特定的Mode，其数据结构如下所示：</p>
+<pre><code>struct __CFRunLoopMode {
+    CFStringRef _name;            // Mode Name, 例如 @&quot;kCFRunLoopDefaultMode&quot;
+    CFMutableSetRef _sources0;    // Set
+    CFMutableSetRef _sources1;    // Set
+    CFMutableArrayRef _observers; // Array
+    CFMutableArrayRef _timers;    // Array
+    ...
+};
+
+struct __CFRunLoop {
+    CFMutableSetRef _commonModes;     // Set
+    CFMutableSetRef _commonModeItems; // Set&lt;Source/Observer/Timer&gt;
+    CFRunLoopModeRef _currentMode;    // Current Runloop Mode
+    CFMutableSetRef _modes;           // Set
+    ...
+};</code></pre><p>这里需要注意一下，有一个很关键的属性叫<code>CommonModes</code>，每当 RunLoop 的内容发生变化时，RunLoop 都会自动将 _commonModeItems 里的 Source/Observer/Timer 同步到具有 “Common” 标记的所有Mode里。</p>
+<p>在iOS系统中包含了两个Mode，一个是<code>NSDefaultRunLoopMode</code>和<code>UITrackingRunLoopMode</code>。这两个Mode都已经被注册成了CommonMode，一般App主线程的Runloop默认是<code>NSDefaultRunLoopMode</code>，当UIScrollView滑动的时候，Runloop就会退出，然后切换到<code>UITrackingRunLoopMode</code>。这两个是苹果公开的Mode，当然，还有一些私有Mode，就在这里不阐述了，有兴趣的读者可以Google一下。</p>
+<p>出了上面这些，苹果还提供一个操作<code>CommonModes</code>的字符串，可以对所有CommonMode进行操作，叫做<code>kCFRunLoopCommonModes</code>，有些同学容易将这个东西和上面的Mode混淆，其实概念还是不一样的，<code>kCFRunLoopCommonModes</code>并不是一个新的Mode，在App主线程的Runloop中，是一个<code>CommonModes</code>组合，包含<code>NSDefaultRunLoopMode</code>和<code>UITrackingRunLoopMode</code>两种Mode。这里的话在下面NSTimer的应用场景中详细讲下。</p>
+<h3 id="Runloop常见应用场景"><a href="#Runloop常见应用场景" class="headerlink" title="Runloop常见应用场景"></a>Runloop常见应用场景</h3><h4 id="AutoreleasePool"><a href="#AutoreleasePool" class="headerlink" title="AutoreleasePool"></a>AutoreleasePool</h4><p>AutoreleasePool其实和Runloop是有关系的，有一个经典的面试题是问<code>AutoreleasePool对象是什么时候释放的？</code>，什么答案都有，标准答案应该是AutoreleasePool对象应该是在当前Runloop迭代结束之后释放的。</p>
+<p>当App启动之后，iOS会在主线程注册两个Observer，第一个Observer是监听即将进入Runloop的状态，监听到后，来创建AutoreleasePool对象，其优先级也是最高的，要保证创建AutoreleasePool发生在其他所有回调之前；第二个Observer是监听Runloop准备休眠状态，来释放旧的AutoreleasePool对象，并且创建新的AutoreleasePool对象以供使用，另外还需要监听即将退出Runloop的状态，优先级是最低的，以此来保证释放操作在其他所有回调之后。</p>
+<p>所以，如果以后有人再问你<code>AutoreleasePool对象是什么时候释放的？</code>，一定要说这和Runloop有关系，当Runloop准备休眠的时候，会释放旧的AutoreleasePool对象，创建新的AutoreleasePool对象，当Runloop即将退出的时候，会释放掉相关所有的AutoreleasePool对象。</p>
+<h4 id="NSTimer"><a href="#NSTimer" class="headerlink" title="NSTimer"></a>NSTimer</h4><p>NSTimer在时间点的触发，是基于Runloop运行的，使用NSTimer之前，都需要将其注册到Runloop上。其实NSTimer就是CFRunLoopTimerRef，一个NSTimer注册好之后，Runloop会自动在时间节点注册好事件。但是Runloop为了节省资源，并不会在非常准确的时间节点调用定时器。为此，NSTimer专门提供了一个tolerance属性，来设置宽容度，标记当时间节点到来之后，容许有多少误差可以触发回调。如果错过了某个时间节点，就只能等下一个时间节点的到来。</p>
+<p>回到之前Mode的话题，当UISCrollView进行滚动的时候，NSTimer就无法正常工作，停止滑动又回恢复正常。这个原因是，添加到Runloop的NSTimer默认是以<code>NSDefaultRunLoopMode</code>模式在工作，当UIScrollView进行滑动的时候，Runloop会退出，然后切换到<code>UITrackingRunLoopMode</code>模式。由于NSTimer不是在这个模式下运行的，所以不会触发定时任务，无法工作。</p>
+<p>要解决这个问题，我们就需要将NSTimer在<code>NSDefaultRunLoopMode</code>和<code>UITrackingRunLoopMode</code>两个模式下工作，在UIScrollView滑动的时候也可以进行触发定时任务。所以，我们需要使用到<code>kCFRunLoopCommonModes</code>来完成任务。一般使用如下语句：</p>
+<pre><code>[[NSRunLoop currentRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];</code></pre><h4 id="事件响应和手势识别"><a href="#事件响应和手势识别" class="headerlink" title="事件响应和手势识别"></a>事件响应和手势识别</h4><p>事件响应其实和Runloop也是有关系的，为此，苹果专门注册了一个Source1用来接收系统事件。当手机的硬件发生感应，比如触摸、锁屏和摇晃，苹果注册的这个Source1都会收到回调，然后会将事件进行应用内部分发。</p>
+<p>然后，App内主线程的Runloop会触发Source0事件，Source0收到回调进行下一步操作。</p>
+<p>不同于事件响应，对于手势识别，收到苹果Source1对应用内部分发事件后，首先先将所有的手势回调打断，将所对应的UIGestureRecognizer事件标记为待处理，然后苹果会注册一个Observer来监听Runloop即将进入休眠的状态，然后在Observer回调里执行GestureRecognizer的回调。</p>
+<h4 id="UI更新"><a href="#UI更新" class="headerlink" title="UI更新"></a>UI更新</h4><p>UI更新也和Runloop有关，当在操作UI时，改变了UI的大小、层次等，这个 UIView/CALayer就被标记为待处理，并被提交到一个全局的容器去。</p>
+<p>苹果注册了一个Observer来监听Runloop即将进入休眠和即将退出的状态，然后在其Observer回调里遍历所有待处理的 UIView/CAlayer 以执行实际的绘制和调整，并更新 UI 界面。</p>
+<h4 id="GCD"><a href="#GCD" class="headerlink" title="GCD"></a>GCD</h4><p>GCD底层也和Runloop有关，当调用<code>dispatch_async(dispatch_get_main_queue(), block)</code>时，libDispatch会向主线程的RunLoop发送消息，RunLoop会被唤醒，并从消息中取得这个block，并在回调里执行这个block。但这个逻辑仅限于 dispatch 到主线程，dispatch 到其他线程仍然是由 libDispatch 处理的。</p>
+<h4 id="PerformSelecter"><a href="#PerformSelecter" class="headerlink" title="PerformSelecter"></a>PerformSelecter</h4><p>PerformSelecter其实是创建了一个Timer，然后添加到当前的线程中。如果当前线程没有Runloop，这个方法则走不通的。</p>
+<pre><code>- (void)performSelector:(SEL)aSelector withObject:(nullable id)anArgument afterDelay:(NSTimeInterval)delay inModes:(NSArray&lt;NSRunLoopMode&gt; *)modes;
+- (void)performSelector:(SEL)aSelector withObject:(nullable id)anArgument afterDelay:(NSTimeInterval)delay;</code></pre><p>另外，还有AFNetworking2.0、NSURLConnection的使用其实都和Runloop有关，AFNetworking2.0希望能在后台线程接收到Delegate回调，单独创建了一条线程，并在这条这个线程中启动了Runloop。但是AFNetworking换成基于<code>NSURLSession</code>之后，并没有看到相关Runloop代码。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>有关Runloop的东西其实还有很多，这里只是站在大神的肩膀上，总结下基本的Runloop知识，希望能帮到需要的同学！</p>
+<h3 id="引用"><a href="#引用" class="headerlink" title="引用"></a>引用</h3><p>CoreFoundation的开源代码地址(包含Runloop代码): </p>
+<ul>
+<li><p><a href="http://blog.ibireme.com/2015/05/18/runloop/" target="_blank" rel="noopener">深入理解RunLoop</a></p>
+</li>
+<li><p><a href="http://opensource.apple.com/tarballs/CF/" target="_blank" rel="noopener">http://opensource.apple.com/tarballs/CF/</a></p>
+</li>
+</ul>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2016/10/20/iOS%E8%BF%9B%E9%98%B6-%E6%B5%85%E8%B0%88Runloop/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

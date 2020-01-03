@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2019-08-06</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">深入了解现代web浏览器-站点请求和网页呈现</h1>
+    <p class="detail-content"><p>作为前端开发，浏览器的知识是必须掌握的，偶然在Google开发平台上看到如此优秀的文章，特此记录回顾一下，本篇介绍浏览器输入url，网站是怎么显示出来的。</p>
+<a id="more"></a>
+
+<ul>
+<li>CPU、GPU、内存和多进程架构；</li>
+<li>站点请求和网页呈现；</li>
+<li>渲染进程的内部运作；</li>
+<li>事件交互实现。</li>
+</ul>
+<p>本篇译文地址：<a href="https://developers.google.com/web/updates/2018/09/inside-browser-part2" target="_blank" rel="noopener">https://developers.google.com/web/updates/2018/09/inside-browser-part2</a></p>
+<p>图片资源来源于Google开发平台。</p>
+<h4 id="从浏览器进程开始说起"><a href="#从浏览器进程开始说起" class="headerlink" title="从浏览器进程开始说起"></a>从浏览器进程开始说起</h4><p>上篇我们介绍了CPU、GPU和多进程架构，以及选项卡之外的东西都是由浏览器进程处理。而浏览器进程具有如下线程：</p>
+<ul>
+<li>UI线程。负责绘制浏览器的按钮和输入字段；</li>
+<li>网络线程。用于处理网络接口以及接收数据；</li>
+<li>存储线程，用于控制对文件的访问。</li>
+</ul>
+<p>在浏览器中输入url时，输入将交给浏览器进程的UI线程来进行渲染处理。</p>
+<p><img src="/images/browserprocesses2019.png" alt="111"></p>
+<h4 id="处理输入"><a href="#处理输入" class="headerlink" title="处理输入"></a>处理输入</h4><p>当用户在地址栏输入url时，UI线程首先会问是搜索查询还是访问URL，因为在chrome里，地址栏也是一个Google搜索框，因此UI线程需要判断决定是将您跳转到搜索引擎，还是请求的网站。</p>
+<p><img src="/images/input2019.png" alt="111"></p>
+<h4 id="浏览网站"><a href="#浏览网站" class="headerlink" title="浏览网站"></a>浏览网站</h4><p>当用户点下enter键，UI线程就会发起网络请求来获取请求结果。并且网络线程通过相应的协议，比如DNS查找，TLS连接，此时可能响应结果是重定向，这种情况下，网络线程会与正在请求重定向的UI线程进行通信，然后启动另外一个请求。</p>
+<p><img src="/images/navstart2019.png" alt="111"></p>
+<h4 id="处理响应结果"><a href="#处理响应结果" class="headerlink" title="处理响应结果"></a>处理响应结果</h4><p>一旦请求结果回来，网络线程会先查看流的前几个字符，判断content-type值。</p>
+<p>如果是html，下一步会将数据传递给渲染器进程，如果是一个zip或者其他类型的文件，意味着这是一个下载，就会又将数据传递给下载管理器。</p>
+<p><img src="/images/sniff2019.png" alt="111"></p>
+<h4 id="查找渲染器进程"><a href="#查找渲染器进程" class="headerlink" title="查找渲染器进程"></a>查找渲染器进程</h4><p>一旦完成所有安全检查，网络线程就会确信浏览器应该导航到请求的站点，然后网络线程会告知UI线程数据已经准备完毕，接下来，UI线程会找到一个渲染器进程进行网页渲染。</p>
+<p><img src="/images/findrenderer2019.png" alt="12"></p>
+<p>由于网络请求，可能需要等待几百毫秒才能返回结果，因此需要优化来加快此步骤，当UI线程向网络线程发送URL请求时，它已经知道他们正在导航到哪个站点。此时UI线程尝试与网络请求并行地主动查找或启动渲染器进程。如果一切预期进行，那么网络数据获取到之后，渲染器已经处于备用状态。</p>
+<h4 id="开始渲染"><a href="#开始渲染" class="headerlink" title="开始渲染"></a>开始渲染</h4><p>当准备好页面数据和渲染进程之后，浏览器进程就会通过IPC来与渲染进程通信。一旦浏览器进程确认了渲染器进程渲染完成，那么加载完毕。</p>
+<p>此时，地址栏也会更新，安全指示符和加载loading状态会处于完毕状态。标签的会话历史也会更新，前进/后退按钮也会生成新的站点地址，会话历史记录也会存储到本地磁盘中。</p>
+<p><img src="/images/commit2019.png" alt="12"></p>
+<h4 id="初始加载完成"><a href="#初始加载完成" class="headerlink" title="初始加载完成"></a>初始加载完成</h4><p>当网站loading状态变更为结束，并不能说明加载已经完成，接下来，JavaScript仍可以在此之后，加载其他资源，并呈现新的网页视图。</p>
+<p><img src="/images/loaded2019.png" alt="1223"></p>
+<h4 id="站点跳转"><a href="#站点跳转" class="headerlink" title="站点跳转"></a>站点跳转</h4><p>首次网页加载已经完成，那么如果用户在地址栏输入新的url，会发生什么呢？浏览器进程将通过相同的步骤导航到不同的站点。但在此之前，它需要检查当前渲染的站点是否关心 <code>beforeunload</code>事件。</p>
+<p><code>beforeunload</code>可以创建“离开此网站？” 尝试导航或关闭选项卡时发出警报。选项卡内部的所有内容（包括您的JavaScript代码）都由渲染器进程处理，因此，当有新的导航请求出现时，浏览器进程必须与当前渲染器进程进行核对。</p>
+<p><img src="/images/beforeunload2019.png" alt="1111"></p>
+<p>如果站点跳转是从渲染器进程触发的，比如用户单击链接或客户端JavaScript运行<code>window.location = &quot;https://newsite.com&quot;</code>这样的代码，那么渲染器进程首先会检查<code>beforeunload</code>事件。</p>
+<p>当跳转的站点和当前站点不是同一个渲染的站点时，将会调用一个单独的渲染器进程来处理新的站点请求，同时保留当前渲染进程来处理诸如的事件<code>unload</code>。</p>
+<p><img src="/images/unload2019.png" alt="123123"></p>
+<h4 id="Service-Worker"><a href="#Service-Worker" class="headerlink" title="Service Worker"></a>Service Worker</h4><p>Service Worker本质上充当了Web应用程序和浏览器之间的代理服务，可以提供优秀的离线体验，拦截网络请求并基于网络是否可用以及更新的资源是否驻留在服务器上来采取适当的动作。他们还允许访问推送通知和后台同步API。</p>
+<p>但是重要的是，Service Worker是在渲染器进程中执行JS代码的。当站点访问时，是如何知道该站点有Service Worker的呢？</p>
+<p>首先需要注册Service Worker，当站点访问时，网络线程会对照注册的Service Worker作用域来检查，如果该URL注册了Service Worker，那么UI线程会找到渲染器进程执行Service Worker代码，Service Worker可以从缓存中加载数据，从而无需网络请求，当然，也可以从网络中请求新资源。</p>
+<p><img src="/images/scope_lookup2019.png" alt="111"></p>
+<p>具体的Service Worker工作流程如下：<br><img src="/images/serviceworker2019.png" alt="111"></p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本篇介绍了站点访问发生了什么，以及浏览器进程是如何和其他线程交互的，从而理解为什么开发了诸如<code>unload</code>之类的API。</p>
+<p>在下一篇中，将介绍浏览器是如何解析HTML / CSS / JavaScript来呈现页面。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2019/08/06/%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%E7%8E%B0%E4%BB%A3web%E6%B5%8F%E8%A7%88%E5%99%A8-%E7%AB%99%E7%82%B9%E8%AF%B7%E6%B1%82%E5%92%8C%E7%BD%91%E9%A1%B5%E5%91%88%E7%8E%B0/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

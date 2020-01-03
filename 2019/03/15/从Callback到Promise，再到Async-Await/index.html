@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2019-03-15</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">从Callback到Promise，再到Async/Await</h1>
+    <p class="detail-content"><p>回调可以说是给编程带来了很大的灵活性，通过提前注册函数的方式，来实现在某一时刻需要完成的任务。当然开发中，回调总是和异步相随，比如文件处理和API的获取等等。并且，当多个异步任务的执行过程中，出现顺序要求时，如何书写易读的代码，也是一个聊不完的话题。</p>
+<a id="more"></a>
+
+<p>这次，我们用一个很实用的Demo，先以Callback来实现，然后进行改造，慢慢过渡到Promise，最后到Async/Await。</p>
+<h4 id="Demo分析"><a href="#Demo分析" class="headerlink" title="Demo分析"></a>Demo分析</h4><p>我们的目标是搭建一个本地静态服务器，用于展示我们预先创建的html相关文件，生成好之后，可以自动打开浏览器，查看运行结果。我们来分析下步骤：</p>
+<ul>
+<li>新建一个<code>public</code>文件夹，用于存放相关文件；</li>
+<li>新建<code>public/index.html</code>文件，并写入内置的代码；</li>
+<li>新建<code>public/css</code>文件夹，并且创建一个index.css文件，用于存放相关样式；</li>
+<li>通过Node，开启某个本地端口，并且自动打开<code>index.html</code>文件。</li>
+</ul>
+<h4 id="Callback方式实现"><a href="#Callback方式实现" class="headerlink" title="Callback方式实现"></a>Callback方式实现</h4><p>通过步骤拆分，我们一步步来实现功能。</p>
+<ul>
+<li><p>创建<code>public</code>文件夹：</p>
+<pre><code class="javascript">/**
+ * 创建Public文件夹
+ */
+const folderPath = path.join(__dirname, &#39;../public&#39;)
+
+function createPublicFolder(callback) {
+    fs.mkdir(folderPath, (error) =&gt; {
+        if (error) {
+            console.error(error)
+        } else {
+            console.log(&#39;创建public文件夹成功&#39;)
+            callback(folderPath)
+        }
+    })
+}</code></pre>
+</li>
+<li><p>创建html文件：</p>
+<pre><code class="javascript">/**
+ * 创建index.html文件，用于展示内容
+ */
+function createHTMLFile(callback) {
+    const content = `&lt;!DOCTYPE html&gt;
+     &lt;html&gt;
+     &lt;head&gt;
+         &lt;meta charset=&quot;utf-8&quot;&gt;
+         &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge&quot;&gt;
+         &lt;title&gt;Demo&lt;/title&gt;
+         &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+         &lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;css/index.css&quot;&gt;
+         &lt;style type=&quot;text/css&quot;&gt;
+             body {background-color: red;}
+        &lt;/style&gt;
+     &lt;/head&gt;
+     &lt;body&gt;
+         &lt;h1&gt;Hello World&lt;/h1&gt;
+     &lt;/body&gt;
+     &lt;/html&gt;`
+    const htmlPath = path.join(folderPath, &#39;index.html&#39;)
+    fs.writeFile(htmlPath, content, &#39;utf8&#39;, (error) =&gt; {
+        if (error) {
+            console.error(error)
+        } else {
+            console.log(&#39;创建index.html文件成功&#39;)
+            callback(folderPath)
+        }
+    })
+}</code></pre>
+</li>
+<li><p>创建css文件:</p>
+<pre><code class="javascript">/**
+ * 创建index.css文件，用于优化UI
+ */
+function createCSSFile(callback) {
+    const cssFolderPath = path.join(folderPath, &#39;css&#39;)
+    const cssPath = path.join(cssFolderPath, &#39;index.css&#39;)
+
+    const content = `body {background-color: red;}`
+
+    fs.mkdir(cssFolderPath, (error) =&gt; {
+        if (error) {
+            console.error(error)
+        } else {
+            fs.writeFile(cssPath, content, &#39;utf8&#39;, (error) =&gt; {
+                if (error) {
+                    console.error(error)
+                } else {
+                    console.log(&#39;创建index.css文件成功&#39;)
+                    callback(folderPath)
+                }
+            })
+        }
+    })
+}</code></pre>
+</li>
+<li><p>开启本地服务：</p>
+<pre><code class="javascript">/**
+ * 开启本地服务，打开静态文件
+ */
+function openIndexPage(callback) {
+
+    const htmlPath = path.join(folderPath, &#39;index.html&#39;)
+
+    const server = http.createServer()
+    server.listen(9001, () =&gt; {
+        console.log(&#39;请访问http://127.0.0.1:9001，查看效果&#39;)
+    })
+
+    server.on(&#39;request&#39;, function (request, response) {
+        var requestPath = url.parse(request.url, true)
+        if (requestPath.pathname == &#39;/&#39;) {
+            requestPath.pathname += &#39;index.html&#39;
+        }
+
+        var staticFilePath = path.join(folderPath, requestPath.pathname)
+
+        fs.readFile(staticFilePath, &#39;binary&#39;, (error, data) =&gt; {
+            if (error) {
+                console.error(error)
+            } else {
+                response.writeHead(200, { &#39;Content-Type&#39;: &#39;text/html&#39; })
+                response.write(data, &#39;binary&#39;)
+                response.end()
+            }
+        })
+    })
+
+    // 打开默认浏览器
+    open(&#39;http://127.0.0.1:9001&#39;)
+}</code></pre>
+</li>
+</ul>
+<p>调用方代码如下：</p>
+<pre><code class="javascript">createPublicFolder(() =&gt; {
+    createHTMLFile(() =&gt; {
+        createCSSFile(() =&gt; {
+            openIndexPage()
+        })
+    })
+})</code></pre>
+<p>怎么样，很熟悉吧，这就是传说中的回调地狱，另外，还有个问题就是，css和html的创建其实并没有顺序可言，代码上面的代码，只能是创建完毕HTML之后，才能创建CSS文件，接下来我们慢慢优化。</p>
+<h4 id="Promise方式实现"><a href="#Promise方式实现" class="headerlink" title="Promise方式实现"></a>Promise方式实现</h4><p>Promise可以将异步对象和回调函数脱离出来，使用 <code>then</code>可以实现链式调用。我们来一步步进行改造。</p>
+<ul>
+<li><p>创建<code>public</code>文件夹：</p>
+<pre><code class="javascript">/**
+ * 创建Public文件夹
+ */
+const folderPath = path.join(__dirname, &#39;../public&#39;)
+
+function createPublicFolder() {
+
+    return new Promise((resolve, reject) =&gt; {
+        fs.mkdir(folderPath, (error) =&gt; {
+            if (error) {
+                reject(error)
+            } else {
+                console.log(&#39;创建public文件夹成功&#39;)
+                resolve()
+            }
+        })
+    })
+}</code></pre>
+</li>
+<li><p>创建html文件：</p>
+<pre><code class="javascript">/**
+ * 创建index.html文件，用于展示内容
+ */
+function createHTMLFile() {
+    const content = `&lt;!DOCTYPE html&gt;
+     &lt;html&gt;
+     &lt;head&gt;
+         &lt;meta charset=&quot;utf-8&quot;&gt;
+         &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge&quot;&gt;
+         &lt;title&gt;Demo&lt;/title&gt;
+         &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+         &lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;css/index.css&quot;&gt;
+         &lt;style type=&quot;text/css&quot;&gt;
+             body {background-color: red;}
+        &lt;/style&gt;
+     &lt;/head&gt;
+     &lt;body&gt;
+         &lt;h1&gt;Hello World&lt;/h1&gt;
+     &lt;/body&gt;
+     &lt;/html&gt;`
+    const htmlPath = path.join(folderPath, &#39;index.html&#39;)
+
+    return new Promise((resolve, reject) =&gt; {
+        fs.writeFile(htmlPath, content, &#39;utf8&#39;, (error) =&gt; {
+            if (error) {
+                reject(error)
+            } else {
+                console.log(&#39;创建index.html文件成功&#39;)
+                resolve()
+            }
+        })
+    });
+}</code></pre>
+</li>
+<li><p>创建css文件:</p>
+<pre><code class="javascript">/**
+ * 创建index.css文件，用于优化UI
+ */
+function createCSSFile() {
+    const cssFolderPath = path.join(folderPath, &#39;css&#39;)
+    const cssPath = path.join(cssFolderPath, &#39;index.css&#39;)
+
+    const content = `body {background-color: red;}`
+
+    return new Promise((resolve, reject) =&gt; {
+        fs.mkdir(cssFolderPath, (error) =&gt; {
+            if (error) {
+                reject(error)
+            } else {
+                fs.writeFile(cssPath, content, &#39;utf8&#39;, (error) =&gt; {
+                    if (error) {
+                        reject(error)
+                    } else {
+                        console.log(&#39;创建index.css文件成功&#39;)
+                        resolve()
+                    }
+                })
+            }
+        })
+    })
+}</code></pre>
+</li>
+<li><p>开启本地服务：</p>
+<pre><code class="javascript">/**
+ * 开启本地服务，打开静态文件
+ */
+function openIndexPage() {
+
+    const htmlPath = path.join(folderPath, &#39;index.html&#39;)
+
+    return new Promise((resolve, reject) =&gt; {
+
+        const server = http.createServer()
+
+        server.listen(9001, () =&gt; {
+            console.log(&#39;请访问http://127.0.0.1:9001，查看效果&#39;)
+        })
+
+        server.on(&#39;request&#39;, function (request, response) {
+            var requestPath = url.parse(request.url, true)
+            if (requestPath.pathname == &#39;/&#39;) {
+                requestPath.pathname += &#39;index.html&#39;
+            }
+
+            var staticFilePath = path.join(folderPath, requestPath.pathname)
+
+            fs.readFile(staticFilePath, &#39;binary&#39;, (error, data) =&gt; {
+                if (error) {
+                    reject(error)
+                } else {
+                    response.writeHead(200, { &#39;Content-Type&#39;: &#39;text/html&#39; })
+                    response.write(data, &#39;binary&#39;)
+                    response.end()
+                    resolve()
+                }
+            })
+        })
+
+        // 打开默认浏览器
+        open(&#39;http://127.0.0.1:9001&#39;)
+    })
+}</code></pre>
+</li>
+</ul>
+<p>调用方代码如下：</p>
+<pre><code class="javascript">createPublicFolder()
+    .then(() =&gt; createHTMLFile())
+    .then(() =&gt; createCSSFile())
+    .then(() =&gt; openIndexPage())
+    .catch((error) =&gt; {
+        console.error(error)
+    })
+</code></pre>
+<p>怎么样，结构是不是变得清晰很多，终于干掉了那种回调地狱的代码。但是这不是我们的终极目标。</p>
+<h4 id="Async-Await方式实现"><a href="#Async-Await方式实现" class="headerlink" title="Async/Await方式实现"></a>Async/Await方式实现</h4><p>async/await可以做到使得代码的可读性变高，再也没有各种回调出现。但是我们先需要做的是将系统方法给Promise化。</p>
+<pre><code class="javascript">const util = require(&#39;util&#39;)
+
+const mkdir = util.promisify(fs.mkdir)
+const writeFile = util.promisify(fs.writeFile)
+const readFile = util.promisify(fs.readFile)</code></pre>
+<p>然后修改每一个方法实现：</p>
+<ul>
+<li><p>创建<code>public</code>文件夹：</p>
+<pre><code class="javascript">/**
+ * 创建Public文件夹
+ */
+const folderPath = path.join(__dirname, &#39;../public&#39;)
+
+async function createPublicFolder() {
+    await mkdir(folderPath)
+}</code></pre>
+</li>
+<li><p>创建html文件：</p>
+<pre><code class="javascript">/**
+ * 创建index.html文件，用于展示内容
+ */
+async function createHTMLFile() {
+    const content = `&lt;!DOCTYPE html&gt;
+     &lt;html&gt;
+     &lt;head&gt;
+         &lt;meta charset=&quot;utf-8&quot;&gt;
+         &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge&quot;&gt;
+         &lt;title&gt;Demo&lt;/title&gt;
+         &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+         &lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;css/index.css&quot;&gt;
+         &lt;style type=&quot;text/css&quot;&gt;
+             body {background-color: red;}
+        &lt;/style&gt;
+     &lt;/head&gt;
+     &lt;body&gt;
+         &lt;h1&gt;Hello World&lt;/h1&gt;
+     &lt;/body&gt;
+     &lt;/html&gt;`
+    const htmlPath = path.join(folderPath, &#39;index.html&#39;)
+
+    await writeFile(htmlPath, content, &#39;utf8&#39;)
+}</code></pre>
+</li>
+<li><p>创建css文件:</p>
+<pre><code class="javascript">/**
+ * 创建index.css文件，用于优化UI
+ */
+async function createCSSFile() {
+    const cssFolderPath = path.join(folderPath, &#39;css&#39;)
+    const cssPath = path.join(cssFolderPath, &#39;index.css&#39;)
+
+    const content = `body {background-color: red;}`
+
+    await mkdir(cssFolderPath)
+    await writeFile(cssPath, content, &#39;utf8&#39;)
+}</code></pre>
+</li>
+<li><p>开启本地服务：</p>
+<pre><code class="javascript">/**
+ * 开启本地服务，打开静态文件
+ */
+async function openIndexPage() {
+
+    const htmlPath = path.join(folderPath, &#39;index.html&#39;)
+
+    const server = http.createServer()
+
+    server.listen(9001, () =&gt; {
+        console.log(&#39;请访问http://127.0.0.1:9001，查看效果&#39;)
+    })
+    server.on(&#39;request&#39;, async (request, response) =&gt; {
+        var requestPath = url.parse(request.url, true)
+        if (requestPath.pathname == &#39;/&#39;) {
+            requestPath.pathname += &#39;index.html&#39;
+        }
+
+        var staticFilePath = path.join(folderPath, requestPath.pathname)
+
+        const data = await readFile(staticFilePath, &#39;binary&#39;)
+
+        response.writeHead(200, { &#39;Content-Type&#39;: &#39;text/html&#39; })
+        response.write(data, &#39;binary&#39;)
+        response.end()
+    })
+
+    // 打开默认浏览器
+    open(&#39;http://127.0.0.1:9001&#39;)
+}</code></pre>
+</li>
+</ul>
+<p>调用方代码如下：</p>
+<pre><code class="javascript">(async () =&gt; {
+    try {
+        await createPublicFolder()
+        await createHTMLFile()
+        await createCSSFile()
+        await openIndexPage()
+    } catch (error) {
+        console.error(&#39;错误信息：&#39; + error)
+    }
+})()</code></pre>
+<p>这样就符合人类的阅读规范了，从上往下执行。我们在调用代码这里，增加了try catch，目的是捕获文件操作时出现的异常信息。</p>
+<p>改造到此就结束了，我们从callback，一步步过渡到async/await，代码的书写方式也发生了改变。总的来说，在绝大多数场景下，推荐使用async/await，以此来提高代码的可读性。</p>
+<p>最后附上demo地址，可以参考下：</p>
+<p><a href="https://github.com/iafine/code_snippets/tree/master/Node/package-demo" target="_blank" rel="noopener">package-demo</a></p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2019/03/15/%E4%BB%8ECallback%E5%88%B0Promise%EF%BC%8C%E5%86%8D%E5%88%B0Async-Await/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

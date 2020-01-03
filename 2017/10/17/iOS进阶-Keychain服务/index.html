@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2017-10-17</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">iOS</span>
+      
+    </div>
+    
+    <h1 class="detail-title">iOS进阶-Keychain服务</h1>
+    <p class="detail-content"><p>在iOS系统中，Keychain提供了安全的存储服务，用来存储一些敏感信息。但是在日常开发中，我们经常会忽视这个苹果自荐的功能，本文的目的就是引起开发者的重视，敏感信息尽量使用Keychain服务。</p>
+<a id="more"></a>
+
+<h4 id="NSUserDefaults不安全"><a href="#NSUserDefaults不安全" class="headerlink" title="NSUserDefaults不安全"></a>NSUserDefaults不安全</h4><p>NSUserDefaults其实是plist文件中键值存储，并且最大的问题是存在与沙盒中，这就对安全性埋下了隐患。如果攻击者破解app，拿到了沙盒中的数据，就会造成数据泄漏，后果不堪设想。  </p>
+<p>当然，一般也不会有把密码直接使用NSUserDefaults存储的，都会进行加密、或者是多重加密后再进行NSUserDefaults存储。这么做其实是可行的，前提是加密算法不能泄漏。有个小问题就是，如果用户删掉app重装的话，之前所有存储的敏感信息都会消失。比如，一个用户误删了使用NSUserDefaults存储密码的app，当重新安装之后，由于以前是记住密码免登录，只因为自己操作不当，接下来要进入找回密码功能，重新修改密码才能再次使用app。这对用户来说是一种相当不友好的体验。</p>
+<p>所以，正确的姿势是使用Keychain服务来存储。Keychain保存的数据不仅仅是加密过的，而且由于Keychain是存在与沙盒之外的，当应用删除之后，app存储的数据并没有被删掉，第二次安装时只要读取Keychain里的数据，即可得到以前存储的信息。</p>
+<h4 id="Keychain使用场景"><a href="#Keychain使用场景" class="headerlink" title="Keychain使用场景"></a>Keychain使用场景</h4><h5 id="存储隐私信息"><a href="#存储隐私信息" class="headerlink" title="存储隐私信息"></a>存储隐私信息</h5><p>在iOS系统中，最常用的keychain服务就是存储用户密码了。使用keychain保存用户密码最大的好处已经在上面说过，个人极力推荐这么做。</p>
+<h5 id="数据共享"><a href="#数据共享" class="headerlink" title="数据共享"></a>数据共享</h5><p>如果我们有多个app，它们之间需要共享一些数据，以提供更好的用户体验，那么使用Keychain群组可以实现。但前提是同一个公司的产品才能共享，比如<code>com.hyyy.test1</code>和<code>com.hyyy.test2</code>两个同一公司下的不同产品之前可以实现数据共享。</p>
+<h5 id="设备唯一标示存储"><a href="#设备唯一标示存储" class="headerlink" title="设备唯一标示存储"></a>设备唯一标示存储</h5><p>在iOS中，为了在苹果的打压下获取唯一标示符，开发者们也是想尽了办法，目前最好的方式就是获取IDFV，并将其存储到keychain中。IDFV是设备区别应用提供商的，一般来说可以作为应用唯一标示符。但是IDFV缺陷就是当设备删除了该所有应用提供商的app之后，IDFV值会发生变化，所以IDFV+Keychain的组合目前被经常用到，来替代UDID的作用。特别是加上Keychain的共享服务，可以使应用提供商下的所有app下获取的IDFV都不会发生变化。这一服务可以说是目前最佳的识别用户的办法。</p>
+<h5 id="其他用处"><a href="#其他用处" class="headerlink" title="其他用处"></a>其他用处</h5><p>当然，不同app的需求是不一样的，如果你需要存储一些信息，即使app删掉后也不会丢失，那么使用Keychain服务可以完美地实现这点。</p>
+<h5 id="实践总结"><a href="#实践总结" class="headerlink" title="实践总结"></a>实践总结</h5><p>其实，所有的这些都是本人摸索出来的，并且实现了一个Swift3下的简单Keychain工具，叫<a href="https://github.com/castial/HYKeychainHelper" target="_blank" rel="noopener">HYKeychainHelper</a>。这个框架是参考大名鼎鼎的<a href="https://github.com/soffes/SAMKeychain" target="_blank" rel="noopener">SAMKeychain</a>和苹果官方的GenericKeychain实现的，如果您的Swfit项目需要使用到Keychain，希望这个可以帮到您，HYKeychainHelper操作起来也比较简单，如果您之前使用过SAMKeychain的话，那更容易了。</p>
+<p><a href="https://github.com/castial/HYKeychainHelper" target="_blank" rel="noopener">HYKeychainHelper</a>的用法也比较简单，为了更好上手，语法采用和<a href="https://github.com/soffes/SAMKeychain" target="_blank" rel="noopener">SAMKeychain</a>基本一致。具体如下：</p>
+<pre><code class="swift">/// query account&#39;s password
+HYKeychainHelper.password(service: &quot;your_service_name&quot;, account: &quot;your_account_name&quot;)
+
+/// add or update an account
+HYKeychainHelper.set(password: &quot;your_password&quot;, service: &quot;your_service_name&quot;, account: &quot;your_account_name&quot;)
+
+/// delete an account
+HYKeychainHelper.deletePassword(service: &quot;your_service_name&quot;, account: &quot;your_account_name&quot;)
+
+/// all accounts
+HYKeychainHelper.allAccounts(forService: &quot;your_service_name&quot;)</code></pre>
+<blockquote>
+<p>对于更多的用法，请查看<code>HYKeychainHelper</code>获取更多细节。</p>
+</blockquote>
+<p>另外，对Keychain的了解难免有些遗漏，如果对Keychain有更多的看法，欢迎留言给我，对自己来说也是一种收获！</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2017/10/17/iOS%E8%BF%9B%E9%98%B6-Keychain%E6%9C%8D%E5%8A%A1/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

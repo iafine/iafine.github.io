@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2016-05-24</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">iOS</span>
+      
+    </div>
+    
+    <h1 class="detail-title">iOS进阶-浅谈Block</h1>
+    <p class="detail-content"><blockquote>
+<p>Block这种东西，基本上天天都会看到，最近闲下来，总结一下Block的基本知识。</p>
+</blockquote>
+<p>从苹果官方文档来看，Block是一个OC对象，其实可以作为一个可以保存代码块的特殊对象来理解。在合适的时机去执行这块代码。</p>
+<a id="more"></a>
+
+<p>Block的种类有三种，无参数无返回值的Block、有参数无返回值的Block和有参数和有返回值的Block。</p>
+<h4 id="无参数无返回值的Block"><a href="#无参数无返回值的Block" class="headerlink" title="无参数无返回值的Block"></a>无参数无返回值的Block</h4><pre><code>void (^(testBlock))() = ^() {
+    NSLog(@&quot;textBlock&quot;);
+};
+
+testBlock();</code></pre><h4 id="有参数无返回值的Block"><a href="#有参数无返回值的Block" class="headerlink" title="有参数无返回值的Block"></a>有参数无返回值的Block</h4><pre><code>void (^(appendString))(NSString *str1, NSString *str2) = ^(NSString *str1, NSString *str2) {
+    NSString *appendStr = [NSString stringWithFormat:@&quot;%@%@&quot;, str1, str2];
+    NSLog(@&quot;%@&quot;, appendStr);
+};
+
+appendString(@&quot;123&quot;, @&quot;456&quot;);</code></pre><h4 id="有参数有返回值的Block"><a href="#有参数有返回值的Block" class="headerlink" title="有参数有返回值的Block"></a>有参数有返回值的Block</h4><pre><code>NSString* (^(appendString))(NSString *str1, NSString *str2) = ^(NSString *str1, NSString *str2) {
+    NSString *appendStr = [NSString stringWithFormat:@&quot;%@%@&quot;, str1, str2];
+    return appendStr;
+    };
+
+NSLog(@&quot;%@&quot;, appendString(@&quot;123&quot;, @&quot;456&quot;));</code></pre><p>这些事Block的基本用法，不过并不是这篇文章的关键，在总结Block的关键知识点之前，我们先来回顾一下iOS的内存分配机制。</p>
+<h3 id="iOS内存分配"><a href="#iOS内存分配" class="headerlink" title="iOS内存分配"></a>iOS内存分配</h3><p>在开始之前，先来讲讲iOS程序中内存分配的知识。搬张图来看看内存区域的划分。</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1232160-0db68b7366e194e3.png?imageMogr2/auto-orient/strip%7CimageView2/2" alt="内存分配"></p>
+<h4 id="栈区"><a href="#栈区" class="headerlink" title="栈区"></a>栈区</h4><p>栈是向低地址扩展的数据结构，是一块连续的内存区域。其栈顶和栈的最大容量是系统事先规定好的，如果申请空间超过栈的剩余空间，就会提示栈溢出，一般栈空间是很小的，用来存放函数的参数值，局部变量等等。</p>
+<h4 id="堆区"><a href="#堆区" class="headerlink" title="堆区"></a>堆区</h4><p>堆和栈相反，是向高地址扩展的数据结构，并且不是一块连续的内存区域。对于堆内存来讲，系统会有一张链表用来记录空闲内存地址的，当系统收到堆内存申请时，会遍历该链表，找到第一个空闲内存大于申请空间的堆结点地址，将空间分配给使用者。和栈相比，堆的大小只受限于操作系统的虚拟内存大小，目前来说已经足够大，所以空间充足。</p>
+<p>堆内存的分配和释放是由开发者去控制的，在iOS中，一般我们创建一个对象，就是存放在堆中的，其分配内存是用alloc方法实现，其内存释放就是使用release方法来进行内存释放。</p>
+<h4 id="全局区"><a href="#全局区" class="headerlink" title="全局区"></a>全局区</h4><p>全局区有时候也叫静态区，是用来存储全局变量和静态变量的。全局区包括两块区域，一块是存放未初始化过全局变量和静态变量的，另一块是存放已经初始化过的全局变量和静态变量。</p>
+<p>在一些其他文章中，全局区属于数据区的范畴，下面讲到的常量区也属于数据区范畴。</p>
+<h4 id="常量区"><a href="#常量区" class="headerlink" title="常量区"></a>常量区</h4><p>常量区顾名思义，存放一些程序是用到的常量，程序结束后由系统释放。</p>
+<h4 id="代码区"><a href="#代码区" class="headerlink" title="代码区"></a>代码区</h4><p>代码区是存放程序运行的二进制代码的。</p>
+<p>一般app启动之后，全局区、常量区和代码区都已经固定，分配完毕。变化的是堆区和栈区的内存分配。当内存已经释放，但是还有指针指向这块，这时会造成野指针。</p>
+<p>盗用一位前辈总结的例子：</p>
+<pre><code>//main.cpp
+int a = 0; // 全局初始化区
+char *p1; // 全局未初始化区
+main {
+    int b; // 栈
+    char s[] = &quot;abc&quot;; // 栈
+    char *p2; // 栈
+    char *p3 = &quot;123456&quot;; // 123456\0在常量区，p3在栈上
+    static int c =0； // 全局静态初始化区
+    p1 = (char *)malloc(10);
+    p2 = (char *)malloc(20); // 分配得来的10和20字节的区域就在堆区
+    strcpy(p1, &quot;123456&quot;); // 123456\0在常量区，这个函数的作用是将&quot;123456&quot; 这串字符串复制一份放在p1申请的10个字节的堆区域中。
+    // p3指向的&quot;123456&quot;与这里的&quot;123456&quot;可能会被编译器优化成一个地址。
+}</code></pre><h3 id="Block知识点总结"><a href="#Block知识点总结" class="headerlink" title="Block知识点总结"></a>Block知识点总结</h3><h4 id="Block捕获外部变量"><a href="#Block捕获外部变量" class="headerlink" title="Block捕获外部变量"></a>Block捕获外部变量</h4><p>首先，Block捕获外部变量仅仅只会捕获闭包里用到的值，没有用到的并不会去捕获。</p>
+<p>如果外部变量是全局变量或者是静态全局变量，Block捕获之后，由于是全局的，在闭包结束之后，其改变的值仍然可以保存下来，所以如果Block捕获外部变量是全局的，在Block回调内部修改了该变量，可以直接修改，不用加<code>__block</code>。</p>
+<p>如果外部变量是静态变量，那么修改也是不需要<code>__block</code>的，因为静态变量传递给Block的是内存地址，所以Block也可以直接修改该值。</p>
+<p>但是，如果外部变量是自动变量的话，是不能直接修改的，是因为Block捕获到的是自动变量的值，并非内存地址。如果需要修改，那么只有加上<code>__block</code>才会生效。</p>
+<p>所以，可以总结一下，在Block中有两种可以修改值的方式，一是传递内存地址到Block中，二是使用<code>__blcok</code>修饰。</p>
+<h4 id="Block常见类型"><a href="#Block常见类型" class="headerlink" title="Block常见类型"></a>Block常见类型</h4><p><strong>_NSConcreteStackBlock</strong></p>
+<p>这是保存在栈中的block，当函数返回时该block会销毁。这种block的特点是只会执行一次就出栈了，可以访问外部变量。</p>
+<p><strong>_NSConcreteMallocBlock</strong></p>
+<p>这是保存在堆中的block，当引用计数为0时会被销毁。该类型的block都是由<code>_NSConcreteStackBlock</code>类型的block从栈中复制到堆中形成的。</p>
+<p>该类型的block可以执行多次，当需要执行多次时，会把block从栈上复制到堆上，提供多次使用。</p>
+<p><strong>_NSConcreteGlobalBlock</strong></p>
+<p>这是全局Block，不会访问任何外部变量，不会涉及到任何拷贝。要么是一个空block，它既不在堆中，也不再栈中。</p>
+<h4 id="copy-和dispose"><a href="#copy-和dispose" class="headerlink" title="copy()和dispose()"></a>copy()和dispose()</h4><p>上面说过，如果需要多次使用该block，那么需要将block拷贝到堆上，提供多次使用。这个拷贝操作其实就是调用<code>Block_copy()</code>函数来实现。</p>
+<p>有拷贝就会有释放，<code>Block_copy()</code>对应的是<code>Block_release()</code>，其对应的辅助函数就是<code>copy()</code>和<code>dispose()</code>。</p>
+<h4 id="block中的weakSelf和strongSelf"><a href="#block中的weakSelf和strongSelf" class="headerlink" title="block中的weakSelf和strongSelf"></a>block中的weakSelf和strongSelf</h4><p>需要使用weakSelf，是因为防止循环引用，一般使用block的场景中，self会对block强引用，在block内部回调中，block又强引用了self，所以造成循环引用，使用weakSelf，可以打破这一闭环，使得block内部回调中不会对self发生强引用，就解决了问题。</p>
+<p>使用strongSelf，是因为外部使用了weakSelf，在Block内部回调中，这个weakSelf可能会被释放，造成接下来的操作无法完成，如果是KVO操作，还是引发崩溃。所以在Block内部需要使用strongSelf，防止weakSelf提前释放。需要注意的是，这个strongSelf的作用域在block内部回调，出了这个回调就会失效，所以这么写既能正常释放，又不会崩溃。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2016/05/24/iOS%E8%BF%9B%E9%98%B6-%E6%B5%85%E8%B0%88Block/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

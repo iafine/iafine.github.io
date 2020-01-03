@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2017-06-05</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">原理</span>
+      
+    </div>
+    
+    <h1 class="detail-title">IM实现-WebSocket原理及应用</h1>
+    <p class="detail-content"><p>WebSocket是基于TCP之上的一套全双工通讯协议，它的出现使得客户端和服务器之间的数据交换变得更加简单，允许服务端主动向客户端推送数据。并且在WebSocket API中，浏览器和服务器只需要完成一次握手，两者之间就直接可以创建持久性的连接，并进行双向数据传输。</p>
+<a id="more"></a>
+
+
+
+<p>类似于http协议，WebSocket使用ws/wss开头，如下：</p>
+<pre><code class="http">ws://im.example.com/
+wss://im.example.com/</code></pre>
+<h4 id="WebSocket握手"><a href="#WebSocket握手" class="headerlink" title="WebSocket握手"></a>WebSocket握手</h4><p>一个典型的WebSocket请求头如下：</p>
+<pre><code class="html">Accept-Encoding: gzip, deflate, br
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8
+Cache-Control: no-cache
+Connection: Upgrade
+Host: im.xyz.com
+Origin: https://xyz.com
+Pragma: no-cache
+Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+Sec-WebSocket-Key: LHzwQVh6gVZ/MSRwAdN4zg==
+Sec-WebSocket-Version: 13
+Upgrade: websocket
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36</code></pre>
+<p>和HTTP的请求头相比，会多了一些东西：</p>
+<pre><code class="html">Upgrade: websocket        // WebSocket核心，用来告诉服务器，这是个ws请求
+Connection: Upgrade            
+Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+Sec-WebSocket-Key: LHzwQVh6gVZ/MSRwAdN4zg==
+Sec-WebSocket-Version: 13    // 协议版本号
+</code></pre>
+<p>其中，<code>Sec-WebSocket-Key</code>是Base64的值，用于验证WebSocket请求，服务端通过校验后，会返回一个确认字符串的。</p>
+<p>下面是一个相应头：</p>
+<pre><code class="html">Connection: upgrade
+Date: Thu, 15 Nov 2018 02:14:37 GMT
+Sec-WebSocket-Accept: 4elAl5XuvKji1w2LZh0wBwSVmtE=
+Server: IM Server
+Upgrade: websocket
+WebSocket-Location: ws://im.xyz.com/
+WebSocket-Origin: https://xyz.com</code></pre>
+<p>其中，<code>Sec-WebSocket-Accept</code>就是那个通过检验返回的字符串，其他的和请求头一样，用于表示这是个<code>ws</code>响应。</p>
+<p>Websocket好处是只需要一次HTTP握手，所以说整个通讯过程是建立在一次连接/状态中，也就避免了HTTP的非状态性，服务端会一直知道你的信息，直到你关闭请求。</p>
+<p>接下来，我们实现一个简单的聊天应用，大概流程如下：</p>
+<ul>
+<li>Web端发送消息，给到Node端，Node端可以将消息转发给客户端；</li>
+<li>客户端发送消息，给到Node端，Node端可以将消息转发给Web端。</li>
+</ul>
+<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><h4 id="Node搭建ws服务"><a href="#Node搭建ws服务" class="headerlink" title="Node搭建ws服务"></a>Node搭建ws服务</h4><p>Node搭建ws服务很方便，已经有了好用的第三方库来做这些事情。我们采用<code>ws</code>这个库来实现ws服务。</p>
+<p>首先，新建一个项目，然后添加 <code>ws</code>库。</p>
+<pre><code>npm install ws</code></pre><p>我们先实现最简单的服务，如下代码：</p>
+<pre><code class="javascript">const WebSocket = require(&#39;ws&#39;)
+
+const wss = new WebSocket.Server({
+    port: 4000
+})
+
+wss.on(&#39;connection&#39;, function connection(ws) {
+    console.log(&#39;ws connection start&#39;)
+    ws.on(&#39;message&#39;, function incoming(message) {
+        console.log(&#39;receive: %s&#39;, message)
+        ws.send(&#39;reply message: &#39; + message)
+    })
+    ws.on(&#39;close&#39;, function close() {
+        console.log(&#39;ws connection closed&#39;)
+    })
+})</code></pre>
+<p>上面的代码意思是：</p>
+<ul>
+<li>本地使用4000端口来开启<code>ws</code>服务，地址是<code>ws://localhost:4000</code>;</li>
+<li>当有客户端连接时，打印<code>ws connection start</code>;</li>
+<li>当有客户端退出时，打印<code>ws connection closed</code>;</li>
+<li>当接收到客户端发送的消息时，打印<code>receive: {message}</code>，并且会给它发送一条reply message。</li>
+</ul>
+<p>至此，基本的<code>ws</code>服务就实现完成了，接下来我们实现web端。</p>
+<h4 id="Web端实现"><a href="#Web端实现" class="headerlink" title="Web端实现"></a>Web端实现</h4><p>目前，H5支持<code>ws</code>服务连接，所以实现也很简单。我们本地新建个<code>index.html</code>，内容如下：</p>
+<pre><code class="html">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+
+&lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;web客户端&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+    &lt;h1&gt;请输入要发送的文字&lt;/h1&gt;
+    &lt;input id=&quot;sendText&quot; type=&quot;text&quot; /&gt;
+    &lt;button id=&quot;sendBtn&quot;&gt;发送&lt;/button&gt;
+    &lt;div id=&quot;receiveMessage&quot;&gt;&lt;/div&gt;
+&lt;/body&gt;
+&lt;script type=&quot;text/javascript&quot;&gt;
+    var websocket = new WebSocket(&quot;ws://localhost:4000&quot;);
+    websocket.onopen = function () {
+        console.log(&quot;websocket open&quot;);
+        document.getElementById(&quot;receiveMessage&quot;).innerHTML = &quot;connected&quot;;
+    }
+    websocket.onclose = function () {
+        console.log(&quot;websocket close&quot;);
+        document.getElementById(&quot;receiveMessage&quot;).innerHTML = &quot;closed&quot;;
+
+    }
+    websocket.onmessage = function (e) {
+        console.log(e.data);
+        document.getElementById(&quot;receiveMessage&quot;).innerHTML = e.data;
+    }
+    document.getElementById(&quot;sendBtn&quot;).onclick = function () {
+        var txt = document.getElementById(&quot;sendText&quot;).value;
+        websocket.send(txt);
+    }
+&lt;/script&gt;
+
+&lt;/html&gt;</code></pre>
+<p>Web端主要实现的功能是：</p>
+<ul>
+<li>当建立连接成功后，显示<code>connected</code>字样；</li>
+<li>当连接断开后，显示<code>closed</code>字样；</li>
+<li>给Node端发送消息，成功后显示reply message。</li>
+</ul>
+<p>至此，我们已经搭建出了一个简易的<code>ws</code>服务，接下来我们实现客户端逻辑，我们以iOS客户端为例，实现一个和Web端功能相似的App出来。</p>
+<h4 id="iOS端实现"><a href="#iOS端实现" class="headerlink" title="iOS端实现"></a>iOS端实现</h4><p> iOS端我们使用Swift语言，采用<a href="https://github.com/daltoniam/Starscream" target="_blank" rel="noopener">Starscream</a>这个库来实现，先搭建好项目。我们使用<code>cocoapods</code>来集成第三方库。</p>
+<pre><code class="ruby">source &#39;https://github.com/CocoaPods/Specs.git&#39;
+
+platform :ios, &#39;10.0&#39;
+
+use_frameworks!
+
+target &#39;ws_client_demo&#39; do
+
+  pod &#39;Starscream&#39;, &#39;~&gt; 3.0.6&#39;
+
+end</code></pre>
+<p>最后<code>pod install</code>即可搭建好项目。iOS端我们实现的目前和Web端一致。</p>
+<ul>
+<li>当建立连接成功后，显示<code>connected</code>字样；</li>
+<li>当连接断开后，显示<code>closed</code>字样；</li>
+<li>给Node端发送消息，成功后显示reply message。</li>
+</ul>
+<p>接下来实现界面，和Web端差不多，如下所示：</p>
+<p>![](/images/Simulator Screen Shot - iPhone XR - 2018-11-07 at 11.19.47.png)</p>
+<p>下面的结果会随着不同状态，跟着变动，点击发送，会将输入框中的文字发送给Node端，UI实现代码如下：</p>
+<pre><code class="swift">import UIKit
+
+class ViewController: UIViewController {
+
+    var textfield: UITextField!
+
+    var sendButton: UIButton!
+
+    var detailLabel: UILabel!
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        layoutSubView()
+    }
+}
+
+// MARK: - UI
+extension ViewController {
+    func layoutSubView() {
+        textfield = UITextField (frame: CGRect (x: 40,
+                                                y: 120,
+                                                width: UIScreen.main.bounds.size.width - 80,
+                                                height: 40))
+        textfield.borderStyle = .bezel
+        view.addSubview(textfield)
+
+        sendButton = UIButton (frame: CGRect (x: 100,
+                                              y: textfield.frame.maxY + 15,
+                                              width: UIScreen.main.bounds.width - 200,
+                                              height: 50))
+        sendButton.setTitle(&quot;发送&quot;, for: .normal)
+        sendButton.backgroundColor = UIColor.orange
+        sendButton.addTarget(self, action: #selector(clickedSendButtonHandler), for: .touchUpInside)
+        view.addSubview(sendButton)
+
+        detailLabel = UILabel (frame: CGRect (x: 20, y: self.sendButton.frame.maxY + 15, width: UIScreen.main.bounds.size.width - 40, height: 35))
+        detailLabel.text = &quot;结果：&quot;
+        detailLabel.textColor = UIColor.darkGray
+        view.addSubview(detailLabel)
+    }
+}
+
+// MARK: - Event
+extension ViewController {
+    @objc func clickedSendButtonHandler() {
+
+    }
+}</code></pre>
+<p>接下来我们来实现<code>ws</code>连接服务，首先导入相关库。</p>
+<pre><code class="swift">import Starscream</code></pre>
+<p>然后，在<code>viewDidLoad</code>方法里进行<code>ws</code>初始化操作。</p>
+<pre><code class="swift">var ws: WebSocket!
+
+ws = WebSocket (url: URL (string: &quot;ws://localhost:4000&quot;)!)
+ws.delegate = self
+ws.connect()</code></pre>
+<p>然后在协议里实现相关逻辑：</p>
+<pre><code class="swift">// MARK: - WebSocketDelegate
+extension ViewController: WebSocketDelegate {
+    func websocketDidConnect(socket: WebSocketClient) {
+        print(&quot;ws connected&quot;)
+        detailLabel.text = &quot;结果：connected&quot;
+    }
+
+    func websocketDidDisconnect(socket: WebSocketClient, error: Error?) {
+        print(&quot;ws disconnected&quot;)
+        detailLabel.text = &quot;结果：disconnected&quot;
+    }
+
+    func websocketDidReceiveMessage(socket: WebSocketClient, text: String) {
+        print(&quot;ws receive message&quot;)
+        detailLabel.text = &quot;结果: \(text)&quot;
+    }
+
+    func websocketDidReceiveData(socket: WebSocketClient, data: Data) {
+        print(&quot;ws receive data&quot;)
+    }
+}</code></pre>
+<p>当我们点击发送按钮时，发送一个文本消息给到Node端。</p>
+<pre><code class="swift">// MARK: - Event
+extension ViewController {
+    @objc func clickedSendButtonHandler() {
+        textfield.resignFirstResponder()
+        ws.write(string: textfield.text ?? &quot;&quot;)
+    }
+}</code></pre>
+<p>至此，我们的基本逻辑就完成了，可以看下发送消息成功的截图：</p>
+<p>![](/images/Simulator Screen Shot - iPhone XR - 2018-11-07 at 11.33.28.png)</p>
+<h2 id="IM应用"><a href="#IM应用" class="headerlink" title="IM应用"></a>IM应用</h2><p>接下来我们实现复杂一点的，模拟IM应用：</p>
+<ul>
+<li>Web端发送消息，可以给到客户端；</li>
+<li>客户端也可以发送消息，给到Web端。</li>
+<li>双方通过Node服务来中转消息。</li>
+</ul>
+<p>我们先需要定一套协议，用来规范消息结构体：</p>
+<pre><code class="json">// connect
+{
+    &#39;client&#39;: &#39;web&#39;,
+    &#39;message&#39;: &quot;&quot;,
+    &#39;type&#39;: &#39;connect&#39;
+} 
+
+// send text
+{
+    &#39;client&#39;: &#39;web&#39;,
+    &#39;message&#39;: txt,
+    &#39;sendTo&#39;: &#39;iOS&#39;,
+    &#39;type&#39;: &#39;text&#39;
+} </code></pre>
+<p>其中，connect是用来和服务端进行连接，用于同步连接状态用的，其结构比较简单，只是个示例。</p>
+<h4 id="Node端改造"><a href="#Node端改造" class="headerlink" title="Node端改造"></a>Node端改造</h4><p>Node端新增存储连接进来的客户端集，用来标示当前在线的用户。</p>
+<pre><code class="javascript">// 连接进来的用户
+var users = []</code></pre>
+<p>当客户端连接成功之后，向Node端发送connect消息。这时可以存储起来。</p>
+<pre><code class="javascript">ws.on(&#39;message&#39;, function incoming(message) {
+    var receiveJson = JSON.parse(message)
+
+    console.log(receiveJson.client + &#39;处于连接状态&#39;)
+
+    // type是connect，然后将其ws服务存在来
+    if (receiveJson.type == &#39;connect&#39;) {
+        users[receiveJson.client] = ws
+    }
+
+})</code></pre>
+<p>然后客户端发送消息时，由于携带了client标示和发送的对象<code>sendTo</code>，所以接受文本消息也需要改造一下。</p>
+<pre><code class="objective-c">ws.on(&#39;message&#39;, function incoming(message) {
+    var receiveJson = JSON.parse(message)
+
+    // 先判断type是否是text，然后在做转发消息
+    if (receiveJson.type == &#39;text&#39;) {
+        var toClient = users[receiveJson.sendTo]
+        if (toClient !== ws, toClient.readyState == WebSocket.OPEN) {                
+            toClient.send(receiveJson.message)
+        }
+    }
+})</code></pre>
+<p>如果是发送文本消息，那么根据<code>sendTo</code>获取到建立的<code>ws</code>服务，如果服务存在，并且是连接状态，那么将携带过来的文本转发过去即可。</p>
+<p>至此，Node端的服务基本实现，实现代码为：</p>
+<pre><code class="javascript">const WebSocket = require(&#39;ws&#39;)
+
+const wss = new WebSocket.Server({
+    port: 4000
+})
+
+// 连接进来的用户
+var users = []
+
+wss.on(&#39;connection&#39;, function connection(ws) {
+    ws.on(&#39;message&#39;, function incoming(message) {
+        var receiveJson = JSON.parse(message)
+
+        console.log(receiveJson.client + &#39;处于连接状态&#39;)
+
+        // type是connect，然后将其ws服务存在来
+        if (receiveJson.type == &#39;connect&#39;) {
+            users[receiveJson.client] = ws
+        }
+        // 先判断type是否是text，然后在做转发消息
+        if (receiveJson.type == &#39;text&#39;) {
+            var toClient = users[receiveJson.sendTo]
+            if (toClient !== ws, toClient.readyState == WebSocket.OPEN) {                
+                toClient.send(receiveJson.message)
+            }
+        }
+    })
+    ws.on(&#39;close&#39;, function close() {
+        console.log(&#39;ws connection closed&#39;)
+    })
+})</code></pre>
+<h4 id="Web端改造"><a href="#Web端改造" class="headerlink" title="Web端改造"></a>Web端改造</h4><p>web需要修改发送消息结构，并且在建立连接成功之后，给Node端发送一条connect消息，用于Node统计当前的连接数。改动不大，具体如下：</p>
+<pre><code class="html">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+
+&lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;web客户端&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+    &lt;h1&gt;请输入要发送的文字&lt;/h1&gt;
+    &lt;input id=&quot;sendText&quot; type=&quot;text&quot; /&gt;
+    &lt;button id=&quot;sendBtn&quot;&gt;发送&lt;/button&gt;
+    &lt;div id=&quot;receiveMessage&quot;&gt;&lt;/div&gt;
+&lt;/body&gt;
+&lt;script type=&quot;text/javascript&quot;&gt;
+    var websocket = new WebSocket(&quot;ws://localhost:4000&quot;);
+    websocket.onopen = function () {
+        console.log(&quot;websocket open&quot;);
+        document.getElementById(&quot;receiveMessage&quot;).innerHTML = &quot;connected&quot;;
+        // 给Node端发送一条消息，用来通知Node你已经在线，用来实现点对点通信。
+        var sendJson = {
+            &#39;client&#39;: &#39;web&#39;,
+            &#39;message&#39;: &quot;&quot;,
+            &#39;type&#39;: &#39;connect&#39;
+        } 
+        var sendStr = JSON.stringify(sendJson)
+        websocket.send(sendStr);
+    }
+    websocket.onclose = function () {
+        console.log(&quot;websocket close&quot;);
+        document.getElementById(&quot;receiveMessage&quot;).innerHTML = &quot;closed&quot;;
+
+    }
+    websocket.onmessage = function (e) {
+        console.log(e.data);
+        document.getElementById(&quot;receiveMessage&quot;).innerHTML = e.data;
+    }
+    document.getElementById(&quot;sendBtn&quot;).onclick = function () {
+        var txt = document.getElementById(&quot;sendText&quot;).value;
+        var sendJson = {
+            &#39;client&#39;: &#39;web&#39;,
+            &#39;message&#39;: txt,
+            &#39;sendTo&#39;: &#39;iOS&#39;,
+            &#39;type&#39;: &#39;text&#39;
+        } 
+        var sendStr = JSON.stringify(sendJson)
+        websocket.send(sendStr);
+    }
+&lt;/script&gt;
+
+&lt;/html&gt;</code></pre>
+<h4 id="iOS端改造"><a href="#iOS端改造" class="headerlink" title="iOS端改造"></a>iOS端改造</h4><p>iOS和Web端一样，需要修改发送消息体结构，当建立连接后给Node端发送一条connect消息。核心代码如下：</p>
+<pre><code class="swift">// MARK: - Event
+extension ViewController {
+    @objc func clickedSendButtonHandler() {
+        textfield.resignFirstResponder()
+
+        let sendJson = [&quot;client&quot; : &quot;iOS&quot;,
+                        &quot;message&quot;: textfield.text as! String,
+                        &quot;sendTo&quot;: &quot;web&quot;,
+                        &quot;type&quot;: &quot;text&quot;]
+        ws.write(string: convertParamToString(sendJson))
+    }
+}
+
+// MARK: - WebSocketDelegate
+extension ViewController: WebSocketDelegate {
+    func websocketDidConnect(socket: WebSocketClient) {
+        print(&quot;ws connected&quot;)
+        detailLabel.text = &quot;结果：connected&quot;
+
+        let sendJson = [&quot;client&quot; : &quot;iOS&quot;,
+                        &quot;message&quot;: &quot;&quot;,
+                        &quot;type&quot;: &quot;connect&quot;]
+        ws.write(string: convertParamToString(sendJson))
+    }
+
+    func websocketDidDisconnect(socket: WebSocketClient, error: Error?) {
+        print(&quot;ws disconnected&quot;)
+        detailLabel.text = &quot;结果：disconnected&quot;
+    }
+
+    func websocketDidReceiveMessage(socket: WebSocketClient, text: String) {
+        print(&quot;ws receive message&quot;)
+        detailLabel.text = &quot;结果: \(text)&quot;
+    }
+
+    func websocketDidReceiveData(socket: WebSocketClient, data: Data) {
+        print(&quot;ws receive data&quot;)
+    }
+}
+
+extension ViewController {
+    func convertParamToString(_ param: Dictionary&lt;String, Any&gt;) -&gt; String {
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: param, options: .prettyPrinted)
+            let string = String (data: jsonData, encoding: .utf8)
+            return string ?? &quot;&quot;
+        } catch {
+            print(error.localizedDescription)
+        }
+        return &quot;&quot;
+    }
+}
+</code></pre>
+<p>至此，点对点通信基本完成了，iOS和Web端可以互相发送消息，IM的基本功能就实现了。但现实业务中，并不会这么简单，当然，这个Demo实现互相发送消息的前提时，双方都在线。</p>
+<h2 id="心跳机制"><a href="#心跳机制" class="headerlink" title="心跳机制"></a>心跳机制</h2><p>心跳机制是每个一段固定时间，向服务端发送一个数据包，告诉服务端自己还在线，如果在线的话，会回传一个数据包给客户端，是为了客户端确认服务端还活着，否则的话，有可能服务端已经挂了，需要重连。</p>
+<p>一般的做法是，客户端定时向服务端发送ping消息，服务端收到之后，回复客户端pong消息，这就是ping/pong机制。</p>
+<p>当客户端连接成功之后，就开始计时，定期发送ping给到服务端，这里的细节是：</p>
+<ul>
+<li>如果客户端发送ping的时候网络已经断开，那么本地应该进行重试，可以2,5,10秒这样子递增重试，没有成功，则是本地连接失败；</li>
+<li>如果客户端发送ping成功，但是之后网络断开，并没有收到pong消息，那么后端去进行重连操作，也可采用递增方式，超过则是服务端断开连接，消息保存在离线DB里；</li>
+<li>如果客户端发送ping成功，但是服务端这时候宕机了，那么还是客户端进行递增重连操作，超时则连接失败。</li>
+</ul>
+<p>我们来实现以下简单的心跳机制：</p>
+<h4 id="Node端改造-1"><a href="#Node端改造-1" class="headerlink" title="Node端改造"></a>Node端改造</h4><p>我们需要监听ping的的回调，以此来做某些操作:</p>
+<pre><code class="javascript">ws.on(&#39;ping&#39;, function ping() {
+    console.log(&#39;receive ping message&#39;)  
+})</code></pre>
+<p>Node端只需要监听就行了，<code>pong</code>消息这个框架会自动发送，不用管的。</p>
+<h4 id="iOS端改造-1"><a href="#iOS端改造-1" class="headerlink" title="iOS端改造"></a>iOS端改造</h4><p>我们先要实现定时器，来定时发送ping消息，给到服务端。</p>
+<pre><code class="swift">var pingTimer: Timer!
+
+pingTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true, block: { (tiemr) in
+    self.sendPing()
+})
+
+// ping消息
+func sendPing() {
+    if ws.isConnected {
+        lastPingTimestamp = Date().timeIntervalSince1970
+        ws.write(ping: Data ())
+    }
+}</code></pre>
+<p>然后监听pong回调</p>
+<pre><code class="swift">ws.pongDelegate = self
+
+extension ViewController: WebSocketPongDelegate {
+    func websocketDidReceivePong(socket: WebSocketClient, data: Data?) {
+        print(&quot;receive pong message\(Date().timeIntervalSince1970)&quot;)
+        lastPongTimestamp = Date().timeIntervalSince1970
+    }
+}</code></pre>
+<p>这样，一个简单的ping/pong机制就搭建起来了。</p>
+<p>至此，一个WebSocket的简单实现就完成了。现实中的IM并不会这么简单，包括协议的制定、重连机制和离线DB等等，但是原理大多如此，掌握了基础才是最重要的。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2017/06/05/IM%E5%AE%9E%E7%8E%B0-WebSocket%E5%8E%9F%E7%90%86%E5%8F%8A%E5%BA%94%E7%94%A8/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

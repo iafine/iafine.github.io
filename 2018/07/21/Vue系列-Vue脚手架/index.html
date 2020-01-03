@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2018-07-21</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavsScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">Vue系列-Vue脚手架</h1>
+    <p class="detail-content"><p>搭建vue开发环境，如果用vue-cli的话，会很容易，但是对于新手来讲，vue-cli做了什么配置，在v3版本里，是不容易查看到的，开发人员是看不到webpack相关配置的细节，所以对webpack的理解也会不清晰。这次我们就从零开始，一步步搭建个类似vue-cli做出来的开发环境。</p>
+<a id="more"></a>
+
+<h4 id="搭建Vue环境"><a href="#搭建Vue环境" class="headerlink" title="搭建Vue环境"></a>搭建Vue环境</h4><p>初始化项目</p>
+<pre><code class="shell">mkdir vue-template
+cd vue-template
+npm init</code></pre>
+<p>安装webpack相关：</p>
+<pre><code class="shell">npm i webpack webpack-cli -D</code></pre>
+<p>安装vue相关：</p>
+<pre><code class="shell">npm i vue vue-loader vue-template-compiler -D</code></pre>
+<p>然后在根目录下，创建<code>public/index.html</code>，作为项目首页显示，可以参考<code>vue cli</code>里的源码；</p>
+<pre><code class="html">&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+  &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1.0&quot;&gt;
+    &lt;title&gt;full-stack-template&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;noscript&gt;
+      &lt;strong&gt;We&#39;re sorry but vue-demo doesn&#39;t work properly without JavaScript enabled. Please enable it to continue.&lt;/strong&gt;
+    &lt;/noscript&gt;
+    &lt;div id=&quot;app&quot;&gt;&lt;/div&gt;
+    &lt;!-- built files will be auto injected --&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>创建<code>src/main.js</code>，作为程序入口：</p>
+<pre><code class="javascript">import Vue from &#39;vue&#39;
+import App from &#39;./App.vue&#39;
+
+Vue.config.productionTip = false
+
+new Vue({
+  render: h =&gt; h(App)
+}).$mount(&#39;#app&#39;)
+</code></pre>
+<p>创建<code>view/src/App.vue</code>，作为首页:</p>
+<pre><code class="html">&lt;template&gt;
+  &lt;div&gt;
+    &lt;h1&gt;Hello World&lt;/h1&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<p>配置webpack：</p>
+<pre><code class="javascript">const path = require(&#39;path&#39;)
+
+const isProd = process.env.NODE_ENV === &#39;production&#39;
+
+module.exports = {
+    mode: isProd ? &#39;production&#39; : &#39;development&#39;,
+    entry: {
+        app: path.join(__dirname, &#39;./src/main.js&#39;) 
+    },
+    output: {
+        filename: &#39;[name].[hash:8].js&#39;,
+        path: path.join(__dirname, &#39;./dist&#39;)
+    }
+}</code></pre>
+<p>修改<code>package.json</code>，添加一条build命令：</p>
+<pre><code class="javascript">&quot;build&quot;: &quot;cross-env NODE_ENV=production webpack --config webpack.config.js&quot;</code></pre>
+<p>需要先安装<code>cross-env</code>库：</p>
+<pre><code class="shell">npm i cross-env -D        // 跨平台的环境变量设置</code></pre>
+<p>执行<code>npm run build</code>，查看报错信息：</p>
+<pre><code class="javascript">ERROR in ./src/App.vue 1:0
+Module parse failed: Unexpected token (1:0)
+You may need an appropriate loader to handle this file type.</code></pre>
+<p>出错原因是因为vue文件不能直接运行，需要配置loader才行。我们继续修改<code>webpack.config.js</code>，添加下面代码：</p>
+<pre><code class="javascript">module: {
+    rules: [
+        {
+            test: /\.vue$/,
+            loader: &#39;vue-loader&#39;
+        }
+    ]
+}</code></pre>
+<p>继续执行<code>npm run build</code>，不出意外，会出现下面的错误提示：</p>
+<pre><code class="javascript">ERROR in ./src/App.vue
+Module Error (from ./node_modules/vue-loader/lib/index.js):
+vue-loader was used without the corresponding plugin. Make sure to include VueLoaderPlugin in your webpack config.</code></pre>
+<p>我们需要添加<code>VueLoaderPlugin</code>插件，在Vue Loader官网对其有过介绍。</p>
+<blockquote>
+<p>VueLoaderPlugin的职责是将你定义过的其它规则复制并应用到 <code>.vue</code> 文件里相应语言的块。例如，如果你有一条匹配 <code>/\.js$/</code> 的规则，那么它会应用到 <code>.vue</code> 文件里的 <code>&lt;script&gt;</code> 块。</p>
+</blockquote>
+<p>我们修改<code>webpack.config.js</code>，添加VueLoaderPlugin插件。</p>
+<pre><code class="javascript">const VueLoaderPlugin = require(&#39;vue-loader/lib/plugin&#39;)
+
+plugins: [
+    new VueLoaderPlugin()
+]</code></pre>
+<p>重新执行<code>npm run build</code>，可以看到，<code>dist</code>文件夹成功被创建，并且里面包含一个<code>js</code>文件。</p>
+<p>但是，一般我们会需要生成一个<code>index.html</code>，来验证打包，我们还需要添加<code>HtmlWebpackPlugin</code>插件，做这样的事情。</p>
+<pre><code class="shell">npm i html-webpack-plugin -D</code></pre>
+<p>然后修改<code>webpack.config.js</code>。</p>
+<pre><code class="javascript">const HtmlWebpackPlugin = require(&#39;html-webpack-plugin&#39;)
+
+plugins: [
+    new VueLoaderPlugin(),
+
+    new HtmlWebpackPlugin({
+        template: path.join(__dirname, &#39;public/index.html&#39;)
+    })
+]</code></pre>
+<p>我们可以浏览器打开<code>dist/index.html</code>，验证下是否出现Hello World那几个大字。若出现，那环境搭建就到此完成了。</p>
+<h4 id="开发环境搭建"><a href="#开发环境搭建" class="headerlink" title="开发环境搭建"></a>开发环境搭建</h4><p><code>webpack-dev-server</code>是一个小型的Express服务器，可以开发运行当前的JS代码，但需要记住的是，开发时运行的是内存中的build包，不需要我们手动去build的。</p>
+<p>首先安装<code>webpack-dev-server</code>:</p>
+<pre><code class="shell">npm i webpack-dev-server -D        // 开发调试服务器</code></pre>
+<p>然后修改<code>webpack.config.js</code>：</p>
+<pre><code class="javascript">devServer: {
+    port: &#39;8000&#39;,
+    host: &#39;localhost&#39;,
+    hot: true,
+    inline: true,
+    open: true
+}</code></pre>
+<p>相关参数可以查看官方文档。最后我们修改<code>package.json</code>，添加一条命令，用于启动开发服务：</p>
+<pre><code class="javascript">&quot;dev&quot;: &quot;cross-env NODE_ENV=development webpack-dev-server&quot;</code></pre>
+<p>配置完之后，我们执行<code>npm run dev</code>，来启动服务看看效果。可以修改<code>App.vue</code>，来看下模块热替换功能是否正常。</p>
+<h4 id="favicon配置"><a href="#favicon配置" class="headerlink" title="favicon配置"></a>favicon配置</h4><p>目前<code>html-webpack-plugin</code>已经提供了favicon的配置，我们先把定义好的favicon放在<code>public</code>里，然后修改<code>webpack.config.js</code>即可。</p>
+<pre><code class="javascript">plugins: [
+    new VueLoaderPlugin(),
+
+    new HtmlWebpackPlugin({
+        template: path.join(__dirname, &#39;public/index.html&#39;),
+        favicon: path.join(__dirname, &#39;public/favicon.ico&#39;)
+    })
+]</code></pre>
+<h4 id="css处理"><a href="#css处理" class="headerlink" title="css处理"></a>css处理</h4><p>我们修改下App.vue，增加点css样式:</p>
+<pre><code class="html">&lt;template&gt;
+  &lt;div&gt;
+    &lt;h1&gt;Hello World&lt;/h1&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;style scoped&gt;
+
+h1 {
+  color: red;
+}
+
+&lt;/style&gt;</code></pre>
+<p>运行后发现，会报下面的错误：</p>
+<pre><code class="javascript">ERROR in ./src/App.vue?vue&amp;type=style&amp;index=0&amp;id=7ba5bd90&amp;scoped=true&amp;lang=css&amp; (./node_modules/vue-loader/lib??vue-loader-options!./src/App.vue?vue&amp;type=style&amp;index=0&amp;id=7ba5bd90&amp;scoped=true&amp;lang=css&amp;) 9:3
+Module parse failed: Unexpected token (9:3)
+You may need an appropriate loader to handle this file type.
+| 
+| 
+&gt; h1 {
+|   background-color: red;
+| }</code></pre>
+<p>这个意思是我们要运行css，需要配置相关loader才行。</p>
+<pre><code class="shell">npm i css-loader -D</code></pre>
+<p>然后修改下<code>webpack.config.js</code>，添加下相关rule：</p>
+<pre><code class="javascript">module: {
+    rules: [
+        {
+            test: /\.vue$/,
+            loader: &#39;vue-loader&#39;
+        },
+        {
+            test: /\.css$/,
+            use: [
+                &#39;vue-style-loader&#39;,
+                &#39;css-loader&#39;
+            ]
+        }
+    ],
+}</code></pre>
+<p>然后运行<code>npm run dev</code>，发现文字颜色变了。</p>
+<p>但是有个问题，这时我们运行<code>npm run build</code> 的时候，发现css并没有单独提取出来，理想情况下，css应该被抽离出来。</p>
+<p>我们需要借助一个第三方库来完成：</p>
+<pre><code class="shell">npm i mini-css-extract-plugin -D</code></pre>
+<p>然后修改<code>webpack.config.js</code>，完整如下：</p>
+<pre><code class="javascript">const path = require(&#39;path&#39;)
+const VueLoaderPlugin = require(&#39;vue-loader/lib/plugin&#39;)
+const HtmlWebpackPlugin = require(&#39;html-webpack-plugin&#39;)
+const MiniCssExtractPlugin = require(&#39;mini-css-extract-plugin&#39;)
+
+const isProd = process.env.NODE_ENV === &#39;production&#39;
+
+let webpackConfig = {
+    mode: isProd ? &#39;production&#39; : &#39;development&#39;,
+    entry: {
+        app: path.join(__dirname, &#39;./src/main.js&#39;)
+    },
+    output: {
+        filename: &#39;[name].[hash:8].js&#39;,
+        path: path.join(__dirname, &#39;./dist&#39;)
+    },
+    module: {
+        rules: [
+            {
+                test: /\.vue$/,
+                loader: &#39;vue-loader&#39;
+            },
+            {
+                test: /\.css$/,
+                use: [
+                    isProd ? MiniCssExtractPlugin.loader : &#39;vue-style-loader&#39;,
+                    &#39;css-loader&#39;
+                ]
+            }
+        ],
+    },
+    devServer: {
+        port: &#39;8000&#39;,
+        host: &#39;localhost&#39;,
+        hot: true,
+        inline: true,
+        open: true
+    },
+    plugins: [
+        new VueLoaderPlugin(),
+
+        new HtmlWebpackPlugin({
+            template: path.join(__dirname, &#39;public/index.html&#39;),
+            favicon: path.join(__dirname, &#39;public/favicon.ico&#39;)
+        })
+    ]
+}
+
+if (isProd) {
+    webpackConfig.plugins.push(
+      // 分离单独的 CSS 文件到 output
+      new MiniCssExtractPlugin({
+        filename: &#39;style.[hash:8].css&#39;,
+      })
+    )
+  }
+
+  module.exports = webpackConfig</code></pre>
+<h4 id="图片处理"><a href="#图片处理" class="headerlink" title="图片处理"></a>图片处理</h4><p>修改<code>App.vue</code> ，然后添加图片样式：</p>
+<pre><code class="html">&lt;template&gt;
+  &lt;div&gt;
+    &lt;h1&gt;Hello World&lt;/h1&gt;
+    &lt;img src=&quot;./assets/img/user.jpg&quot;&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;style scoped&gt;
+
+h1 {
+  color: red;
+}
+
+&lt;/style&gt;
+</code></pre>
+<p>和css一样，如果不加上loader的话，会报错：</p>
+<pre><code class="javascript">ERROR in ./src/App.vue?vue&amp;type=template&amp;id=7ba5bd90&amp;scoped=true&amp; (./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./src/App.vue?vue&amp;type=template&amp;id=7ba5bd90&amp;scoped=true&amp;)
+Module not found: Error: Can&#39;t resolve &#39;./assets/img/logo.png&#39; in &#39;/Users/harlan/Documents/GitHub/code_snippets/JavaScript/vue-template/src&#39;</code></pre>
+<p>我们需要通过<code>url-loader</code>进行处理：</p>
+<pre><code class="shell">npm i url-loader file-loader -D</code></pre>
+<p><code>url-loader</code>的好处是会将图片编码化，然后修改<code>webpack.config.js</code>，添加loader。</p>
+<pre><code class="javascript">{
+    test: /\.(jpe?g|png|svg|gif)$/,
+    use: [
+        {
+            loader: &#39;url-loader&#39;,
+            options: {
+                limit: 8192, // 小于8k的图片自动转成base64格式
+                name: &#39;img/[name].[hash:8].[ext]&#39;
+            }
+        }
+    ]
+}</code></pre>
+<p>重新执行<code>npm run dev</code>，是不是可以看到图片了。然后我们<code>build</code>试试，将limit值设小点，就可以看到打包的图片了。</p>
+<h4 id="Babel配置"><a href="#Babel配置" class="headerlink" title="Babel配置"></a>Babel配置</h4><p>首先，安装babel-loader和babel-core：</p>
+<pre><code class="shell">npm i babel-loader @babel/core -D</code></pre>
+<p>安装完之后，检查下版本，我们这里安装的是babelV7版本。</p>
+<p>然后，修改webpack.config.js，对JS文件添加rule：</p>
+<pre><code class="javascript">{
+    test: /\.js$/,
+    loader: &#39;babel-loader&#39;,
+    exclude: /node_modules/
+}</code></pre>
+<p>然后安装babel-preset-env：</p>
+<pre><code class="shell">npm i @babel/preset-env -D</code></pre>
+<p>接着在根目录添加<code>.babelrc</code>，并引用安装的env。</p>
+<pre><code class="javascript">{
+    &quot;presets&quot;: [
+        [
+            &quot;@babel/preset-env&quot;,
+            {
+                &quot;module&quot;: false
+            }
+        ]
+    ]
+}</code></pre>
+<p>接着安装transform-runtime</p>
+<pre><code class="shell">npm i @babel/plugin-transform-runtime -D
+npm i @babel/runtime -S</code></pre>
+<p>注意一个是开发依赖，一个是生产依赖。</p>
+<p>然后修改<code>.babelrc</code>，增加插件：</p>
+<pre><code class="javascript">{
+    &quot;presets&quot;: [
+        [
+            &quot;@babel/preset-env&quot;,
+            {
+                &quot;module&quot;: false
+            }
+        ]
+    ],
+    &quot;plugins&quot;: [&quot;@babel/plugin-transform-runtime&quot;]
+}</code></pre>
+<p>到此，babel的配置就完成了，我们可以打包看看效果。</p>
+<h4 id="webpack-config-js分离"><a href="#webpack-config-js分离" class="headerlink" title="webpack.config.js分离"></a>webpack.config.js分离</h4><p>目前，我们的<code>webpack.config.js</code>里有个<code>isProd</code>判断，用于区分开发还是打包上线，前期这么做是没问题的，但是当配置越来越多，只用一个变量去判断，并写在一个文件里时，配置的易读性就变得很低了，所以我们要将配置分离出来。</p>
+<p>我们需要用到<code>webpack-merge</code>来对配置进行分离：</p>
+<pre><code class="shell">npm i webpack-merge -D</code></pre>
+<p>我们分为三个文件来管理，如下：</p>
+<pre><code class="shell">build/webpack.base.js
+build/webpack.dev.js
+build/webpack.prod.js</code></pre>
+<p>使得后面逻辑上清晰些。</p>
+<p>我们先看修改后的<code>webpack.base.js</code>：</p>
+<pre><code class="javascript">const path = require(&#39;path&#39;)
+const VueLoaderPlugin = require(&#39;vue-loader/lib/plugin&#39;)
+const HtmlWebpackPlugin = require(&#39;html-webpack-plugin&#39;)
+
+module.exports = {
+    entry: {
+        app: path.join(__dirname, &#39;../src/main.js&#39;)
+    },
+    output: {
+        filename: &#39;[name].[hash:8].js&#39;,
+        path: path.join(__dirname, &#39;../dist&#39;)
+    },
+    module: {
+        rules: [
+            {
+                test: /\.vue$/,
+                loader: &#39;vue-loader&#39;
+            },
+            {
+                test: /\.js$/,
+                loader: &#39;babel-loader&#39;,
+                exclude: /node_modules/
+            },
+            {
+                test: /\.(jpe?g|png|svg|gif)$/,
+                use: [
+                    {
+                        loader: &#39;url-loader&#39;,
+                        options: {
+                            limit: 10, // 小于8k的图片自动转成base64格式
+                            name: &#39;img/[name].[hash:8].[ext]&#39;
+                        }
+                    }
+                ]
+            }
+        ],
+    },
+    plugins: [
+        new VueLoaderPlugin(),
+
+        new HtmlWebpackPlugin({
+            template: path.join(__dirname, &#39;../public/index.html&#39;),
+            favicon: path.join(__dirname, &#39;../public/favicon.ico&#39;)
+        })
+    ],
+    optimization: {
+        splitChunks: {
+            chunks: &#39;all&#39;
+        }
+    }
+}</code></pre>
+<p>修改后的<code>webpack.dev.js</code>:</p>
+<pre><code class="javascript">const merge = require(&#39;webpack-merge&#39;)
+const base = require(&#39;./webpack.base&#39;)
+
+module.exports = merge(base, {
+    mode: &#39;development&#39;,
+    module: {
+        rules: [
+            {
+                test: /\.css$/,
+                use: [
+                    &#39;vue-style-loader&#39;,
+                    &#39;css-loader&#39;
+                ]
+            }
+        ]
+    },
+    devServer: {
+        port: &#39;8000&#39;,
+        host: &#39;localhost&#39;,
+        hot: true,
+        inline: true,
+        open: true
+    },
+})</code></pre>
+<p>修改后的<code>webpack.prod.js</code>:</p>
+<pre><code class="javascript">const merge = require(&#39;webpack-merge&#39;)
+const base = require(&#39;./webpack.base&#39;)
+
+const MiniCssExtractPlugin = require(&#39;mini-css-extract-plugin&#39;)
+const CleanWebpackPlugin = require(&#39;clean-webpack-plugin&#39;)
+
+module.exports = merge(base, {
+    mode: &#39;production&#39;,
+    module: {
+        rules: [
+            {
+                test: /\.css$/,
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    &#39;css-loader&#39;
+                ]
+            }
+        ]
+    },
+    plugins: [
+        // 每次build清空dis目录
+        new CleanWebpackPlugin(),
+        // 分离单独的 CSS 文件到 output
+        new MiniCssExtractPlugin({
+            filename: &#39;style.[hash:8].css&#39;,
+        })
+    ]
+})</code></pre>
+<p>另外，还要修改下<code>package.json</code>的<code>scripts</code>：</p>
+<pre><code class="javascript">&quot;scripts&quot;: {
+    &quot;dev&quot;: &quot;webpack-dev-server --config webpack.dev.js&quot;,
+    &quot;build&quot;: &quot;webpack --config webpack.prod.js&quot;
+}</code></pre>
+<p>记住，如果是自定义config文件，命令上需要加<code>--config</code>才能正常运行。</p>
+<p>至此，手动搭建vue开发环境到此就结束了，不过实际项目开发还是推荐使用vue-cli进行开发。</p>
+<h4 id="可选-Vue-Router"><a href="#可选-Vue-Router" class="headerlink" title="[可选]Vue Router"></a>[可选]Vue Router</h4><p>接下来的东西都是可选的，不属于骨架里的一部分，但是由于vue router的应用广泛，所以挑出来单独说下。</p>
+<p>首先安装vue router:</p>
+<pre><code class="shell">npm i vue-router -S</code></pre>
+<p>然后我们添加一个子页面<code>src/page/hello.vue</code>，用于测试路由。</p>
+<pre><code class="html">&lt;template&gt;
+    &lt;div&gt;
+        &lt;h1&gt;This is a hello page.&lt;/h1&gt;
+    &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<p>接着修改<code>App.vue</code>:</p>
+<pre><code class="html">&lt;template&gt;
+  &lt;div&gt;
+    &lt;h1&gt;{{ message }}&lt;/h1&gt;
+    &lt;img src=&quot;./assets/logo.png&quot;&gt;
+    &lt;div&gt;
+      &lt;router-view/&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+export default {
+  data() {
+    return {
+      message: &#39;Hello, Vue-Template.&#39;
+    };
+  }
+};
+&lt;/script&gt;
+
+&lt;style scoped&gt;
+h1 {
+  color: red;
+}
+&lt;/style&gt;</code></pre>
+<p>然后创建路由文件<code>src/router/router.js</code>:</p>
+<pre><code class="javascript">import Vue from &#39;vue&#39;
+import Router from &#39;vue-router&#39;
+import Hello from &#39;../page/hello&#39;
+
+Vue.use(Router)
+
+export default new Router({
+  mode: &#39;history&#39;,
+  routes: [
+    {
+      path: &#39;/&#39;,
+      name: &#39;home&#39;,
+      component: Hello
+    }
+  ]
+})</code></pre>
+<p>最后修改<code>main.js</code>，将路由添加进去：</p>
+<pre><code class="javascript">import Vue from &#39;vue&#39;
+import App from &#39;./App.vue&#39;
+import router from &#39;./router/router&#39;
+
+Vue.config.productionTip = false
+
+new Vue({
+  router,
+  render: h =&gt; h(App)
+}).$mount(&#39;#app&#39;)</code></pre>
+<p>代码部分就完成了，接着我们运行<code>npm run dev</code>，看下页面是否加载出hello页面。</p>
+<p>可能到这步会报错:</p>
+<pre><code class="javascript">ERROR in ./src/router/router.js
+Module not found: Error: Can&#39;t resolve &#39;../page/hello/index&#39;</code></pre>
+<p>这时，需要修改下webpack配置，添加解析：</p>
+<pre><code class="javascript">resolve: {
+    extensions: [&#39;.js&#39;, &#39;.vue&#39;, &#39;.json&#39;],
+    alias: {
+        &#39;vue$&#39;: &#39;vue/dist/vue.esm.js&#39;,
+    }
+}</code></pre>
+<p>然后重新运行就可以了。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>至此，一个可用的vue骨架就搭建完成了，当然，这并不全面，还缺少scss配置，eslint等。也没有vue-cli那么强大。但是这可以让我们一步步了解webpack相关配置，以及后期怎么去优化我们的项目。</p>
+<p>当然，还是那句话，真实项目还是推荐用vue-cli去做。最后附上Demo地址：</p>
+<p><a href="https://github.com/iafine/code_snippets/tree/master/JavaScript/vue-framework" target="_blank" rel="noopener">vue-framework</a></p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2018/07/21/Vue%E7%B3%BB%E5%88%97-Vue%E8%84%9A%E6%89%8B%E6%9E%B6/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

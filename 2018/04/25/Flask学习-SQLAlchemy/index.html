@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2018-04-25</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">Python</span>
+      
+    </div>
+    
+    <h1 class="detail-title">Flask学习-SQLAlchemy</h1>
+    <p class="detail-content"><p>作为一个专业的后端框架。当然少不了ORM这种东西，这篇我们以sqlite作为测试数据库，学习下falsk-sqlalchemy。</p>
+<a id="more"></a>
+
+<h4 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h4><pre><code class="shell">pipenv install flask-sqlalchemy</code></pre>
+<p>使用pipenv可以分离开发环境，优点很明显</p>
+<h4 id="定义模型"><a href="#定义模型" class="headerlink" title="定义模型"></a>定义模型</h4><p>我们以作者和文章为例，一个作者可以有多篇文章，一篇文章只能对应一个作者。</p>
+<pre><code class="python">// app.py
+from datetime import datetime
+from flask import Flask, render_template
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config[&#39;SQLALCHEMY_DATABASE_URI&#39;] = &#39;sqlite:///blog.db&#39;
+
+db = SQLAlchemy(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(120), unique=False, nullable=False)
+    posts = db.relationship(&#39;Post&#39;, backref=&#39;author&#39;, lazy=True)
+
+    def __repr__(self):
+        return f&quot;User(&#39;{self.username}&#39;, &#39;{self.email}&#39;, &#39;{self.password}&#39;, &#39;{self.posts}&#39;)&quot;
+
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), unique=False, nullable=False)
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    content = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey(&#39;user.id&#39;), nullable=False)
+
+    def __repr__(self):
+        return f&quot;Post(&#39;{self.title}&#39;, &#39;{self.date_posted}&#39;, &#39;{self.content}&#39;)&quot;
+</code></pre>
+<p>需要注意的是，我们在User对象里声明了一个posts字段，目的是利用relationship函数简化关系之间的调用，backref则是一种反向引用的声明。</p>
+<p>声明的sqlite地址是<code>sqlite:///blog.db</code>，数据库创建成功之后，会在当前目录下创建一个blog.db文件，用户测试ORM调用。</p>
+<p><code>__repr__</code>的目的是用于打印对象。</p>
+<h4 id="创建数据库"><a href="#创建数据库" class="headerlink" title="创建数据库"></a>创建数据库</h4><p>首先我们打开终端，cd到当前目录。</p>
+<pre><code class="shell">cd flask_demo
+python
+&gt;&gt;&gt; from app import db
+&gt;&gt;&gt; db.create_all()</code></pre>
+<p>这是用于创建数据库，如果没有报错，那么当前目录会多出一个<code>blog.db</code>数据库文件。</p>
+<h4 id="新增User数据"><a href="#新增User数据" class="headerlink" title="新增User数据"></a>新增User数据</h4><pre><code class="shell">python
+&gt;&gt;&gt; user_1 = User(username=&#39;iafine&#39;, email=&#39;abc@d.com&#39;, password=&#39;123456&#39;)
+&gt;&gt;&gt; db.session.add(user_1)
+&gt;&gt;&gt; user_2 = User(username=&#39;Halran&#39;, email=&#39;xyz@d.com&#39;, password=&#39;123456&#39;)
+&gt;&gt;&gt; db.session.add(user_2)
+&gt;&gt;&gt; db.session.commit()</code></pre>
+<h4 id="查询User数据"><a href="#查询User数据" class="headerlink" title="查询User数据"></a>查询User数据</h4><pre><code class="shell">python
+&gt;&gt;&gt; User.query.all()
+[User(&#39;iafine&#39;, &#39;abc@d.com&#39;, &#39;123456&#39;, &#39;[]&#39;), User(&#39;Halran&#39;, &#39;xyz@d.com&#39;, &#39;123456&#39;, &#39;[]&#39;)]
+&gt;&gt;&gt; User.query.first()
+User(&#39;iafine&#39;, &#39;abc@d.com&#39;, &#39;123456&#39;, &#39;[]&#39;)
+&gt;&gt;&gt; User.query.filter_by(username=&#39;iafine&#39;).all()
+[User(&#39;iafine&#39;, &#39;abc@d.com&#39;, &#39;123456&#39;, &#39;[]&#39;)]
+&gt;&gt;&gt; User.query.filter_by(username=&#39;iafine&#39;).first()
+User(&#39;iafine&#39;, &#39;abc@d.com&#39;, &#39;123456&#39;, &#39;[]&#39;)</code></pre>
+<h4 id="新增Post数据"><a href="#新增Post数据" class="headerlink" title="新增Post数据"></a>新增Post数据</h4><pre><code class="shell">python
+&gt;&gt;&gt; user = User.query.filter_by(username=&#39;iafine&#39;).first()
+&gt;&gt;&gt; post_1 = Post(title=&#39;Hello&#39;, content=&#39;Hello World&#39;, user_id=user.id)
+&gt;&gt;&gt; post_2 = Post(title=&#39;Second Blog&#39;, content=&#39;hahaha&#39;, user_id=user.id)
+&gt;&gt;&gt; db.session.add(post_1)
+&gt;&gt;&gt; db.session.add(post_2)
+&gt;&gt;&gt; db.session.commit()</code></pre>
+<h4 id="查询Post数据"><a href="#查询Post数据" class="headerlink" title="查询Post数据"></a>查询Post数据</h4><pre><code class="shell">python
+&gt;&gt;&gt; user = User.query.filter_by(username=&#39;iafine&#39;).first()
+&gt;&gt;&gt; user.posts
+[Post(&#39;Hello&#39;, &#39;2018-12-20 03:48:56.766852&#39;, &#39;Hello World&#39;), Post(&#39;Second Blog&#39;, &#39;2018-12-20 03:48:56.767787&#39;, &#39;hahaha&#39;)]
+&gt;&gt;&gt; post = Post.query.first()
+&gt;&gt;&gt; post
+Post(&#39;Hello&#39;, &#39;2018-12-20 03:48:56.766852&#39;, &#39;Hello World&#39;)
+&gt;&gt;&gt; post.author
+User(&#39;iafine&#39;, &#39;abc@d.com&#39;, &#39;123456&#39;, &#39;[Post(&#39;Hello&#39;, &#39;2018-12-20 03:48:56.766852&#39;, &#39;Hello World&#39;), Post(&#39;Second Blog&#39;, &#39;2018-12-20 03:48:56.767787&#39;,&#39;hahaha&#39;)]&#39;)</code></pre>
+<p>当我们查询<code>post.author</code>的时候，可以看到，返回了当前对应的用户所有信息，是不是很方便呢。如果没有这个relationship函数的话，那么就需要查询两次。</p>
+<h4 id="资料"><a href="#资料" class="headerlink" title="资料"></a>资料</h4><p><a href="https://www.youtube.com/watch?v=cYWiDiIUxQc" target="_blank" rel="noopener">Python Flask Tutorial: Full-Featured Web App Part 4 - Database with Flask-SQLAlchemy</a></p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2018/04/25/Flask%E5%AD%A6%E4%B9%A0-SQLAlchemy/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

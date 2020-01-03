@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2016-03-20</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">iOS</span>
+      
+    </div>
+    
+    <h1 class="detail-title">iOS进阶-浅谈Runtime</h1>
+    <p class="detail-content"><p>面向对象的语言有很多种，比如Java、C++和Objective-C。但是面向对象的语言分两种，一种是函数调用型，另一种是消息结构型。其中Java和C++属于函数调用型，而OC属于消息结构型。为了支持消息结构，OC和其他语言不同的是，不仅仅只有一个编译器，还存在一个叫做runtime组件的东西，它的出现目的是简化编译器的功能，在OC中，基本的重要功能都是runtime组件完成的，所有的内存管理方法，对象所需的数据结构和方法都在其中。</p>
+<a id="more"></a>
+
+<p>这么一来，我们只需要更新runtime组件，就可以达到修改应用功能，我们使用的JSPatch、Aspects就是利用了这一功能。如果要在函数调用型语言上完成这些事，由于这些工作是在编译期完成的，所以必须重新编译代码才能完成。</p>
+<p>在我们平时编写OC代码时，其实已经有意无意在和runtime打交道了，比如：</p>
+<ul>
+<li>平时写的类和方法，并且使用它们，其实runtime已经在悄悄地给我们提供支持；</li>
+<li>当我们使用到<code>isKindOfClass</code>、<code>isMemberOfClass</code>、<code>conformsToProtocol</code>和<code>respondsToSelector</code>这些方法时，其实就是在调底层runtime的API；</li>
+</ul>
+<h3 id="对象模型"><a href="#对象模型" class="headerlink" title="对象模型"></a>对象模型</h3><p>Objective-C类是用Class类型表示的，实际上是一个指向<code>objc_class</code>结构体的指针。打开<code>objc.h</code>即可看到：</p>
+<pre><code>typedef struct objc_class *Class;</code></pre><p>点进<code>objc_class</code>，可以看到该结构体定义：</p>
+<pre><code>struct objc_class {
+    Class isa  OBJC_ISA_AVAILABILITY;
+
+#if !__OBJC2__
+    Class super_class                                        OBJC2_UNAVAILABLE;     // 父类
+    const char *name                                         OBJC2_UNAVAILABLE;     // 类名
+    long version                                             OBJC2_UNAVAILABLE;     // 类的版本信息，默认为0
+    long info                                                OBJC2_UNAVAILABLE;     // 类信息，提供运行时使用一些标示位
+    long instance_size                                       OBJC2_UNAVAILABLE;     // 类的实例变量大小
+    struct objc_ivar_list *ivars                             OBJC2_UNAVAILABLE;     // 类的成员变量列表
+    struct objc_method_list **methodLists                    OBJC2_UNAVAILABLE;     // 类的方法列表
+    struct objc_cache *cache                                 OBJC2_UNAVAILABLE;     // 类的方法缓存
+    struct objc_protocol_list *protocols                     OBJC2_UNAVAILABLE;     // 类的协议列表
+#endif
+
+} OBJC2_UNAVAILABLE;</code></pre><h4 id="ISA指针"><a href="#ISA指针" class="headerlink" title="ISA指针"></a>ISA指针</h4><p>打开<code>NSObject.h</code>文件，查看interface，我们可以看到下面这个定义：</p>
+<pre><code>@interface NSObject &lt;NSObject&gt; {
+    Class isa  OBJC_ISA_AVAILABILITY;
+}</code></pre><p>可以看到，基类<code>NSObject</code>只有这么一个成员变量，我先看下官方是怎么定义的：</p>
+<blockquote>
+<p>Every object has an isa instance variable that identifies the object’s class. The runtime uses this pointer to determine the actual class of the object when it needs to.（简单翻译：每个对象都有一个isa变量来标示实例对象，当需要使用到这个对象时，runtime使用isa指针来确定是哪个实例对象）</p>
+</blockquote>
+<p>那么我们可以得出，每个对象都会有个isa指针，并且指向该对象的类。也就是isa指针是用来作为对象标示的。</p>
+<p>但是，当我们查看<code>Class</code>结构时，如下所示：</p>
+<pre><code>struct objc_class {
+    Class isa  OBJC_ISA_AVAILABILITY;
+
+#if !__OBJC2__
+    Class super_class                                        OBJC2_UNAVAILABLE;     // 父类
+    const char *name                                         OBJC2_UNAVAILABLE;     // 类名
+    long version                                             OBJC2_UNAVAILABLE;     // 类的版本信息，默认为0
+    long info                                                OBJC2_UNAVAILABLE;     // 类信息，提供运行时使用一些标示位
+    long instance_size                                       OBJC2_UNAVAILABLE;     // 类的实例变量大小
+    struct objc_ivar_list *ivars                             OBJC2_UNAVAILABLE;     // 类的成员变量列表
+    struct objc_method_list **methodLists                    OBJC2_UNAVAILABLE;     // 类的方法列表
+    struct objc_cache *cache                                 OBJC2_UNAVAILABLE;     // 类的方法缓存
+    struct objc_protocol_list *protocols                     OBJC2_UNAVAILABLE;     // 类的协议列表
+#endif
+
+} OBJC2_UNAVAILABLE;</code></pre><p>我们看到，<code>objc_class</code>里面也有一个isa指针，那么这个isa指针是干什么的呢？在OC中，类也是一个对象，那可以这么说，类也是另外一个类的实例，这个类叫做<code>metaclass</code>，中文叫元类。元类保存类方法列表，就是说，当我们去调用一个类方法时，先会在元类中找，如果没有找到，则会在元类的父类中找。</p>
+<p>那么问题来了？元类的isa指针指向哪里呢？所有的元类的isa指针都会指向一个根元类，同时根元类的isa指针指向自己。</p>
+<p>关于这里的资料，推荐唐巧大哥的博客<a href="http://blog.devtang.com/2013/10/15/objective-c-object-model/" target="_blank" rel="noopener">Objective-C对象模型及应用</a>，有关isa详细的介绍，可以参考参考。</p>
+<h3 id="成员变量"><a href="#成员变量" class="headerlink" title="成员变量"></a>成员变量</h3><p>在<code>objc_class</code>结构体中，有下面一条定义：</p>
+<pre><code>struct objc_ivar_list *ivars                             OBJC2_UNAVAILABLE;     // 类的成员变量列表</code></pre><p>ivars值包含了类的所有成员变量，每个元素里面是一个Ivar。</p>
+<pre><code>typedef struct objc_ivar *Ivar;</code></pre><p>有关Ivar，也是一个结构体，如下所示：</p>
+<pre><code>struct objc_ivar {
+    char *ivar_name                                          OBJC2_UNAVAILABLE;
+    char *ivar_type                                          OBJC2_UNAVAILABLE;
+    int ivar_offset                                          OBJC2_UNAVAILABLE;
+#ifdef __LP64__
+    int space                                                OBJC2_UNAVAILABLE;
+#endif
+}   </code></pre><p><code>objc_ivar</code>里定义了成员变量的名称、类型和偏移字节。有关偏移字节的介绍，可以查看<a href="http://quotation.github.io/objc/2015/05/21/objc-runtime-ivar-access.html" target="_blank" rel="noopener">Objective-C类成员变量深度剖析
+</a>，说的很好，同时也回答了<code>为什么Objective-C类不能动态添加成员变量？</code>这个问题。</p>
+<h3 id="方法列表"><a href="#方法列表" class="headerlink" title="方法列表"></a>方法列表</h3><p>在Class的定义里，有一个关于方法的属性，如下：</p>
+<pre><code>struct objc_method_list **methodLists                    OBJC2_UNAVAILABLE;     // 类的方法列表</code></pre><p>顾名思义，<code>methodLists</code>内包含的是该对象的方法列表。我们查看<code>objc_method_list</code>的介绍，可以看到：</p>
+<pre><code>struct objc_method_list {
+    struct objc_method_list *obsolete                        OBJC2_UNAVAILABLE;
+
+    int method_count                                         OBJC2_UNAVAILABLE;
+#ifdef __LP64__
+    int space                                                OBJC2_UNAVAILABLE;
+#endif
+    /* variable length structure */
+    struct objc_method method_list[1]                        OBJC2_UNAVAILABLE;
+}   </code></pre><p>除了一些基本介绍之外，最底部有个<code>objc_method</code>的属性，这个结构体就是用来定义方法的。</p>
+<pre><code>struct objc_method {
+    SEL method_name                                          OBJC2_UNAVAILABLE;
+    char *method_types                                       OBJC2_UNAVAILABLE;
+    IMP method_imp                                           OBJC2_UNAVAILABLE;
+} </code></pre><p>里面有三个属性，SEL、方法类型和IMP。最重要的两个SEL和IMP，一个是查找方法的，另一个是实现方法的。</p>
+<h4 id="SEL"><a href="#SEL" class="headerlink" title="SEL"></a>SEL</h4><p>我们先来看下<code>SEL</code>的定义：</p>
+<pre><code>typedef struct objc_selector *SEL;</code></pre><p>在Objective-C的编译过程中，会根据每一个方法的名字、参数序列来生成一个唯一的整型标示，这个标示就是SEL。我们可以用下面的代码获取到SEL，例如：</p>
+<pre><code>SEL selector = @selector(eat);  // eat是一个Person类里的方法名
+NSLog(@&quot;SEL: %p&quot;, selector);
+
+// output: SEL: 0x1049748ee</code></pre><p>在Objective-C中，只要两个方法名相同，那么方法的SEL就是一样的。每一个方法对应一个SEL，同一个类中不能存在两个同名的方法，比如：</p>
+<pre><code>// Person.h
+
+- (void)showMessage:(NSString *)message;
+- (void)showMessage:(NSDictionary *)message;
+
+//Error: Duplicate declaration of method &#39;showMessage:&#39;</code></pre><p>拥有两个同名的方法，Xcode就会提示你重复声明方法而报错，但是，在不同类中使用同名的方法是不会报错的，并且其SEL也是一样的。</p>
+<p>有关SEL的更多介绍，希望放到消息发送那块去讲，了解这些基础就可以了。</p>
+<h4 id="IMP"><a href="#IMP" class="headerlink" title="IMP"></a>IMP</h4><p>IMP叫做函数指针，指的是方法实现的首地址。前面说了，查找方法通过SEL去查找对应的IMP，获取到IMP后，我们就获取到了方法实现的首地址了，也就是执行方法的入口，这样，我们就可以像调用C语言函数一样，去调用Objective-C的方法了。</p>
+<p>SEL和IMP说完之后，我们回到Method上，Method结构体中包含一个SEL和IMP，相当于在SEL和IMP之间作了一个映射。每个方法都有自己的唯一标示和方法地址，执行起来效率最高。具体细节到消息发送那块去讲。</p>
+<h3 id="方法缓存"><a href="#方法缓存" class="headerlink" title="方法缓存"></a>方法缓存</h3><p>在Class的定义中，有一行是关于方法缓存的：</p>
+<pre><code>struct objc_cache *cache                                 OBJC2_UNAVAILABLE;     // 类的方法缓存</code></pre><p>打开<code>objc_cache</code>，我们可以看到其结构：</p>
+<pre><code>struct objc_cache {
+    unsigned int mask /* total = mask + 1 */                 OBJC2_UNAVAILABLE;
+    unsigned int occupied                                    OBJC2_UNAVAILABLE;
+    Method buckets[1]                                        OBJC2_UNAVAILABLE;
+};</code></pre><p>每个类只有一份方法缓存，当第一次方法被调用之后，再次调用的时候，就会优先从缓存列表中查找，如果没有的话，才会从methodLists中查找。</p>
+<h3 id="协议列表"><a href="#协议列表" class="headerlink" title="协议列表"></a>协议列表</h3><p>Class定义中还有一个协议列表。</p>
+<pre><code>struct objc_protocol_list *protocols                     OBJC2_UNAVAILABLE;     // 类的协议列表</code></pre><p>查看<code>objc_protocol_list</code>，如下所示：</p>
+<pre><code>struct objc_protocol_list {
+    struct objc_protocol_list *next;
+    long count;
+    __unsafe_unretained Protocol *list[1];
+};</code></pre><p>顾名思义，其中包含了该Class的所有协议列表。我们可以使用<code>class_copyProtocolList</code>获取所有的<code>Protocol</code>。</p>
+<h3 id="静态调用和动态调用"><a href="#静态调用和动态调用" class="headerlink" title="静态调用和动态调用"></a>静态调用和动态调用</h3><p>在说Objective-C的消息机制之前，我们先来看下在C中是如何进行函数调用的，在C语言中，函数调用属于静态绑定，意思就是在编译期间就可以获取到函数调用指令，例如：</p>
+<pre><code>#include &lt;stdio.h&gt;
+
+void eat() {
+    printf(&quot;eat\n&quot;);
+}
+
+void rest() {
+    printf(&quot;rest\n&quot;);
+}
+
+void doSomeThing(int type) {
+    if (type == 0) {
+        eat();
+    }else {
+        rest();
+    }
+}
+
+int main(int argc, const char * argv[]) {
+
+    doSomeThing(1);
+    return 0;
+}</code></pre><p>上面这种函数调用，在编译期间就可以确定函数调用指令，所以为静态调用，下面我们换一种方式：</p>
+<pre><code>#include &lt;stdio.h&gt;
+
+void eat() {
+    printf(&quot;eat\n&quot;);
+}
+
+void rest() {
+    printf(&quot;rest\n&quot;);
+}
+
+void doSomeThing(int type) {
+    void (*method)();
+    if (type == 0) {
+        method = eat;
+    }else {
+        method = rest;
+    }
+    method();
+}
+
+int main(int argc, const char * argv[]) {
+
+    doSomeThing(1);
+    return 0;
+}</code></pre><p>第二个和第一个区别在于，第二个只有在运行的时候，才会知道method方法到底指的是哪个，这就使用到了简单的动态调用了，因为需要在运行的时候才会知道method函数调用指令。</p>
+<p>在Objective-C中，所有的函数调用，我们叫做发送消息，所谓的发送消息，就是指使用动态绑定技术在运行时决定需要调用的函数指令。所以我们经常说Objective-C是一门动态语言。</p>
+<h3 id="objc-msgSend-消息分发"><a href="#objc-msgSend-消息分发" class="headerlink" title="objc_msgSend(消息分发)"></a>objc_msgSend(消息分发)</h3><p>当我们使用Objective-C进行方法调用时，比如：</p>
+<pre><code>[person doSomething];</code></pre><p>通俗地讲，我们使用面向对象的思维去解释的话，是<code>person</code>对象调用<code>doSomething</code>方法。但是如果从runtime的角度去看，其实是一个函数调用：</p>
+<pre><code>objc_msgSend(person,doSomething);</code></pre><p>通俗地讲，就是在Objective-C中，我们进行方法调用的时候，其实是runtime使用<code>objc_msgSend</code>帮助我们发送一个消息，来帮助我们需要调用的方法。</p>
+<p>然后，<code>objc_msgSend</code>会负责分发这个消息，它会查找合适的函数指针或者IMP，然后调用该函数，任何通过<code>objc_msgSend</code>传递的参数，最终都会变成IMP的参数。<code>objc_msgSend</code>的职责范围是接收参数，然后找到函数指针，进行分发。就像一个快递员一样，根据快递单号和地址，将快递从一个地方送到另外一个地方。</p>
+<p>当然，为了提升速度，runtime还提供了方法缓存来加快查找速度。</p>
+<p>我们把流程总结一下：</p>
+<ol>
+<li>[person doSomething];</li>
+<li>objc_msgSend(person,@selector(doSomething));</li>
+<li>objc_msgSend会进行消息分发，先是从cache中去查找，cache是一个hash表，Selector是key；</li>
+<li>如果cache中没有找到，那么再去methodLists去找，如果找到，就会把它放到缓存中去，下次就不用直接查表了。</li>
+<li>如果在methodLists中都没找到，那么会去superClass中去找，直到最顶端的根类；</li>
+<li>如果到根类都没有找到的话，那么就会报<code>unrecognized selector sent to instance 0x7fe672452350</code>这个异常。</li>
+</ol>
+<h3 id="消息转发"><a href="#消息转发" class="headerlink" title="消息转发"></a>消息转发</h3><p>上面，我们看到，如果找不到的话，就会报异常，<code>unrecognized selector sent to instance 0x7fe672452350</code>，在这个异常抛出之前，会试图通过三种途径来拯救异常。</p>
+<ol>
+<li>Method resolution</li>
+<li>Fast forwarding</li>
+<li>Normal forwarding</li>
+</ol>
+<h4 id="Method-resolution"><a href="#Method-resolution" class="headerlink" title="Method resolution"></a>Method resolution</h4><p>Method resolution提供了两个方法，一个是<code>+ (BOOL)resolveInstanceMethod:(SEL)sel</code>，另一个是<code>+ (BOOL)resolveClassMethod:(SEL)sel</code>。从名字可以看出，一个是用于实例方法，一个用于类方法。都是一样的，我们以上面的[person doSomething]为类，来重写<code>+ (BOOL)resolveInstanceMethod:(SEL)sel</code>来保证运行不崩溃。</p>
+<pre><code>void testMethod(id obj, SEL _cmd) {
+    NSLog(@&quot;testMethod防止程序崩溃&quot;);
+}
+
++ (BOOL)resolveInstanceMethod:(SEL)sel {
+    if (sel == @selector(doSomething)) {
+        class_addMethod([self class], sel, (IMP)testMethod, &quot;v@:&quot;);
+        return YES;
+    }
+    return [super resolveInstanceMethod:sel];
+}</code></pre><p>运行程序之后，会发现没有抛出异常，而是打印出了<code>testMethod防止程序崩溃</code>的信息。</p>
+<h4 id="Fast-forwarding"><a href="#Fast-forwarding" class="headerlink" title="Fast forwarding"></a>Fast forwarding</h4><p>在使用之前，，我们先给测试类新加一个方法，来创造下测试条件，在头文件中加上下面这句。</p>
+<pre><code>- (BOOL)hasPrefix:(NSString *)str;</code></pre><p>实现文件里什么都不写，运行之后会发现直接报错。</p>
+<pre><code>&#39;-[MessageSendTest hasPrefix:]: unrecognized selector sent to instance 0x60800000ccf0&#39;</code></pre><p>好了，我们看下如何使用Fast forwarding来保证异常不会发生。我们在测试类中重写以下方法：</p>
+<pre><code>- (id)forwardingTargetForSelector:(SEL)aSelector {
+    if (aSelector == @selector(hasPrefix:)) {
+        return [NSString string];
+    }
+    return [super forwardingTargetForSelector:aSelector];
+}</code></pre><p>可以发现，在该方法中，我们让如果请求的是<code>hasPrefix:</code>，直接返回<code>[NSString string]</code>，将这个消息转发给了NSString对象，我们知道，<code>hasPrefix:</code>是NSString的系统方法，肯定有实现的，所以再次运行程序之后，没有崩溃。</p>
+<h4 id="Normal-forwarding"><a href="#Normal-forwarding" class="headerlink" title="Normal forwarding"></a>Normal forwarding</h4><p>Normal forwarding一般是最后救命的稻草了。这些可以在<code>-forwardInvocation:</code>中实现，我们还是用上面的例子。</p>
+<p>我们先定义一个全局的NSString变量，</p>
+<pre><code>NSString _string = [NSString string];</code></pre><p>下面是关键实现代码：</p>
+<pre><code>- (void)forwardInvocation:(NSInvocation *)anInvocation {
+    SEL sel = anInvocation.selector;
+
+    if ([_string respondsToSelector:sel]) {
+        [anInvocation invokeWithTarget:_string];
+    }else {
+        [self doesNotRecognizeSelector:sel];
+    }
+}
+
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)aSelector {
+    NSMethodSignature *signature = [super methodSignatureForSelector:aSelector];
+    if (!signature) {
+        signature = [_string methodSignatureForSelector:aSelector];
+    }
+    return signature;
+}</code></pre><p>这里代码也是比较好理解的，调用一个方法，首先会走<code>methodSignatureForSelector</code>这个方法，如果发现方法签名是nil，我们加了个判断，如果是nil，则走NSString实例的方法签名。</p>
+<p>重签名之后，会走<code>forwardInvocation</code>来进行分发，我们这里增加了一个判断，如果在NSString中找到该SEL，那么就直接在新的对象上执行该SEL，否则执行<code>doesNotRecognizeSelector</code>方法。这样就可以完全避免<code>unrecognized selector sent to instance</code>崩溃问题。</p>
+<p>另外，如果关注过JSPatch的同学，可以看到JSPatch作者解决参数获取的问题时，就用了这个技术，详情可以查看Bang的博客, 在文末那里可以找到。</p>
+<h3 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h3><p><a href="https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Introduction/Introduction.html" target="_blank" rel="noopener">https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Introduction/Introduction.html</a></p>
+<p><a href="http://blog.cnbang.net/tech/2808/" target="_blank" rel="noopener">JSPatch实现原理详解</a></p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2016/03/20/iOS%E8%BF%9B%E9%98%B6-%E6%B5%85%E8%B0%88Runtime/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

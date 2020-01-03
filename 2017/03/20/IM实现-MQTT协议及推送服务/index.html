@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2017-03-20</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">原理</span>
+      
+    </div>
+    
+    <h1 class="detail-title">IM实现-MQTT协议及推送服务</h1>
+    <p class="detail-content"><p>MQTT全称叫做Message Queuing Telemetry Transport，意为消息队列遥测传输，是IBM开发的一个即时通讯协议。由于其维护一个长连接以轻量级低消耗著称，所以常用于移动端消息推送服务开发。</p>
+<a id="more"></a>
+
+<h4 id="MQTT特性"><a href="#MQTT特性" class="headerlink" title="MQTT特性"></a>MQTT特性</h4><p>MQTT具有如下特性：</p>
+<ul>
+<li><p>使用发布／订阅消息模式，提供一对多消息发布；</p>
+</li>
+<li><p>对负载内容屏蔽的消息传输；</p>
+</li>
+<li><p>使用TCP/IP进行网络连接；</p>
+<p>  主流的MQTT是基于TCP进行连接的，同样也有UDP版本的MQTT，但是不太常用，叫做MQTT-SN。</p>
+</li>
+<li><p>具有三种消息发布服务质量选项；</p>
+<ol>
+<li>“至多一次”，通常app的推送使用的就是这种模式。也就是说，如果移动设备在消息推送的时候没有联网，那么再次联网就不会收到通知了；</li>
+<li>“至少一次”，可以确保消息收到，但消息可能会重复；</li>
+<li>“只有一次”，确保消息到达一次，比如计费系统， 如果出现消息重复或者丢失会导致系统结果不正确的问题。</li>
+</ol>
+</li>
+<li><p>小型传输，开销很小（固定长度的头部是2字节），协议交换最小化，以降低网络流量；</p>
+<p>  这就是为什么MQTT能以轻量级低消耗著称，所以MQTT特别适用于低开销、低宽带占用的即时通讯场景。</p>
+</li>
+<li><p>通知有关各方客户端异常中断的机制。</p>
+</li>
+</ul>
+<h4 id="MQTT协议实现方式"><a href="#MQTT协议实现方式" class="headerlink" title="MQTT协议实现方式"></a>MQTT协议实现方式</h4><p><img src="https://itbilu.com/upload/2016/1/9/14523188625918865.png" alt="image"></p>
+<p>在MQTT协议中有三种身份：</p>
+<ul>
+<li>发布者(Publish)。发布者其实是客户端，可以进行发布消息；<ul>
+<li>代理(Broker)。代理指的是服务器，比较有名的是eqmtt，当前，你也可以用其他成熟的框架去搭建MQTT服务；</li>
+<li>订阅者(Subscribe)。一般指的是客户端，不过，发布者同时也可以是订阅者。</li>
+</ul>
+</li>
+</ul>
+<h4 id="MQTT客户端"><a href="#MQTT客户端" class="headerlink" title="MQTT客户端"></a>MQTT客户端</h4><p>一般来说，客户端可以实现一下功能：</p>
+<ul>
+<li>给其他客户端发布订阅的信息；</li>
+<li>订阅其他客户端发布的信息；</li>
+<li>退订和订阅主题；</li>
+<li>断开服务器连接。</li>
+</ul>
+<h4 id="MQTT服务端"><a href="#MQTT服务端" class="headerlink" title="MQTT服务端"></a>MQTT服务端</h4><p>MQTT服务端也称为消息代理，经常你会听到broker这个词。它可以实现一下功能：</p>
+<ul>
+<li>接收来自客户端的网络连接；</li>
+<li>接受客户发布的应用信息；</li>
+<li>处理来自客户端主题订阅和退订请求；</li>
+<li>向订阅的客户端转发应用程序消息。</li>
+</ul>
+<h4 id="MQTT协议中的方法"><a href="#MQTT协议中的方法" class="headerlink" title="MQTT协议中的方法"></a>MQTT协议中的方法</h4><p>MQTT和HTTP一样，也定义了一些动作，来表示对确定资源进行操作。</p>
+<ul>
+<li><strong>Connect</strong>，等待于服务器建立连接；</li>
+<li><strong>Disconnect</strong>，等待客户端完成所做的工作，并与服务器断开TCP/IP会话；</li>
+<li><strong>Subscribe</strong>，主题订阅；</li>
+<li><strong>UnSubscribe</strong>，主题取消订阅；</li>
+<li><strong>Publish</strong>，发送消息。</li>
+</ul>
+<h3 id="移动端推送服务"><a href="#移动端推送服务" class="headerlink" title="移动端推送服务"></a>移动端推送服务</h3><p>消息推送服务目前已经是app开发中必备的一个功能了，及时地将消息推送给用户，可以使得用户不会错过重大新闻或者重要事件通知。一般，推送服务有三种实现方式：</p>
+<ol>
+<li>轮询方式。客户端不断的查询服务器，检索新内容。这种方式的缺点十分明显，如果轮询频率过快，会大量消耗网络带宽和电池；</li>
+<li>长连接方式。客户端和服务端维持一条TCP/IP长连接，服务端向客户端push数据。这种方式可以避免轮询方式带来的性能问题，但是长连接依然会带来耗能问题。目前苹果的APNS和谷歌的GCM都是基于此方案来实现推送服务的；</li>
+<li>SMS方式。当服务端有新内容的时候，会发送一条类似短信的指令传给客户端，客户端收到后从服务端下载新内容。由于运营商并没有免费开放这种指令，使用需要向运营商缴纳部分费用，所以并没有大量运用起来，但是这种方式非常的高效和及时。</li>
+</ol>
+<h4 id="iOS和Andorid推送的实现差异"><a href="#iOS和Andorid推送的实现差异" class="headerlink" title="iOS和Andorid推送的实现差异"></a>iOS和Andorid推送的实现差异</h4><p>之前我们说过，目前移动端的推送服务实现都是基于长连接方式实现的。服务端和客户端之间需要存在一条长连接来维持，当服务端主动推送内容给客户端时，客户端可以接收到该内容。</p>
+<p><strong>iOS推送服务</strong> </p>
+<p>在iOS系统中，这个长连接是由系统去维护，iOS上所有应用的推送都是先将推送推到苹果推送服务器(APNs)上，应用需要推送功能时，需要先注册推送服务。其流程图如下所示：</p>
+<p><img src="https://pic4.zhimg.com/f74c97ee64f0bf008e8c790206811f4f_b.png" alt="推送注册流程图"></p>
+<p>首先，苹果会下发deviceToken，这是apns推送实现的基础。APNs推送能够实现就是基于deviceToken来推送的，只有正确的deviceToken才会被APNs接受，一般第三方推送商就是来收集deviceToken来进行推送的。</p>
+<p>当开始进行推送内容的时候，服务端会将内容先推到APNs，然后，剩下的就都交给APNs去做了，其推送内容流程如下：</p>
+<p><img src="https://pic2.zhimg.com/4525ca70963895ab4fca064a537dbcd9_b.png" alt="推送注册流程图"></p>
+<p>苹果这么做，不管是给用户还是开发者，带来的好处都是实实在在的：</p>
+<ol>
+<li>由于是系统级别的长连接，所以不会出现被杀死而不发推送的现象；</li>
+<li>省电。不用每个app都去各自维护一个自己的长连接；</li>
+<li>安全可靠。为了能够使用推送服务，必须先在开发者账号注册推送功能，这就大大降低了长连接滥用的场景。</li>
+<li>对于开发来说，实现起来十分容易，服务端只要将正确的deviceToken和推送内容发送给APNs，然后客户端进行推送注册和逻辑处理就行了。</li>
+</ol>
+<p><strong>Android推送服务</strong></p>
+<p>Android系统上，Google也推出了和APNS类似的服务，叫做GCM。但是由于国情原因(你懂得)，导致该服务在中国无法使用。所以，国内Andorid的普遍做法是自己维护一条长连接，和自己的推送服务器或者第三方推送商对接。</p>
+<p>其实现原理APNs没有本质区别，但是由于一个设备通常需要维持多个长连接，所以在耗能这块，Andorid这块处理就不尽人意，并且，由于后台可以常驻，所以安全性这块也得不到保障。</p>
+<p>除了类似APNs的实现，在Android上，也可以采用轮询方式，也可以简单实现推送功能。</p>
+<h3 id="MQTT实现消息推送"><a href="#MQTT实现消息推送" class="headerlink" title="MQTT实现消息推送"></a>MQTT实现消息推送</h3><h4 id="iOS端实现"><a href="#iOS端实现" class="headerlink" title="iOS端实现"></a>iOS端实现</h4><p>对于iOS端使用MQTT来实现消息推送服务，比较常见的做法就是采用离线消息的方式去做，服务端发送推送消息，发送到APNs上，然后APNs通知客户端收到通知消息，客户端去服务端拉取最新消息列表，然后展示的界面上并处理相关逻辑。</p>
+<h4 id="Android端实现"><a href="#Android端实现" class="headerlink" title="Android端实现"></a>Android端实现</h4><p>由于并不是做Android开发，并且Android方面采用方式五花八门，了解的做法是类似iOS的实现，利用MQTT将服务端和客户端建议一个长连接，然后服务端将消息直接推倒客户端上，客户端收到推送消息后，去服务端拉取最新的消息列表。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>对于移动设备来说，MQTT以低开销、低带宽著称，十分适合搭建推送服务。目前方案也比较成熟，希望未来MQTT的应用会越来越广！</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2017/03/20/IM%E5%AE%9E%E7%8E%B0-MQTT%E5%8D%8F%E8%AE%AE%E5%8F%8A%E6%8E%A8%E9%80%81%E6%9C%8D%E5%8A%A1/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

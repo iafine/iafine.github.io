@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2019-08-10</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">深入了解现代web浏览器-渲染进程的内部运作</h1>
+    <p class="detail-content"><p>作为前端开发，浏览器的知识是必须掌握的，偶然在Google开发平台上看到如此优秀的文章，特此记录回顾一下，本篇介绍浏览器的渲染进程，是如何工作的。</p>
+<a id="more"></a>
+
+<ul>
+<li>CPU、GPU、内存和多进程架构；</li>
+<li>站点请求和网页呈现；</li>
+<li>渲染进程的内部运作；</li>
+<li>事件交互实现。</li>
+</ul>
+<p>本篇译文地址：<a href="https://developers.google.com/web/updates/2018/09/inside-browser-part3" target="_blank" rel="noopener">https://developers.google.com/web/updates/2018/09/inside-browser-part3</a></p>
+<p>图片资源来源于Google开发平台。</p>
+<h4 id="处理Web内容"><a href="#处理Web内容" class="headerlink" title="处理Web内容"></a>处理Web内容</h4><p>在浏览器中，渲染进程负责选项卡内部的所有事情。其核心就是将HTML、CSS和JavaScript转换成用户可以交互的页面。</p>
+<p><img src="/images/renderer0927.png" alt="1111"></p>
+<h4 id="解析"><a href="#解析" class="headerlink" title="解析"></a>解析</h4><h5 id="HTML解析"><a href="#HTML解析" class="headerlink" title="HTML解析"></a>HTML解析</h5><p>当渲染进程开始接受HTML数据后，内部的主线程就开始解析处理HTML文本，使之成为一个DOM树。</p>
+<p>DOM是浏览器对页面的内部表示以及Web开发人员可以通过JavaScript与之交互的数据结构和API。</p>
+<h5 id="子资源的加载"><a href="#子资源的加载" class="headerlink" title="子资源的加载"></a>子资源的加载</h5><p>然后，进程子资源的加载，通常网站都会使用图片、CSS和JavaScript，他们可以统称为资源。主线程可以在解析构建DOM的过程中，一个个找到它们，并发出请求。但是为了加快响应速度，通常的做法就是预加载这些资源，<img src="/images/dom0927.png" alt="1111"></p>
+<p>当HTML解析器找到<code>&lt;script&gt;</code>标签后，就会暂停对HTML文档的解析，并且需要解析执行JavaScript代码，因为JavaScript可以使用<code>document.write()</code>类似的方式更改整个DOM树结构。</p>
+<p>当然，也可以异步去加载这些资源，对于<code>&lt;script&gt;</code>可以使用defer或者async来实现。<code>&lt;link rel=&quot;preload&quot;&gt;</code>也是如此。</p>
+<h5 id="样式表"><a href="#样式表" class="headerlink" title="样式表"></a>样式表</h5><p>只通过DOM或者资源，并不能知道页面的外观，需要使用CSS来确认。渲染器进程内部的主线程，来计算每个DOM上对应的节点样式。</p>
+<p>如果没有提供任何CSS，那么主线程就会根据默认样式表来计算，比如<code>&lt;p&gt;</code>和<code>&lt;h1&gt;</code>。</p>
+<p><img src="/images/computedstyle0927.png" alt="1111"></p>
+<h5 id="布局树"><a href="#布局树" class="headerlink" title="布局树"></a>布局树</h5><p>仅仅知道DOM树上面每个节点的文档结构和样式，也是不足以渲染页面的，还需要对布局进行计算。渲染进程的主线程会根据DOM和样式，生成一个布局树，该树的每个节点具有类似xy坐标，以及边界框等等，和DOM树很像。</p>
+<p><img src="/images/tellgame0927.png" alt="1111"></p>
+<h5 id="绘制顺序"><a href="#绘制顺序" class="headerlink" title="绘制顺序"></a>绘制顺序</h5><p>生成了布局树之后，我们还需要知道节点是以什么顺序来绘制的。</p>
+<p><img src="/images/drawgame0927.png" alt="1111"></p>
+<p>主线程根据布局树，来创建绘制记录，比如可能是这样的，首先是背景，然后是文本，然后是矩形。</p>
+<p><img src="/images/paint0927.png" alt="1111"></p>
+<p>另外，更新绘制过程的成本是很高的，在每个步骤中，首先需要准备好节点的新数据，如果布局树中发生某些更改，则需要为文档的受影响部分重新生成绘制记录。</p>
+<p>比如，一个流程的动画帧如下：<br><img src="/images/pagejank10927.png" alt="1111"></p>
+<p>如果在动画的绘制过程中，JavaScript代码阻止了一帧，动画就会错过帧，会变得混乱。</p>
+<p><img src="/images/pagejank20927.png" alt="1111"></p>
+<p>如果非要在动画帧里面执行JavaScript代码块，可以将代码块分割成几小块，然后调用<code>requestAnimationFrame()</code>，避免来阻塞主线程。也可以在Web Worker里去执行JavaScript代码。</p>
+<p><img src="/images/raf20927.png" alt="1111"></p>
+<h5 id="合成"><a href="#合成" class="headerlink" title="合成"></a>合成</h5><p>合成的意思是将页面的各个部分分为若干层，分别对其进行栅格化，然后用一条专用的合成线程合成为页面。</p>
+<p>如果发生滚动，那么图层就会被改变，所以要合成一个新的帧。</p>
+<p>一旦确定和布局树和绘制顺序，主线程就会将这些信息交给合成线程来做，合成线程会将每个图层栅格化，一层可能像页面的整个长度一样大，因此合成器线程将它们划分为图块，然后将每个图块发送给栅格线程。栅格线程栅格化每个图块并将它们存储在GPU内存中。</p>
+<p><img src="/images/raster0927.png" alt="1111"></p>
+<p>合成线程来收集图块位置等信息，然后通过IPC发送给浏览器进程，接着通过UI线程或者其他渲染器进程添加到另一个合成器框架。然后会给到GPU那边，进行图形计算，显示的硬件屏幕上。如果发生了滚动，合成线程会创建另外一个合成器给到GPU那边。</p>
+<p>这样，合成的过程无需主线程干扰，不需要等待样式或者JavaScript执行完毕，才进行绘制。但是如果涉及到重新计算布局或者绘制，就必须涉及到主线程。</p>
+<p><img src="/images/composit0927.png" alt="1111"></p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本篇介绍了渲染进程中做的事情，以及是如何根据HTML、CSS和JavaScript来绘制成页面的。接下来我们会介绍交互是如何实现的。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2019/08/10/%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%E7%8E%B0%E4%BB%A3web%E6%B5%8F%E8%A7%88%E5%99%A8-%E6%B8%B2%E6%9F%93%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%86%85%E9%83%A8%E8%BF%90%E4%BD%9C/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

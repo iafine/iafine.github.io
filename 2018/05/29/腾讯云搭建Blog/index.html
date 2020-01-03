@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2018-05-29</span>
+      <span class="detail-meta-item">•</span>
+      
+    </div>
+    
+    <h1 class="detail-title">腾讯云搭建Blog</h1>
+    <p class="detail-content"><blockquote>
+<p>前段时间上车了腾讯云，准备用来学习下Node，发现有些浪费，就把博客从GitHub Page搬到腾讯云上来，其过程对于一个前端来讲，还是蛮有趣的，虽然自己以前也倒腾过Linux。</p>
+</blockquote>
+<a id="more"></a>
+
+
+
+<h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><p>开始之前，首先你要有个云服务器，可以不是腾讯云，一个VPS就行。另外是之前写的博客MD文件，确保核心数据没有丢。我整理了下，流程如下：</p>
+<p><img src="/images/%E8%85%BE%E8%AE%AF%E4%BA%91%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%B5%81%E7%A8%8B.png" alt="腾讯云搭建博客流程"></p>
+<h3 id="云服务器"><a href="#云服务器" class="headerlink" title="云服务器"></a>云服务器</h3><p>随便一家云服务都行，看自己心情，我买腾讯云的时候很便宜，就入手了腾讯云。</p>
+<h3 id="服务器环境搭建"><a href="#服务器环境搭建" class="headerlink" title="服务器环境搭建"></a>服务器环境搭建</h3><p>Windows服务器没接触过，我用的是CentOS。对于一个写前端的，特别是移动端的，Linux下的环境搭建还是有点麻烦，特别是照着某些不入流的教程走，所以如果官网有文档的话，最好还是根据官网来。另外，下面的这些都是需要在云服务器上安装的。</p>
+<h4 id="安装Node"><a href="#安装Node" class="headerlink" title="安装Node"></a>安装Node</h4><p>按照官网的文档往下走，</p>
+<pre><code class="shell">curl --silent --location https://rpm.nodesource.com/setup_8.x | sudo bash -</code></pre>
+<p>然后</p>
+<pre><code class="shell">sudo yum -y install nodejs</code></pre>
+<p>就完成了。可以输入<code>node -v</code>测试下是否安装成功。</p>
+<h4 id="安装Nginx"><a href="#安装Nginx" class="headerlink" title="安装Nginx"></a>安装Nginx</h4><pre><code class="shell">sudo yum install epel-release
+sudo yum install nginx</code></pre>
+<p>安装后默认Nginx会启动，如果没有启动，可以输入下面命令来启动Nginx：</p>
+<pre><code class="shell">nginx -s reopen</code></pre>
+<p>最后可以在浏览器中输入外网IP看下，会不会出现Nginx的欢迎页，出现说明启动成功。</p>
+<h4 id="安装Hexo"><a href="#安装Hexo" class="headerlink" title="安装Hexo"></a>安装Hexo</h4><p>一条命令就可安装成功：</p>
+<pre><code class="shell">npm install -g hexo-cli</code></pre>
+<h4 id="安装Git"><a href="#安装Git" class="headerlink" title="安装Git"></a>安装Git</h4><p>可以通过<code>yum</code>安装Git，但是这种方式的Git版本太低了，强迫症会受不了，所以推荐源码安装：</p>
+<pre><code class="shell">wget https://github.com/git/git/archive/v2.16.3.tar.gz
+tar -zxf git-2.16.3.tar.gz
+cd git-2.16.3
+make prefix=/usr/local all
+sudo make prefix=/usr/local install</code></pre>
+<p>安装完毕后，可以输入<code>git --version</code>看下是否安装成功。</p>
+<h3 id="本地环境搭建"><a href="#本地环境搭建" class="headerlink" title="本地环境搭建"></a>本地环境搭建</h3><p>本地系统是Mac的，所以安装比较方便，直接用Homebrew安装即可。</p>
+<pre><code class="shell">brew install node
+npm install -g hexo-cli</code></pre>
+<p>Git这些在Mac是自带的，所有不用安装。</p>
+<h2 id="博客搭建"><a href="#博客搭建" class="headerlink" title="博客搭建"></a>博客搭建</h2><h3 id="本地博客搭建"><a href="#本地博客搭建" class="headerlink" title="本地博客搭建"></a>本地博客搭建</h3><p>hexo是一个十分高效的blog生成工具，使用也很简单。本地搭建博客需要实现以下两点：</p>
+<ul>
+<li>代码备份，使用GitHub或者Bitbucket来做；</li>
+<li>本地测试Blog。</li>
+</ul>
+<p>首先需要在GitHub或者Bitbucket上新建一个repo，也可以使用其他家的服务，流程都是一样的，关键是用来备份代码。</p>
+<p>比如我们在GitHub上新建了个blog仓库，接下来我们使用<code>git clone</code>来将仓库拷贝到本地，比如本地blog文件夹目录是<code>/document/blog</code>。</p>
+<p>接下来我们开始创建blog。</p>
+<pre><code class="shell">cd /document/blog
+hexo init
+hexo new &quot;Hello World&quot;
+hexo g
+hexo s</code></pre>
+<p>hexo默认开启的是4000端口，可以在浏览器中输入<code>127.0.0.1:4000</code>来查看blog效果。</p>
+<p>接下来就是之前blog的md文件迁移，这个过程就不细细阐述了。</p>
+<h3 id="云服务上Git搭建"><a href="#云服务上Git搭建" class="headerlink" title="云服务上Git搭建"></a>云服务上Git搭建</h3><p>首先需要按转Git，方法上面已经说了，接下来我们创建一个git用户，用来管理相关git仓库。</p>
+<pre><code class="shell">adduser git
+chmod 740 /etc/sudoers
+vim /etc/sudoers</code></pre>
+<p>然后在root下面添加git用户。</p>
+<pre><code class="shell">## Allow root to run any commands anywhere
+root    ALL=(ALL)     ALL
+git     ALL=(ALL)       ALL</code></pre>
+<p>然后修改权限，并且给git用户设置一个密码。</p>
+<p>```powershell`<br>chmod 400 /etc/sudoers<br>sudo passwd git</p>
+<pre><code>
+成功之后，切换到git用户，对SSH进行配置，主要是实现免密登录。
+
+​```shell
+su git
+mkdir ~/.ssh
+vim ~/.ssh/authorized_keys
+#然后将电脑中执行 cat ~/.ssh/id_rsa.pub | pbcopy ,将公钥复制粘贴到authorized_keys
+chmod 600 ~/.ssh/authorzied_keys
+chmod 700 ~/.ssh</code></pre><p>使用下面命令可以测试免密登录是否成功。</p>
+<pre><code class="shell">ssh -v git@SERVER</code></pre>
+<h3 id="远程Git静态仓库配置"><a href="#远程Git静态仓库配置" class="headerlink" title="远程Git静态仓库配置"></a>远程Git静态仓库配置</h3><p>接下来，需要创建一个用来存放hexo生成静态文件的目录。我们先切换到git用户，然后创建一个blog文件夹，用来存放hexo静态文件。</p>
+<pre><code class="shell">su git
+cd /home/git
+git init --bare blog.git</code></pre>
+<p>然后创建个git钩子，用来自动同步网站根目录。</p>
+<pre><code class="shell">cd blog.git
+vim /hooks/post-receive</code></pre>
+<p>输入以下内容：</p>
+<pre><code class="shell">GIT_REPO=/home/git/blog.git
+TMP_GIT_CLONE=/home/project/tmp/blog_tmp
+PUBLIC_HEXO=/home/project/blog
+rm -rf ${TMP_GIT_CLONE}
+git clone $GIT_REPO $TMP_GIT_CLONE
+rm -rf ${PUBLIC_HEXO}/*
+cp -rf ${TMP_GIT_CLONE}/* ${PUBLIC_HEXO}</code></pre>
+<p>其中tmp文件夹是用来保存静态文件的，public目录是最后对外访问的网站根目录。</p>
+<p>这里需要注意的是，tmp和public目录是需要给git用户权限的，否则执行钩子的时候会没有读写权限而失败。可以使用下面来修改文件用户权限:</p>
+<pre><code class="shell">chown git /home/project/tmp/blog_tmp
+chown git /home/project/blog</code></pre>
+<p>可以使用<code>ll</code>来查看当前文件所属用户是不是git。</p>
+<h3 id="Nginx配置"><a href="#Nginx配置" class="headerlink" title="Nginx配置"></a>Nginx配置</h3><p>接下来我们需要修改Nginx的server项，root项修改成我们设置的public文件夹即可，它是网站根目录。类似如下：</p>
+<pre><code class="shell">server {
+    listen 80;
+    #listen [::]:80;
+    server_name {your ip};
+
+    #这里要改成网站的根目录
+    root  /home/project/blog;
+
+    location / {
+        index index.html index.htm;
+    }
+}</code></pre>
+<p>修改成功，保存即可。</p>
+<h3 id="Hexo部署"><a href="#Hexo部署" class="headerlink" title="Hexo部署"></a>Hexo部署</h3><p>打开本地blog目录下的<code>_config.yml</code>文件，修改<code>deploy</code>选项：</p>
+<pre><code class="shell">deploy:
+  type: git
+  repo: git@{your server ip}:/home/git/hexo-blog.git
+  branch: master</code></pre>
+<p>保存即可，然后命令行输入：</p>
+<pre><code class="shell">hexo clean
+hexo g
+hexo d</code></pre>
+<p>如果提交成功，说明Blog搭建完毕了。</p>
+<p>接下来打开浏览器输入你的server ip，又可以看到你那个熟悉的blog了。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>其实过程还算简单，并不是很复杂，只要细心就好。每次修改了本地blog文件夹，记得同步到你的GitHub或者Bitbucket上的仓库里，避免数据丢失。</p>
+<p>还有域名相关的还没加，等域名审核下来后再加上。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2018/05/29/%E8%85%BE%E8%AE%AF%E4%BA%91%E6%90%AD%E5%BB%BABlog/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2019-07-23</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">深入了解现代web浏览器-CPU、GPU、内存和多进程架构</h1>
+    <p class="detail-content"><p>作为前端开发，浏览器的知识是必须掌握的，偶然在Google开发平台上看到如此优秀的文章，特此记录回顾一下，本篇介绍CPU、GPU和多进程架构。</p>
+<a id="more"></a>
+
+<ul>
+<li>CPU、GPU、内存和多进程架构；</li>
+<li>站点请求和网页呈现；</li>
+<li>渲染进程的内部运作；</li>
+<li>事件交互实现。</li>
+</ul>
+<p>本篇译文地址：<a href="https://developers.google.com/web/updates/2018/09/inside-browser-part1" target="_blank" rel="noopener">https://developers.google.com/web/updates/2018/09/inside-browser-part1</a></p>
+<p>图片资源来源于Google开发平台。</p>
+<h4 id="CPU和GPU"><a href="#CPU和GPU" class="headerlink" title="CPU和GPU"></a>CPU和GPU</h4><p>CPU是计算器的大脑，负责所有需要计算的工作，一个CPU内核相当于办公室，里面有很多个工作人员，可以处理许多不同的任务，无论是数学还是美术。现代CPU通常是多个内核的，所以有了更多的能力去完成一些复杂的计算任务。</p>
+<p><img src="/images/CPU2019.png" alt="cpu"></p>
+<p>GPU顾名思义，它是来做图像或者图形相关运算工作的，它使得显卡减少了对CPU的依赖，同时还可以做一些原本是CPU做的工作。</p>
+<p><img src="/images/GPU2019.png" alt="GPU"></p>
+<h4 id="三层计算机结构"><a href="#三层计算机结构" class="headerlink" title="三层计算机结构"></a>三层计算机结构</h4><p>首先，最底层是CPU和GPU这些，然后之上是操作系统，然后是应用程序，如下图。</p>
+<p><img src="/images/hw-os-app2019.png" alt="ç¡¬ä»¶ï¼æä½ç³»ç»ï¼åºç¨ç¨åº"></p>
+<h4 id="进程和线程"><a href="#进程和线程" class="headerlink" title="进程和线程"></a>进程和线程</h4><p>另外一个重要的概念就是进程和线程，进程是一个应用程序的执行程序，线程是存在于应用程序内部，并执行其流程的任何部分的程序。</p>
+<p><img src="/images/process-thread2019.png" alt="è¿ç¨åçº¿ç¨"></p>
+<p>当应用程序启动后，就会创建一个进程，当然，也可以同时创建多条线程来辅佐它，这个是可选的。这个时候，操作系统会为创建的进程开辟一部分内存空间，所有应用程序都保存在专用的内存空间里。</p>
+<p><img src="/images/memory2019.png" alt="è¿ç¨ä¸è®°å¿"></p>
+<p>如果一个进程不够用的时候，操作系统会允许另外一条进程(worker process)来运行不同的任务，并为新进程来分配新的内存空间，如果两条进程之间需要通信，就需要使用IPC来实现。如果工作进程无响应，主进程可以重新启动它。</p>
+<p><img src="/images/workerprocess2019.png" alt="å·¥ä½æµç¨åIPC"></p>
+<h4 id="浏览器架构"><a href="#浏览器架构" class="headerlink" title="浏览器架构"></a>浏览器架构</h4><p>那如何通过进程和线程来实现浏览器架构呢？有两种方案，一是有一条进程，多条线程；二是具有多条线程的进程，使用IPC来通信。</p>
+<p><img src="/images/browser-arch2019.png" alt="æµè§å¨æ¶æ"></p>
+<p>当然，每种浏览器实现细节是不一样的，只能说出个大概，比如最新的chrome，类似于下面：</p>
+<p>　<img src="/images/browser-arch22019.png" alt="æµè§å¨æ¶æ"></p>
+<p>其中，浏览器进程负责和其他进程协调，渲染进程会创建多个进程来分配给每个选项卡。下面是详细介绍：</p>
+<ul>
+<li>浏览器进程。控制应用程序的“ chrome”部分，包括地址栏，书签，后退和前进按钮。还处理Web浏览器的隐形，特权部分，例如网络请求和文件访问；</li>
+<li>渲染进程。控制显示网站的标签内的所有内容；</li>
+<li>插件进程。控制网站使用的所有插件，例如Flash；</li>
+<li>GPU进程。与其他进程隔离地处理GPU任务。由于GPU处理来自多个应用程序的请求并将它们绘制在同一表面上，因此将其分为不同的进程。</li>
+</ul>
+<p><img src="/images/browserui2019.png" alt="Chromeç¨åº"></p>
+<p>当然，不止这些进程，chrome可以通过右上角的三个点，然后更多工具，选择任务管理器，可以查看所有进程，并查看进程ID。</p>
+<h4 id="多进程架构的好处"><a href="#多进程架构的好处" class="headerlink" title="多进程架构的好处"></a>多进程架构的好处</h4><p>之前已经说过，在chrome里，每次打开一个选项卡，就会创建一条新的渲染进程来做。假设三个选项卡都同时处于打开状态，如果其中一个选项卡无响应了，则可以关闭无响应的选项卡，保持其他选项卡的活动状态，如果是使用的是多线程架构的话，如果一个选项卡无响应，那么会导致所有选项卡都会无响应。</p>
+<p><img src="/images/tabs2019.png" alt="æ ç­¾çå¤ä¸ªæ¸²æå¨"></p>
+<p>另外一个好处就是，安全性和沙盒处理。由于进程拥有自己的私人空间，每条进程只做自己的事情，另外在chrome上，也对节省内存做了一些措施，比如当硬件足够强大的时候，会将每个服务拆分成不同的进程，如果硬件性能不足时，会将服务整合成一个进程，从而节省了内存。</p>
+<p><img src="/images/servicfication2019.png" alt="éé¬ç»´ä¿®"></p>
+<h4 id="站点隔离"><a href="#站点隔离" class="headerlink" title="站点隔离"></a>站点隔离</h4><p>之前我们说过，每个选项卡都会拥有一个渲染进程，那么站点隔离，可以为跨网站iframe运行单独的渲染进程。允许跨站点iframe在单个渲染进程中进行，并在不同站点共享内存。</p>
+<p><img src="/images/isolation2019.png" alt="ç½ç«éç¦»"></p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本篇介绍了浏览器架构的一些原理性知识，并介绍了多进程架构的好处。以及谈到了chrome怎么节省内存和做站点隔离的。下篇开始讲解进程和线程之间发生的事情。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2019/07/23/%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%E7%8E%B0%E4%BB%A3web%E6%B5%8F%E8%A7%88%E5%99%A8-CPU%E3%80%81GPU%E3%80%81%E5%86%85%E5%AD%98%E5%92%8C%E5%A4%9A%E8%BF%9B%E7%A8%8B%E6%9E%B6%E6%9E%84/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

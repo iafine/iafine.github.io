@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2018-10-12</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">JavaScript进阶-this</h1>
+    <p class="detail-content"><p>this关键字可以说是JavaScript最复杂的机制之一，在其他语言里也是一样的重要。对于一个难题就是，this到底指的是什么东西，本篇我们通过学习《你不知道的JavaScript》一书，来总结下this的机制。</p>
+<a id="more"></a>
+
+<h4 id="this有什么用"><a href="#this有什么用" class="headerlink" title="this有什么用"></a>this有什么用</h4><p>首先，我们先看一个例子：</p>
+<pre><code class="javascript">function identify() {
+    return this.name.toUpperCase();
+}
+function speak() {
+    var greeting = &quot;Hello, I&#39;m &quot; + identify.call(this); console.log(greeting);
+}
+var me = {
+    name: &quot;Kyle&quot;
+};
+var you = {
+    name: &quot;Reader&quot;
+};
+identify.call(me); // KYLE
+identify.call(you); // READER
+speak.call(me); // Hello, 我是 KYLE 
+speak.call( you ); // Hello, 我是 READER</code></pre>
+<p>这段代码的关键点是，me和you可以重复使用相关函数，不用针对每个对象去编写不同版本的函数。并且<code>identify</code>和<code>speak</code>并没有一个入参，来获取me或者you对象。</p>
+<p>那如果不使用this，就需要显式地传入一个入参去实现。</p>
+<pre><code class="javascript">function identify(context) {
+    return context.name.toUpperCase();
+}
+function speak(context) {
+    var greeting = &quot;Hello, I&#39;m &quot; + identify(context); console.log(greeting);
+}
+var me = {
+    name: &quot;Kyle&quot;
+};
+var you = {
+    name: &quot;Reader&quot;
+};
+identify(you); // READER
+speak(me); //hello, 我是 KYLE</code></pre>
+<p>但是这样会有一个问题，随着代码工程的增加，显式传递上下文对象会让工程越来越难以维护，所以，这时候就需要使用this，来以一种优雅的方式隐式传递一个对象引用。</p>
+<h4 id="this误区"><a href="#this误区" class="headerlink" title="this误区"></a>this误区</h4><p>大家对于this，通常会有两种误区解释。</p>
+<p>其一是this指向自身，就是指向当前函数自身。我们可以看个例子：</p>
+<pre><code class="javascript">function foo(num) {
+    console.log(&quot;foo: &quot; + num);
+    // 记录 foo 被调用的次数
+    this.count++;
+}
+foo.count = 0;
+var i;
+for (i = 0; i &lt; 10; i++) {
+    if (i &gt; 5) {
+        foo(i);
+    }
+}
+// foo: 6
+// foo: 7
+// foo: 8
+// foo: 9
+// foo 被调用了多少次?
+console.log(foo.count); // 0 -- WTF?</code></pre>
+<p>如果按照this指向函数自身的话，那么<code>this.count</code>就等同于<code>foo.count</code>，那么事实并不是这样，最终的<code>foo.count</code>是0。所以，this并没有指向到foo上面去。</p>
+<p>那我们在看个例子：</p>
+<pre><code class="javascript">function foo(num) {
+    console.log(&quot;foo: &quot; + num);
+    // 记录 foo 被调用的次数
+    foo.count++;
+}
+foo.count = 0;
+var i;
+for (i = 0; i &lt; 10; i++) {
+    if (i &gt; 5) {
+        foo(i);
+    }
+}
+// foo: 6
+// foo: 7
+// foo: 8
+// foo: 9
+// foo 被调用了多少次?
+console.log(foo.count); // 4</code></pre>
+<p>我们将this.count修改成了<code>foo.count</code>，可以看到，确实是得到了想要的效果，但是这是完全依赖foo的词法作用域实现的，回避了this的问题。</p>
+<p>我们试着不避开this，来实现我们想要的结果。</p>
+<pre><code class="javascript">function foo(num) {
+    console.log(&quot;foo: &quot; + num);
+    // 记录 foo 被调用的次数
+    this.count++;
+}
+foo.count = 0;
+var i;
+for (i = 0; i &lt; 10; i++) {
+    if (i &gt; 5) {
+        foo.call( foo, i );
+    }
+}
+// foo: 6
+// foo: 7
+// foo: 8
+// foo: 9
+// foo 被调用了多少次?
+console.log(foo.count); // 4</code></pre>
+<p>原因是我们使用了call函数，将this指向了foo本身。但是我们已经证明，this并不是指向函数本身这个事实。</p>
+<p>其二是指向函数的作用域，也是不准确的，可以以一个例子来看：</p>
+<pre><code class="javascript">function foo() {
+    var a = 2;
+    this.bar();
+
+    function bar() {
+        console.log(this.a);
+    }
+}
+foo(); // this.bar is not a function</code></pre>
+<p>如果是指向函数的作用域的话，那么<code>this.bar</code>不可能找不到的。</p>
+<p>所以，this既不是指向函数本身，也不是指向函数的词法作用域，真正的含义是，this实现上是在函数被调用时发生的绑定，指向什么完全取决于函数在哪里调用。</p>
+<h4 id="this解析"><a href="#this解析" class="headerlink" title="this解析"></a>this解析</h4><p>既然this是在调用的时候被绑定的，那么我们就要先看下函数的调用位置，来加深理解this。</p>
+<p>有一个参数是调用栈，这个在调试的时候也可以看到，我们首先来看下调用栈和调用位置：</p>
+<pre><code class="javascript">function baz() {
+    // 当前调用栈是:baz
+    // 因此，当前调用位置是全局作用域
+    console.log(&quot;baz&quot;);
+    bar(); // &lt;-- bar 的调用位置 
+}
+function bar() {
+    // 当前调用栈是 baz -&gt; bar
+    // 因此，当前调用位置在 baz 中
+    console.log(&quot;bar&quot;);
+    foo(); // &lt;-- foo 的调用位置 
+}
+function foo() {
+    // 当前调用栈是 baz -&gt; bar -&gt; foo // 因此，当前调用位置在 bar 中
+    console.log(&quot;foo&quot;);
+}
+baz(); // &lt;-- baz 的调用位置</code></pre>
+<p>我们可以看到，我们可以看到，foo的调用栈是<code>baz -&gt; bar -&gt; foo</code>，那么foo的调用位置就是bar，上面已经讲过，this的指向和调用位置有关系。我们可以看个示例：</p>
+<pre><code class="javascript">function baz() {
+      // 当前调用栈是:baz
+      // 因此，当前调用位置是全局作用域
+      console.log(&quot;baz&quot;, this.a);
+      bar(); // &lt;-- bar 的调用位置 
+  }
+  function bar() {
+      // 当前调用栈是 baz -&gt; bar
+      // 因此，当前调用位置在 baz 中
+      console.log(&quot;bar&quot;);
+      foo(); // &lt;-- foo 的调用位置 
+  }
+  function foo() {
+      // 当前调用栈是 baz -&gt; bar -&gt; foo // 因此，当前调用位置在 bar 中
+      console.log(&quot;foo&quot;);
+  }
+  var a = 1;
+
+  baz(); // &lt;-- baz 的调用位置</code></pre>
+<p>查看打印，可以看到，<code>this.a</code>指向了全局作用域的a变量，那么this是如何绑定对象的呢，它是有一批规则来实现的。</p>
+<h4 id="绑定规则"><a href="#绑定规则" class="headerlink" title="绑定规则"></a>绑定规则</h4><h5 id="默认绑定"><a href="#默认绑定" class="headerlink" title="默认绑定"></a>默认绑定</h5><p>首先来看个示例：</p>
+<pre><code class="javascript">function foo() {
+    console.log(this.a);
+}
+var a = 2; 
+foo(); // 2</code></pre>
+<p>这是因为，函数调用时触发了this的默认绑定，将this指向了全局对象。我们可以用window试试。</p>
+<pre><code class="javascript">function foo() {
+    console.log(window.a);
+}
+var a = 2;
+foo(); // 2</code></pre>
+<p>结果是一样的，说明this被指向了window上面，我们试着打印window对象看看。</p>
+<pre><code class="javascript">function foo() {
+    console.log(this.location.href);
+}
+var a = 2;
+foo(); // 2</code></pre>
+<p>同样可以拿到window对象值，确定了this被指向了window对象，默认绑定是指调用不带任何修饰的函数引用的。</p>
+<p>但是如果是严格模式，上面就无法使用默认绑定了。</p>
+<h5 id="隐式绑定"><a href="#隐式绑定" class="headerlink" title="隐式绑定"></a>隐式绑定</h5><p>先看个示例：</p>
+<pre><code class="javascript">function foo() {
+    console.log(this.a);
+}
+var obj = {
+    a: 2,
+    foo: foo
+};
+obj.foo(); // 2</code></pre>
+<p>可以这么理解，调用位置会使用obj上下文来引用函数foo，当函数调用的时候，obj对象拥有了foo函数。当foo被调用之后，其落脚点会指向obj对象，当函数引用有上下文对象时，隐式规则绑定会把函数调用中的this绑定到这个上下文对象上，所以这里，<code>obj.a</code>和<code>this.a</code>是一样的。</p>
+<p>还有就是对象属性的引用链只有最顶层或者最外层才会影响到调用位置。</p>
+<pre><code class="javascript">function foo() {
+    console.log(this.a);
+}
+var obj2 = {
+    a: 42,
+    foo: foo
+};
+var obj1 = {
+    a: 20,
+    obj2: obj2
+};
+obj1.obj2.foo(); // 42</code></pre>
+<p>如果默认绑定和隐式绑定同时存在的时候，会出现隐式丢失的情况。</p>
+<pre><code class="javascript">function foo() {
+    console.log(this.a);
+}
+var obj = {
+    a: 2,
+    foo: foo
+};
+var bar = obj.foo; // 函数别名!
+var a = &quot;oops, global&quot;; // a 是全局对象的属性 
+bar(); // &quot;oops, global&quot;</code></pre>
+<p>此时的bar其实是一个不带任何修饰的函数调用，因此应用了默认绑定，如果是在严格模式下，会打印<code>undefined</code>。</p>
+<h4 id="显式绑定"><a href="#显式绑定" class="headerlink" title="显式绑定"></a>显式绑定</h4><p>所谓的显式绑定，就是在某个对象上强制调用函数，具体点就是使用call和apply方法来做。首先来看下示例：</p>
+<pre><code class="javascript">function foo() {
+    console.log(this.a);
+}
+var obj = {
+    a: 2
+};
+foo.call(obj); // 2</code></pre>
+<p>之前的隐式绑定会存在绑定丢失的情况，如果是显式绑定的话，可以采取强制绑定，以上面为例：</p>
+<pre><code class="javascript">function foo() {
+    console.log(this.a);
+}
+var obj = {
+    a: 2,
+    foo: foo
+};
+var bar = obj.foo; // 函数别名!
+var a = &quot;oops, global&quot;; // a 是全局对象的属性 
+bar.call(obj);  // 2</code></pre>
+<p>如果是ES5的话，那么硬绑定可以使用<code>bind</code>来实现:</p>
+<pre><code class="javascript">function foo() {
+    console.log(this.a);
+}
+var obj = {
+    a: 2,
+    foo: foo
+};
+var bar = foo.bind(obj); // 函数别名!
+var a = &quot;oops, global&quot;; // a 是全局对象的属性 
+bar() // 2</code></pre>
+<p>关于bind有个有趣的实验就是，多次bind会出现什么结果，可以测试一下：</p>
+<pre><code class="javascript">function foo() {
+    console.log(this.a);
+}
+var obj1 = {
+    a: 1,
+    foo: foo
+};
+var obj2 = {
+    a: 2,
+    foo: foo
+};
+var obj3 = {
+    a: 3,
+    foo: foo
+};
+var bar = foo.bind(obj1).bind(obj2).bind(obj3);
+bar() // 1</code></pre>
+<p>可以看到，只有第一次的bind才会生效。</p>
+<h4 id="new绑定"><a href="#new绑定" class="headerlink" title="new绑定"></a>new绑定</h4><p>首先我们先要了解，使用new来调用函数的时候，发生了什么操作。</p>
+<ul>
+<li>首先会创建一个新的对象出来；</li>
+<li>这个对象会被执行原型连接；</li>
+<li>这个对象会绑定到函数调用的this；</li>
+<li>如果函数没有返回其他对象，那么new调用之后会自动返回这个新对象。</li>
+</ul>
+<p>比如下面的例子：</p>
+<pre><code class="javascript">function foo(a) {
+    this.a = a;
+}
+var bar = new foo(2);
+console.log(bar.a); // 2</code></pre>
+<p>会先构造出一个新对象并将它绑定到foo调用的this上，</p>
+<h4 id="绑定优先级"><a href="#绑定优先级" class="headerlink" title="绑定优先级"></a>绑定优先级</h4><p>在函数调用中，this的绑定是有四条规则的，但是它们之间是存在优先级的，我们先来测试下隐式绑定和显式绑定的优先级。</p>
+<pre><code class="javascript">function foo() {
+    console.log(this.a);
+}
+var obj1 = {
+    a: 2,
+    foo: foo
+};
+var obj2 = {
+    a: 3,
+    foo: foo
+};
+obj1.foo(); // 2
+obj2.foo(); // 3
+obj1.foo.call(obj2); // 3
+obj2.foo.call(obj1); // 2</code></pre>
+<p>从结果可以看到，显式绑定的优先级较高，所以在判断时应当首先考虑显式绑定。</p>
+<p>然后我们看new绑定和隐式绑定哪个优先级高。</p>
+<pre><code class="javascript">function foo(something) {
+    this.a = something;
+}
+var obj1 = {
+    foo: foo
+};
+var obj2 = {};
+obj1.foo(2);
+console.log(obj1.a); // 2
+obj1.foo.call(obj2, 3);
+console.log(obj2.a); // 3
+var bar = new obj1.foo(4);
+console.log(obj1.a); // 2 
+console.log( bar.a ); // 4</code></pre>
+<p>可以看到，new绑定的优先级高点，那么接下来看显式绑定和new绑定哪个优先级高。</p>
+<pre><code class="javascript">
+function foo(something) {
+    this.a = something;
+}
+var obj1 = {};
+var bar = foo.bind(obj1); bar(2);
+console.log(obj1.a); // 2
+var baz = new bar(3);
+console.log(obj1.a); // 2 
+console.log(baz.a); // 3</code></pre>
+<p>可以看到，new绑定并没有修改obj1的值，相反，使用new得到了一个新对象baz，并且baz.a的值是3。所以new的优先级会高点。</p>
+<p>我们可以通过下面的流程来判断this绑定的规则优先级：</p>
+<ul>
+<li>函数是否存在this绑定，如果是的话，this绑定的就是新创建的对象；</li>
+<li>函数是否通过call或者apply来显式绑定，如果是的话，this绑定的就是指定的对象；</li>
+<li>函数是否在某个上下文中被调用，发生了隐式绑定，如果是的话，this绑定的就是上下文对象；</li>
+<li>如果上面都不是，那么就是使用默认绑定，绑定到全局对象，但是在严格模式下，默认绑定会得到undefined。</li>
+</ul>
+<h4 id="箭头函数"><a href="#箭头函数" class="headerlink" title="箭头函数"></a>箭头函数</h4><p>在ES6中，函数有一种新的写法是以箭头的形式，然而，箭头函数并不适用上面四种标准规则，而是根据外层作用域来决定this的。</p>
+<p>我们先来看个不是箭头函数的例子：</p>
+<pre><code class="javascript">function foo() {
+    return function (a) {
+        console.log(this.a);
+    }
+
+}
+var obj1 = {
+    a: 2
+};
+var obj2 = {
+    a: 3
+};
+var bar = foo.call(obj1);
+bar.call(obj2); // 3</code></pre>
+<p>可以看到，最终执行的结果其实是发生了显式绑定，返回了obj2的结果，那么如果是箭头函数呢。</p>
+<pre><code class="javascript">function foo() {
+    // 返回一个箭头函数 
+    return (a) =&gt; {
+        //this 继承自 foo()
+        console.log(this.a);
+    };
+
+}
+var obj1 = {
+    a: 2
+};
+var obj2 = {
+    a: 3
+};
+var bar = foo.call(obj1);
+bar.call(obj2); // 2</code></pre>
+<p>可以看到，箭头函数并不适用四种标准规则，而是返回了当前作用域obj1的结果。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本篇介绍了有关this的解释，this并不是指向函数本身，也不是指向当前的词法作用域，而是和调用位置有关。通过调用位置，会有四种标准绑定规则适用于this。new绑定、显式绑定、隐式绑定和默认绑定，同时还介绍了ES6的箭头函数的this特殊绑定问题，来加深对this的理解。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2018/10/12/JavaScript%E8%BF%9B%E9%98%B6-this/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

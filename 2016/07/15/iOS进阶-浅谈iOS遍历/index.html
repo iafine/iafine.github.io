@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2016-07-15</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">iOS</span>
+      
+    </div>
+    
+    <h1 class="detail-title">iOS进阶-浅谈iOS遍历</h1>
+    <p class="detail-content"><p>之前是组内同学用到了iOS遍历，使用场景没有把握好，这篇文章来回顾一下iOS开发中的遍历知识。</p>
+<a id="more"></a>
+
+<ul>
+<li>经典for循环</li>
+</ul>
+<pre><code>NSArray *iosArray = @[@&quot;a&quot;, @&quot;b&quot;, @&quot;c&quot;, @&quot;d&quot;, @&quot;e&quot;, @&quot;f&quot;, @&quot;g&quot;];
+for (int i = 0; i &lt; iosArray.count; i++) {
+    //处理数组中数据
+    NSLog(@&quot;%@&quot;, iosArray[i]);
+}</code></pre><ul>
+<li>NSEnumerator遍历</li>
+</ul>
+<pre><code>NSArray *iosArray = @[@&quot;a&quot;, @&quot;b&quot;, @&quot;c&quot;, @&quot;d&quot;, @&quot;e&quot;, @&quot;f&quot;, @&quot;g&quot;];
+NSEnumerator *enumerator = [iosArray objectEnumerator];//正向遍历
+// NSEnumerator *enumerator = [iosArray reverseObjectEnumerator];//反向遍历
+
+id object;
+
+while ((object = [enumerator nextObject]) != nil) {
+    //处理枚举器中的数据
+    NSLog(@&quot;%@&quot;, object);
+}</code></pre><ul>
+<li>for-in快速遍历</li>
+</ul>
+<pre><code>NSArray *iosArray = @[@&quot;a&quot;, @&quot;b&quot;, @&quot;c&quot;, @&quot;d&quot;, @&quot;e&quot;, @&quot;f&quot;, @&quot;g&quot;];
+for (NSString *obj in iosArray) {
+    //处理数组中的数据
+    NSLog(@&quot;%@&quot;, obj);
+}</code></pre><ul>
+<li>EnumeratorBlock遍历</li>
+</ul>
+<pre><code>NSArray *iosArray = @[@&quot;a&quot;, @&quot;b&quot;, @&quot;c&quot;, @&quot;d&quot;, @&quot;e&quot;, @&quot;f&quot;, @&quot;g&quot;];
+[iosArray enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    NSLog(@&quot;%@&quot;, obj);
+    if ([obj isEqualToString:@&quot;e&quot;]) {
+        *stop = YES;    // 跳出遍历
+    }
+}];</code></pre><p>另外，EnumeratorBlock还支持反向遍历，并发遍历，并发遍历可以使用多核的优化，充分利用系统的资源。</p>
+<ul>
+<li>反向遍历</li>
+</ul>
+<pre><code>NSArray *iosArray = @[@&quot;a&quot;, @&quot;b&quot;, @&quot;c&quot;, @&quot;d&quot;, @&quot;e&quot;, @&quot;f&quot;, @&quot;g&quot;];
+[iosArray enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSString *obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    NSLog(@&quot;%@&quot;, obj);
+    if ([obj isEqualToString:@&quot;e&quot;]) {
+        *stop = YES;
+    }
+}];</code></pre><ul>
+<li>并发遍历</li>
+</ul>
+<pre><code>NSArray *iosArray = @[@&quot;a&quot;, @&quot;b&quot;, @&quot;c&quot;, @&quot;d&quot;, @&quot;e&quot;, @&quot;f&quot;, @&quot;g&quot;];
+NSMutableArray *iosMutableArray = [NSMutableArray arrayWithArray:iosArray];
+[iosMutableArray enumerateObjectsWithOptions:NSEnumerationConcurrent usingBlock:^(NSString *obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    obj = [NSString stringWithFormat:@&quot;_%@&quot;, obj];
+    [iosMutableArray replaceObjectAtIndex:idx withObject:obj];
+    NSLog(@&quot;%@&quot;, obj);
+
+    if ([obj isEqualToString:@&quot;_I&quot;]) {
+        *stop = YES;
+    }
+}];</code></pre><ul>
+<li>dispatch_apply遍历</li>
+</ul>
+<p>dispatch_apply类似于for循环，这里需要注意的是，dispatch_apple是同步调用，调用完毕返回结果，并且由于是GCD实现，所以可以使用并发队列或者是串行队列。代码如下：</p>
+<pre><code>dispatch_queue_t queue = dispatch_queue_create(&quot;queue&quot;, DISPATCH_QUEUE_CONCURRENT);
+//    dispatch_queue_t queue = dispatch_queue_create(&quot;queue&quot;, DISPATCH_QUEUE_SERIAL); // 串行队列
+dispatch_apply(array.count, queue, ^(size_t i) {
+    Enumerate *enumerate = [array objectAtIndex:i];
+    NSLog(@&quot;number: %ld&quot;, enumerate.number);
+});</code></pre><h3 id="开发中遍历的注意事项"><a href="#开发中遍历的注意事项" class="headerlink" title="开发中遍历的注意事项"></a>开发中遍历的注意事项</h3><ol>
+<li>遍历过程中是不能随便删除遍历的元素的，如果需要删除元素，可以先复制一份出来，比如如下的代码会有问题：</li>
+</ol>
+<pre><code>NSMutableArray *iosArray = @[@&quot;a&quot;, @&quot;b&quot;, @&quot;c&quot;, @&quot;d&quot;, @&quot;e&quot;, @&quot;f&quot;, @&quot;g&quot;];
+for (NSString *obj in iosArray) {
+    //处理数组中的数据
+    if([@&quot;e&quot; isEqualTo:obj]) {
+        [iosArray removeObject:obj];
+    }
+}</code></pre><p>但是使用enumerateBlock可以在block内部做removeObject操作，原因个人猜测是和Block的特性有关，<strong>在Block中会保存变量的值，而不会随变量的值的改变而改变</strong>。</p>
+<ol start="2">
+<li>当数组容量很大的时候，如果只是进行数组遍历的话，使用for-in是最快速的，其次是并发遍历；</li>
+</ol>
+<h3 id="遍历实践tips"><a href="#遍历实践tips" class="headerlink" title="遍历实践tips"></a>遍历实践tips</h3><h4 id="数组分组"><a href="#数组分组" class="headerlink" title="数组分组"></a>数组分组</h4><p>在开发中，有时需要对数组进行某种情况的分组，比如，一个拥有很多消息模型的数组，我们需要根据消息的创建月份进行分组，那么可以使用下面的方法实现：</p>
+<pre><code>NSMutableSet *set=[NSMutableSet set];
+NSArray *array = @[message1, message2, message3, message4, message5, message6, message7];
+__block NSArray *tempDataArray = [NSArray arrayWithArray:array];
+[tempDataArray enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+    [set addObject:obj.month];//利用set不重复的特性,得到有多少组,根据数组中消息的月份属性
+}];
+[set enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {//遍历set数组
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@&quot;SELF.month = %@&quot;, obj];//创建谓词筛选器
+    NSArray *group = [tempDataArray filteredArrayUsingPredicate:predicate];//用数组的过滤方法得到新的数组,在添加的最终的数组
+}</code></pre><h4 id="倒序遍历"><a href="#倒序遍历" class="headerlink" title="倒序遍历"></a>倒序遍历</h4><p>倒序遍历也很常见，可以使用上面的反向遍历来实现。</p>
+<h4 id="set排序"><a href="#set排序" class="headerlink" title="set排序"></a>set排序</h4><p>这个和Emunerate其实没有关系，但是也很实用，我们知道set是无序的，但是有时需要实现有顺序的set，可以使用下面来实现：</p>
+<pre><code>//由于set无序，现将set转换成nsarray
+NSArray *sortDescriptor = @[[[NSSortDescriptor alloc] initWithKey:@&quot;self&quot; ascending:NO]];
+NSArray *sortSetArray = [set sortedArrayUsingDescriptors:sortDescriptor];</code></pre><p>其实原理是将set转化成array来实现的。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2016/07/15/iOS%E8%BF%9B%E9%98%B6-%E6%B5%85%E8%B0%88iOS%E9%81%8D%E5%8E%86/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

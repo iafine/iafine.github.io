@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2018-09-11</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">JavaScript进阶-闭包</h1>
+    <p class="detail-content"><p>本系列可以看作是《你不知道的JavaScript》读书笔记，今日第二篇，结合作用域，来学习下闭包的知识。</p>
+<a id="more"></a>
+
+<h4 id="闭包是什么"><a href="#闭包是什么" class="headerlink" title="闭包是什么"></a>闭包是什么</h4><p>在每一门语言里，闭包的学习都会让初学者头疼，因为不知道如何理解闭包，但是日常开发中几乎每天都在用它。所以觉得是非常重要但又难以掌握的东西。</p>
+<p>但看了书之后，对闭包有了新的理解，谈谈自己的看法。首先，闭包的特点是，身为一个函数，可以记住并访问所在的词法作用域，即使函数是在当前词法作用域之外执行的，那么就是闭包。</p>
+<p>当然，有点绕口，我们看个例子：</p>
+<pre><code class="javascript">function foo() {
+    var a = 2;
+    function bar() {
+        console.log(a); // 2
+    }
+    bar();
+}
+foo();</code></pre>
+<p>在foo的作用域里嵌套了bar的作用域，然后外部调用foo函数，打印出结果。那么这是不是一个闭包呢，其实这不是闭包，因为能打印是因为词法作用域的嵌套，并没有函数在当前词法作用域之外执行，也没有发现闭包的动作。我们在看个例子：</p>
+<pre><code class="javascript">function foo() {
+    var a = 2;
+    function bar() {
+        console.log(a);
+    }
+    return bar;
+}
+var baz = foo();
+baz(); // 2 —— 朋友，这就是闭包的效果。</code></pre>
+<p>这是一个真正闭包的例子，原因是baz函数是在foo的作用域之外执行的，并且成功打印出了foo作用域的变量，好像是foo整个内部作用域没有被销毁，这也就是闭包的神奇之处，他可以阻止内部作用域的销毁。</p>
+<p>当然，上面的例子在日常开发中可能不太常见，但是下面的一定遇见过。</p>
+<pre><code class="javascript">function wait(message) {
+    setTimeout(function timer() {
+        console.log(message);
+    }, 1000);
+}
+wait(&quot;Hello, closure!&quot;);</code></pre>
+<p>当wait执行1秒之后，它的内部作用域并没有消失，setTimeout的内部函数timer还对外部的message变量持有引用，所以，这就是一个经典的闭包场景。</p>
+<h4 id="循环和闭包"><a href="#循环和闭包" class="headerlink" title="循环和闭包"></a>循环和闭包</h4><p>在面试里，这个知识会经常被问到，那就是循环里的闭包如何处理，我们先看个例子：</p>
+<pre><code class="javascript">for (var i = 1; i &lt;= 5; i++) {
+    setTimeout(function timer() {
+        console.log(i);
+    }, i * 1000);
+}</code></pre>
+<p>猜想一下，执行的结果是什么，既然不是1～5，而是输出5次6。这是因为，在每次循环中，setTimeout的内部函数，会等到for循环结束后才会执行，而最终的i值是6，所以当for循环结束后，会执行6次其内部方法。</p>
+<p>但是如果我们想在循环中使用闭包，并且得到我们想要的结果，那么可以使用函数表达式来实现：</p>
+<pre><code class="javascript">for (var i = 1; i &lt;= 5; i++) {
+    (function (j) {
+        setTimeout(function timer() {
+            console.log(j);
+        }, j * 1000);
+    })(i);
+}</code></pre>
+<p>我们将i变量传入函数表达式内部，会得到一个新的作用域，是的延迟函数的回调始终在每次迭代产生的新作用域里执行，既可以打印出我们想要的结果1～5。</p>
+<p>另外，我们也可以使用块作用域来实现，上篇我们讲过，利用let来实现。</p>
+<pre><code class="javascript">for (let i = 1; i &lt;= 5; i++) {
+    setTimeout(function timer() {
+        console.log(i);
+    }, i * 1000);
+}</code></pre>
+<p>其实实现原理也是一样的，let会生成一个新的块作用域，让延迟函数的回调始终在每次迭代新的作用域中执行。这个应该更常用一点。</p>
+<h4 id="模块"><a href="#模块" class="headerlink" title="模块"></a>模块</h4><p>在JavaScript的模块实现中，也是用到了闭包的思路。可以看下例子：</p>
+<pre><code class="javascript">function CoolModule() {
+    var something = &quot;cool&quot;;
+    var another = [1, 2, 3];
+    function doSomething() {
+        console.log(something);
+    }
+    function doAnother() {
+        console.log(another.join(&quot; ! &quot;));
+    }
+    return {
+        doSomething: doSomething, doAnother: doAnother
+    };
+}
+var foo = CoolModule(); foo.doSomething(); // cool
+foo.doAnother(); // 1 ! 2 ! 3</code></pre>
+<p>在CoolModule外部，我们调用其对外暴露的方法，成功打印了该内部作用域的变量值，以闭包的概念理解，这也是闭包。</p>
+<p>当然，还有经典的单例实现：</p>
+<pre><code class="javascript">var foo = (function CoolModule() {
+    var something = &quot;cool&quot;;
+    var another = [1, 2, 3];
+    function doSomething() {
+        console.log(something);
+    }
+    function doAnother() {
+        console.log(another.join(&quot; ! &quot;));
+    }
+    return {
+        doSomething: doSomething, doAnother: doAnother
+    };
+})();
+foo.doSomething(); // cool
+foo.doAnother(); // 1 ! 2 ! 3</code></pre>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>闭包可以看作是一种编程语言中神奇的操作，用好了事半功倍。闭包的识别可以是当函数可以记住并访问所在的词法作用域，即使函数是在当前词法作用域之外执行，就是闭包。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2018/09/11/JavaScript%E8%BF%9B%E9%98%B6-%E9%97%AD%E5%8C%85/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

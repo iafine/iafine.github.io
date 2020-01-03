@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2018-07-15</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">CSS</span>
+      
+    </div>
+    
+    <h1 class="detail-title">CSS系列-Flex布局</h1>
+    <p class="detail-content"><p>时至今日，能够稳定的实现跨浏览器的布局方式还是float和position，但是对于一些特殊布局，实现上十分不方便。所以目前来讲，Flex布局应用也是越来越广泛，这篇文章的主题就是一步步学会Flex布局的使用。</p>
+<a id="more"></a>
+
+<h4 id="指定元素布局为Flex"><a href="#指定元素布局为Flex" class="headerlink" title="指定元素布局为Flex"></a>指定元素布局为Flex</h4><p> 首先，如果想要某个元素使用flex布局，首先需要指定该元素的<code>display</code>值：</p>
+<pre><code class="css">.content {
+    display: flex;
+}</code></pre>
+<p>如果是行内元素，可以设置为：</p>
+<pre><code class="css">.content {
+    display: inline-flex;
+}</code></pre>
+<h4 id="Flex模型"><a href="#Flex模型" class="headerlink" title="Flex模型"></a>Flex模型</h4><p>我们以MDN上的一张图来作为参考：</p>
+<p><img src="https://developer.mozilla.org/files/3739/flex_terms.png" alt=""></p>
+<p>这张图说明了FLex布局的一些关键点：</p>
+<ul>
+<li>main axis。是布局主轴，是Flex元素延伸的轴，该轴的开始和结束称为main start和main end；</li>
+<li>cross axis。是垂直于flex元素延伸的轴，该轴的开始和结束称为cross start和cross end；</li>
+<li>如果指定display值为flex，那么其容器就称为flex container；</li>
+<li>在flex container中每个子flex元素称为flex item。</li>
+</ul>
+<h4 id="Flex-Direction"><a href="#Flex-Direction" class="headerlink" title="Flex-Direction"></a>Flex-Direction</h4><p>对于flex item的排列方式，有两种：行和列。默认是以行的方式去横向排列，如同上面的图示，但是flex也提供了列的方式去实现。</p>
+<pre><code class="css">flex-direction: row;    // 横向往右方向去排列
+flex-direction: row-reverse;    // 横向往左方向去排列
+flex-direction: column;    // 竖向往下方向去排列
+flex-direction: column;    // 竖向往上方向去排列</code></pre>
+<h4 id="Flex-Wrap"><a href="#Flex-Wrap" class="headerlink" title="Flex-Wrap"></a>Flex-Wrap</h4><p>随着flex item的变多，如果布局使用了定宽和定高，那么就会发生变形，带来的效果就是高宽可能会被压缩。所以，这里需要做的变动就是当高或宽受到限制的时候，为了flex item的高宽不发生变化，及时去做换行处理。</p>
+<pre><code class="css">flex-wrap: wrap;</code></pre>
+<p>这样做确实换行了，但是可能最后一行的flex item并没有铺满一行，效果有点突兀。所以我们需要指定flex item的flex值，设定个最小值。</p>
+<pre><code class="css">flex: 100px;</code></pre>
+<p>这里的<code>flex-wrap</code>是换行策略，有三个值可以设定。</p>
+<pre><code class="css">flex-wrap: wrap;
+flex-wrap: nowrap;    // 默认
+flex-wrap: wrap-reverse;</code></pre>
+<h4 id="Flex-Flow"><a href="#Flex-Flow" class="headerlink" title="Flex-Flow"></a>Flex-Flow</h4><p>上面我们定义了<code>flex-direction</code>和<code>flex-wrap</code>两个属性，如果使用<code>flex-flow</code>的话，可以把它们放在一起使用。</p>
+<pre><code class="css">flex-flow: row wrap;</code></pre>
+<p>也就是说，flex-flow是<code>flex-direction</code>和<code>flex-wrap</code>的缩写。</p>
+<h4 id="Flex"><a href="#Flex" class="headerlink" title="Flex"></a>Flex</h4><p>如果需要指定flex item的尺寸的时候，可以使用width和height来做，但是对于动态尺寸，我们可以用<code>flex</code>属性来实现。</p>
+<p>比如，我们有4个flex item，前三个flex值都是1，最后一个是3，那么前三个就会平分一半空间，最后一个独占一半空间。</p>
+<pre><code class="css">.item {
+    flex: 1;
+}
+.item:nth-of-type(4) {
+    flex: 3;
+}</code></pre>
+<p>还有另外一种写法就是下面这样：</p>
+<pre><code class="css">.item {
+    flex: 1 400px;
+}</code></pre>
+<p>它表示的是会首先给每个item分配400px的空间，然后将剩余的可用空间在按照分配的比例给共享。</p>
+<p>这样做好处很多，因为没有设定宽高就实现了动态尺寸，所以如果浏览器的尺寸发生变化，或者是动态生成flex item，都不会对原有布局造成影响。</p>
+<p>当然，flex属性其实是<code>flex-grow</code>、<code>flex-shrink</code>和<code>flex-basis</code>的集合。</p>
+<h4 id="Align-Items"><a href="#Align-Items" class="headerlink" title="Align-Items"></a>Align-Items</h4><p><code>align-items</code>是控制交叉轴的对齐方式。一共有5种效果。</p>
+<pre><code class="css">align-items: flex-start;    // 交叉轴起点对齐
+align-items: flex-end;        // 交叉轴终点对齐
+align-items: center;        // 交叉轴中心对齐
+align-items: baseline;        // 以项目的第一行文字的基线对齐
+align-items: stretch;        // 如果项目未设置高度或者为auto，那么将铺满整个容器</code></pre>
+<h4 id="Justify-Content"><a href="#Justify-Content" class="headerlink" title="Justify-Content"></a>Justify-Content</h4><p>和<code>align-item</code>类似，<code>justify-content</code>控制的是主轴的对齐方式，也是有5种效果。</p>
+<pre><code class="css">justify-content: flex-start;    // 以主轴起点处对齐
+justify-content: flex-end;        // 以主轴结束点对齐
+justify-content: center;        // 以主轴中心对齐
+justify-content: space-between;    // 两端对齐，项目间隔等分
+justify-content: space-around;    // 每个项目的间隔等分</code></pre>
+<h4 id="Align-Content"><a href="#Align-Content" class="headerlink" title="Align-Content"></a>Align-Content</h4><p>如果flex容器中存在多根轴线，那么<code>align-content</code>的效果就和多个<code>align-items</code>的集合一样，效果可以自行测试一下。</p>
+<h4 id="Order"><a href="#Order" class="headerlink" title="Order"></a>Order</h4><p>如果需要将flex item做下排序，而不影响到dom里的节点顺序，那么可以使用这个属性去实现。</p>
+<pre><code class="css">order: 0;    // 默认</code></pre>
+<p>order值大的会显示靠后点。</p>
+<h4 id="Align-Self"><a href="#Align-Self" class="headerlink" title="Align-Self"></a>Align-Self</h4><p>之前的<code>align</code>设定都是基于flex容器来的，那么如果某个flex item想单独地使用某个<code>align</code>方式，可以使用这个属性完成，效果可以参考<code>align-items</code>来。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>基本的Flex布局的介绍就这么多了，相比盒子模型，还算好理解点，目前，浏览器上的支持也是越来越完善，是时候使用flex布局来完成绝大部分需求了。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2018/07/15/CSS%E7%B3%BB%E5%88%97-Flex%E5%B8%83%E5%B1%80/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

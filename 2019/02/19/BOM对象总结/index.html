@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2019-02-19</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">BOM对象总结</h1>
+    <p class="detail-content"><p>BOM全称叫浏览器对象模型，用于JavaScript访问Web浏览器的功能。本文的目的是总结下基本的BOM使用。</p>
+<a id="more"></a>
+
+<h4 id="window对象"><a href="#window对象" class="headerlink" title="window对象"></a>window对象</h4><p>window是BOM的核心，是一个Global对象，在全局作用域里声明的变量和函数，都可以通过window来访问。比如：</p>
+<pre><code class="javascript">var name = &#39;iafine&#39;
+function sayHello() {
+    console.log(this.name)
+}
+
+console.log(window.name)    // iafine
+sayHello()                    // iafine
+window.sayHello()            // iafine</code></pre>
+<p><code>window.open</code>可以打开一个特定的URL，类似于<code>&lt;a&gt;</code>标签，如下：</p>
+<pre><code class="javascript">window.open(&#39;https://www.baidu.com&#39;)</code></pre>
+<h4 id="location对象"><a href="#location对象" class="headerlink" title="location对象"></a>location对象</h4><p>顾名思义，提供了当前窗口加载的页面信息。我们以Google页面作为参考。</p>
+<pre><code class="javascript">https://www.google.com/webhp?hl=zh-CN&amp;ictx=2&amp;sa=X&amp;ved=0ahUKEwjmteDX7sbgAhVTObwKHeTNBZQQPQgH</code></pre>
+<p>具体用法如下：</p>
+<pre><code class="javascript">location.host    
+// &quot;www.google.com&quot;
+
+location.hostname    
+// &quot;www.google.com&quot;
+
+location.href
+// &quot;https://www.google.com/webhp?hl=zh-CN&amp;ictx=2&amp;sa=X&amp;ved=0ahUKEwjmteDX7sbgAhVTObwKHeTNBZQQPQgH&quot;
+
+location.pathname
+// &quot;/webhp&quot;
+
+location.port
+// &quot;&quot;
+
+location.protocol
+// &quot;https:&quot;
+
+location.search
+// &quot;?hl=zh-CN&amp;ictx=2&amp;sa=X&amp;ved=0ahUKEwjmteDX7sbgAhVTObwKHeTNBZQQPQgH&quot;</code></pre>
+<p><code>location.reload</code>可以重新加载当前显示的页面，如果不传递参数，那么页面可能是从缓存中加载的，如果传递参数，并且是<code>true</code>，如<code>location.reload(true)</code>，那么页面会强制从服务器上重新加载。</p>
+<h4 id="navigator对象"><a href="#navigator对象" class="headerlink" title="navigator对象"></a>navigator对象</h4><p>用于识别客户端浏览器的事实标准。我们以Chrome为例，具体的属性和方法如下：</p>
+<pre><code class="javascript">navigator.appCodeName
+//&quot;Mozilla&quot;
+
+navigator.appName
+// &quot;Netscape&quot;
+
+navigator.appVersion
+//&quot;5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36&quot;
+
+navigator.cookieEnabled
+// true
+
+navigator.javaEnabled
+// ƒ javaEnabled() { [native code] }
+
+navigator.language
+// &quot;zh-CN&quot;
+
+navigator.mimeTypes
+// MimeTypeArray {0: MimeType, 1: MimeType, 2: MimeType, 3: MimeType, application/pdf: MimeType, application/x-google-chrome-pdf: MimeType, application/x-nacl: MimeType, application/x-pnacl: MimeType, length: 4}
+
+navigator.onLine
+// true
+
+navigator.platform
+// &quot;MacIntel&quot;
+
+navigator.plugins
+// PluginArray {0: Plugin, 1: Plugin, 2: Plugin, Chrome PDF Plugin: Plugin, Chrome PDF Viewer: Plugin, Native Client: Plugin, length: 3}
+
+navigator.product
+// &quot;Gecko&quot;
+
+navigator.userAgent
+// &quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36&quot;
+
+navigator.vendor
+// &quot;Google Inc.&quot;</code></pre>
+<h4 id="history对象"><a href="#history对象" class="headerlink" title="history对象"></a>history对象</h4><p>histtory对象保存了用户的上网记录。</p>
+<pre><code class="javascript">history.go(-1)    // 后退一页，类似于history.back()
+history.go(1)    // 前进一页，类似于history.forward()
+history.go(2)    // 前进两页</code></pre>
+<p>好了，基本的BOM对象就这些了，放在这里以备后用。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2019/02/19/BOM%E5%AF%B9%E8%B1%A1%E6%80%BB%E7%BB%93/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

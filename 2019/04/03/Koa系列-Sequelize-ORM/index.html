@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">量才博深</p>
+      <p class="content-title-description">专注于前端开发</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2019-04-03</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">Koa系列-Sequelize-ORM</h1>
+    <p class="detail-content"><p>在真实的项目开发中，如果需要Node操作数据库，通常会选择一个合适的ORM框架。在Node社区中，有很多优秀的ORM框架，Sequelize当属其中之一。</p>
+<a id="more"></a>
+
+<p>使用ORM的好处是，是可以使用面向对象思维来操作数据库，由于高度封装了SQL，所以开发效率上也会提高很多。</p>
+<p>另外，本篇文章的重点并不是讲解Sequelize语法，而是结合项目，打造自己项目的数据层。</p>
+<h4 id="Model定义"><a href="#Model定义" class="headerlink" title="Model定义"></a>Model定义</h4><p>Sequelize为了开发者更方便地使用框架，打造了一个Sequelize Cli来做一些事情。但是本文中，没有用到cli，所有的事情都是自己写脚本完成。我们以User对象为例，首先编写Model：</p>
+<pre><code class="javascript">module.exports = (sequelize, DataTypes) =&gt; {
+    const User = sequelize.define(&#39;user&#39;, {
+        username: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            defaultValue: &#39;&#39;,
+            comment: &#39;用户名&#39;
+        },
+        email: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            defaultValue: &#39;&#39;,
+            comment: &#39;邮箱&#39;
+        },
+        avatar: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            defaultValue: &#39;&#39;,
+            comment: &#39;头像&#39;
+        },
+        password: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            defaultValue: &#39;&#39;,
+            comment: &#39;用户密码&#39;
+        },
+        address: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            defaultValue: &#39;&#39;,
+            comment: &#39;用户住址&#39;
+        }
+    }, {
+        hooks: {
+            afterSync: async () =&gt; {
+                const data = {
+                    username: &#39;admin&#39;,
+                    email: &#39;admin@iafine.com&#39;,
+                    password: &#39;123456&#39;,  //密码需要加密存储，后面再做
+                    address: &#39;ShenZhen&#39;
+                }
+                await User.create(data, {
+                    ignoreDuplicates: false
+                })
+            }
+        }
+    })
+
+    return User
+}</code></pre>
+<p>当然，这里包括了Sequelize hooks的api，如果不懂的话，可以查看文档。</p>
+<p>然后，我们需要定义外部调用类，实现<code>model/index.js</code>，用处是为了外部更方便的调用，比如controller层操作数据库。只需要引入即可。</p>
+<pre><code class="javascript">const model = require(&#39;../model/index&#39;)
+
+const userInfo = await model.User.findAll()</code></pre>
+<p>那么index.js的职责就很明确，方便外部操作数据层。核心代码如下:</p>
+<pre><code class="javascript">const Sequelize = require(&#39;sequelize&#39;)
+const { database } = require(&#39;../config/mysql/db.config&#39;)
+const model = {}
+
+const modelMap = {
+    MigrationMeta: require(&#39;./migration_meta&#39;),
+    User: require(&#39;./user&#39;),
+    Article: require(&#39;./article&#39;)
+}
+
+const sequelize = new Sequelize(database.name, database.username, database.password, {
+    host: database.host,
+    dialect: database.dialect,
+    freezeTableName: database.freezeTableName,
+    pool: database.pool
+})
+
+
+Object.keys(modelMap).forEach(key =&gt; {
+    model[key] = modelMap[key](sequelize, Sequelize.DataTypes)
+})
+
+// 关联关系
+model.User.hasMany(model.Article)
+
+// 迁移model定义
+model.migrationMeta = model.MigrationMeta    // 后面迁移会讲到
+
+model.sequelize = sequelize
+model.Sequelize = Sequelize
+
+module.exports = model
+</code></pre>
+<p>数据库配置这里，目前读的是本地的一个config文件，当然，线上需要以环境变量的方式读取的，这里每个项目都差不多，就不多做介绍了，开发环境配置类似这样：</p>
+<pre><code class="javascript">module.exports = {
+    database: {
+        name: &#39;full_stack_framework&#39;,
+        username: &#39;root&#39;,
+        password: &#39;123456&#39;,
+        host: &#39;127.0.0.1&#39;,
+        dialect: &#39;mysql&#39;,   // 数据库类型
+        freezeTableName: true,  // 不修改表名为复数
+        pool: {
+            max: 20,
+            min: 0,
+            acquire: 30000,
+            idle: 10000
+        },
+    }
+}</code></pre>
+<h4 id="DB初始化脚本"><a href="#DB初始化脚本" class="headerlink" title="DB初始化脚本"></a>DB初始化脚本</h4><p>DB初始化脚本主要做的事情就是：</p>
+<ul>
+<li>测试数据库连接是否正常；</li>
+<li>初始化创建数据库；</li>
+<li>初始化创建数据表。</li>
+</ul>
+<p>拆分开来之后，实现代码如下：</p>
+<pre><code class="javascript">const model = require(&#39;../../model/index&#39;)
+const { database } = require(&#39;../../config/mysql/db.config&#39;)
+
+/**
+ * 初始化数据库操作
+ */
+const db = {
+    async init() {
+        await db.createDatabase()
+        await db.authenticate()
+        await db.syncTable()
+    },
+    async createDatabase() {
+        // 创建相关表
+        let temp_sequelize = new model.Sequelize(&#39;&#39;, database.username, database.password, {
+            host: database.host,
+            dialect: database.dialect,
+            freezeTableName: database.freezeTableName,
+            pool: database.pool
+        })
+        await temp_sequelize.query(`CREATE DATABASE IF NOT EXISTS ${database.name} DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`)
+    },
+    async authenticate() {
+        // 测试连接
+        await model.sequelize.authenticate()
+        console.log(&#39;Database Connection has been established successfully.&#39;)
+    },
+    async syncTable() {
+        // 创建表
+        for (const key of Object.keys(model)) {
+            const value = model[key]
+            if (!value.sync || value === model.sequelize) {
+                continue
+            }
+            await value.sync()
+        }
+    }
+}
+
+db.init()
+    .then(() =&gt; {
+        console.log(&#39;========== init database finish==========&#39;)
+        process.exit(0)
+    })
+    .catch(error =&gt; {
+        console.error(&#39;Occur error: &#39; + error)
+    })
+</code></pre>
+<p>这里就用到了<code>model/index.js</code>，用于外部操作数据层。</p>
+<h4 id="migration文件生成脚本"><a href="#migration文件生成脚本" class="headerlink" title="migration文件生成脚本"></a>migration文件生成脚本</h4><p>作为真实项目，迁移是少不了的，当表的结构发生变化，或者需要预置一些数据的时候，都可以使用migration来完成。</p>
+<p>当然，迁移文件最好不要手动创建，不然效率太低了，我们使用一个脚本来完成，具体代码如下：</p>
+<pre><code class="javascript">const path = require(&#39;path&#39;)
+const fs = require(&#39;fs&#39;)
+
+const migrate = {
+    async new() {
+        const tplPath = path.join(__dirname, &#39;../../migration/.tpl.js&#39;)
+        const tplContent = fs.readFileSync(tplPath, &#39;utf-8&#39;)
+
+        const timestamp = new Date().getTime()
+        const migrateFileName = `${timestamp}_migration.js`
+        const migrateFilePath = path.join(__dirname, &#39;../../migration&#39;, migrateFileName)
+        fs.writeFileSync(migrateFilePath, tplContent)
+
+        return migrateFilePath
+    }
+}
+
+migrate.new()
+    .then(migrateFilePath =&gt; {
+        console.log(&#39;New migration was created at &#39; + migrateFilePath)
+        process.exit(0)
+    })
+    .catch(error =&gt; {
+        console.error(&#39;New migration was created failed: &#39;, error)
+    })</code></pre>
+<p>首先，它会读取<code>.tpl.js</code>内容，然后写入一个新文件里，新文件的命名就是<code>时间戳_migration.js</code>，<code>.tpl.js</code>的内容和sequelize cli生成的一致：</p>
+<pre><code class="javascript">&#39;use strict&#39;;
+
+module.exports = {
+  up: (queryInterface, Sequelize) =&gt; {
+    /*
+      Add altering commands here.
+      Return a promise to correctly handle asynchronicity.
+
+      Example:
+      return queryInterface.createTable(&#39;users&#39;, { id: Sequelize.INTEGER });
+    */
+  },
+
+  down: (queryInterface, Sequelize) =&gt; {
+    /*
+      Add reverting commands here.
+      Return a promise to correctly handle asynchronicity.
+
+      Example:
+      return queryInterface.dropTable(&#39;users&#39;);
+    */
+  }
+};
+</code></pre>
+<p><code>up</code>的意思就是需要修改的项，<code>down</code>就是回退时需要修改的项。至此，迁移文件的创建就结束了。</p>
+<h4 id="migration执行脚本"><a href="#migration执行脚本" class="headerlink" title="migration执行脚本"></a>migration执行脚本</h4><p>创建好migration后，需要一个脚本来完成迁移工作。接下来我们就一步步完成它。</p>
+<p>首先定义一张表，用来记录执行过的迁移文件。</p>
+<pre><code class="javascript">module.exports = (sequelize, DataTypes) =&gt; {
+    const MigrationMeta = sequelize.define(&#39;migration_meta&#39;, {
+        file_name: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            defaultValue: &#39;&#39;,
+            comment: &#39;执行过的迁移文件&#39;
+        }
+    })
+
+    return MigrationMeta
+}</code></pre>
+<p>这张表会在DB初始化的时候，跟随其他表一起被创建。</p>
+<p>然后当我们执行迁移脚本的时候，它会读取最后一条记录，然后拿到文件名上的时间戳，然后遍历迁移文件，如果时间戳大于数据库中的最新纪录，那么就执行该迁移文件中的<code>up</code>函数，然后把文件名插入到表中即可。</p>
+<p>完整的迁移脚本如下：</p>
+<pre><code class="javascript">const model = require(&#39;../../model/index&#39;)
+const path = require(&#39;path&#39;)
+const fs = require(&#39;fs&#39;)
+
+const migrate = {
+    async run() {
+        console.log(&#39;===========Start Run Migration Files===========&#39;)
+        const migrationMeta = model.migrationMeta
+        const queryInterface = model.sequelize.getQueryInterface()
+
+        const latestMeta = await model.migrationMeta.findOne({
+            order: [[&#39;file_name&#39;, &#39;DESC&#39;]]
+        })
+
+        const latestTimestamp = latestMeta ? latestMeta.file_name.split(&#39;_&#39;)[0] : 0
+
+        // 获取所有migration文件
+        const migrationFileList = await migrate.migrationFileList()
+
+        // console.log(migrationFileList)
+        for (const file of migrationFileList) {
+            const filename = path.basename(file)
+            const timestamp = filename.split(&#39;_&#39;)[0]
+            const migrationFile = require(path.join(file))
+
+            if (timestamp &gt; latestTimestamp) {
+                console.log(`========Run ${filename} Migration========`)
+
+                await migrationFile.up(queryInterface, model.Sequelize)        // 执行up方法
+                await model.migrationMeta.create({ &#39;file_name&#39; : filename })    // 数据库记录变更
+
+                console.log(`========Run ${filename} Migration Successfully========`)
+            }
+        }
+
+    },
+    async migrationFileList() {
+        const migrationFolderPath = path.join(__dirname, &#39;../../migration&#39;)
+        const migrationFileList = fs.readdirSync(migrationFolderPath)
+            .filter(filename =&gt; filename.includes(&#39;migration.js&#39;))
+            .map(filename =&gt; {
+                return path.join(migrationFolderPath, filename)
+            })
+
+        return migrationFileList
+    }
+}
+
+migrate.run()
+    .then(() =&gt; {
+        console.log(&#39;===========Run Migration Files Successfully===========&#39;)
+        process.exit(0)
+    })
+    .catch(error =&gt; {
+        console.error(&#39;Occur error: &#39; + error)
+    })</code></pre>
+<h4 id="回退迁移脚本"><a href="#回退迁移脚本" class="headerlink" title="回退迁移脚本"></a>回退迁移脚本</h4><p>和执行迁移脚本类似，也是查找迁移表中的最新纪录，然后执行该文件中的<code>down</code>函数，之后再把迁移表中的这条记录删掉即可。</p>
+<p>多次执行，即可回退多个迁移文件，核心代码如下：</p>
+<pre><code class="javascript">const model = require(&#39;../../model/index&#39;)
+const path = require(&#39;path&#39;)
+const fs = require(&#39;fs&#39;)
+
+const migrate = {
+    async run() {
+        console.log(&#39;===========Start Run Migration Files===========&#39;)
+        const migrationMeta = model.migrationMeta
+        const queryInterface = model.sequelize.getQueryInterface()
+
+        const latestMeta = await model.migrationMeta.findOne({
+            order: [[&#39;file_name&#39;, &#39;DESC&#39;]]
+        })
+
+        const latestTimestamp = latestMeta ? latestMeta.file_name.split(&#39;_&#39;)[0] : 0
+
+        // 获取所有migration文件
+        const migrationFileList = await migrate.migrationFileList()
+
+        // console.log(migrationFileList)
+        for (const file of migrationFileList) {
+            const filename = path.basename(file)
+            const timestamp = filename.split(&#39;_&#39;)[0]
+            const migrationFile = require(path.join(file))
+
+            if (filename === latestMeta.file_name &amp;&amp; migrationFile.down) {
+                console.log(`========Undo ${filename} Migration========`)
+
+                await migrationFile.down(queryInterface, model.Sequelize)   // undo
+                await model.migrationMeta.destroy({ where: { file_name: filename }})
+
+                console.log(`========Undo ${filename} Migration Successfully========`)
+            }
+        }
+
+    },
+    async migrationFileList() {
+        const migrationFolderPath = path.join(__dirname, &#39;../../migration&#39;)
+        const migrationFileList = fs.readdirSync(migrationFolderPath)
+            .filter(filename =&gt; filename.includes(&#39;migration.js&#39;))
+            .map(filename =&gt; {
+                return path.join(migrationFolderPath, filename)
+            })
+
+        return migrationFileList
+    }
+}
+
+migrate.run()
+    .then(() =&gt; {
+        console.log(&#39;===========Run Migration Files Successfully===========&#39;)
+        process.exit(0)
+    })
+    .catch(error =&gt; {
+        console.error(&#39;Occur error: &#39; + error)
+    })</code></pre>
+<p>至此，迁移的工作就完成了。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>在Node应用中，我们使用Sequelize作为数据层的ORM，并且抛弃Sequelize Cli的使用，采用自定义脚本来完成基础功能的搭建，包括数据层初始化，迁移工作等，利用这些，我们就可以搭建出一个Node基础的数据层，如果还对其他模块感兴趣，可以参考下面这个Demo链接，里面包括了一个全栈脚手架。</p>
+<p><a href="https://github.com/iafine/code_snippets/tree/master/JavaScript/full-stack-framework" target="_blank" rel="noopener">Full-Stack-Framework</a></p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2019/04/03/Koa%E7%B3%BB%E5%88%97-Sequelize-ORM/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    
+<!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>
