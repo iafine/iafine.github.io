@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">上善若水</p>
+      <p class="content-title-description">专注于前端/Node/iOS领域</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2020-01-07</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">Puppeteer初探</h1>
+    <p class="detail-content"><p>Puppeteer英文意思是操作木偶的人，其的功能也类似这样，可以通过一系列的高级API，来控制Chromium或者Chrome，达到一些意想不到的功能。</p>
+<a id="more"></a>
+
+<p>Puppeteer提供了很多NodeJS API，实现服务端操作Chrome，只要安装Chromium就行。其API层的逻辑如下：<br><img src="/images/40333229-5df5480c-5d0c-11e8-83cb-c3e371de7374.png" alt=""></p>
+<p>其中，Puppeteer是通过DevTool协议与浏览器进行通信，我们通过创建Browser和Page，来实现特定功能，接下来就一一举例。</p>
+<h4 id="截屏百度网站"><a href="#截屏百度网站" class="headerlink" title="截屏百度网站"></a>截屏百度网站</h4><p>截屏功能在客户端来说很常见，但如果服务端需要截屏特定网站，就不是那么容易了，好在现在有了Puppeteer。</p>
+<pre><code class="javascript">&#39;use strict&#39;;
+const puppeteer = require(&#39;puppeteer&#39;);
+
+// 截屏自定义viewport的百度网站
+(async() =&gt; {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto(&#39;https://www.baidu.com/&#39;);
+  await page.setViewport({ width: 2048, height: 1152});
+  await page.screenshot({path: &#39;assets/baidu-2048-1152.png&#39;, fullPage: true});
+  await browser.close();
+})();</code></pre>
+<p>只要运行此代码，就可以实现截屏，另外还可以设置viewport。</p>
+<p>如果需要截取移动端，可以这么做。</p>
+<pre><code class="javascript">&#39;use strict&#39;;
+const puppeteer = require(&#39;puppeteer&#39;);
+
+// 截屏iphoneX上显示的百度网站
+(async() =&gt; {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.emulate(devices[&#39;iPhone X&#39;]);
+  await page.goto(&#39;https://www.baidu.com/&#39;);
+  await page.screenshot({path: &#39;assets/baidu-iphonex.png&#39;, fullPage: true});
+  await browser.close();
+})();</code></pre>
+<h4 id="生成PDF"><a href="#生成PDF" class="headerlink" title="生成PDF"></a>生成PDF</h4><p>将某个文本网站，转换成pdf格式，利用Puppeteer，也非常简单。</p>
+<pre><code class="javascript">&#39;use strict&#39;;
+const puppeteer = require(&#39;puppeteer&#39;);
+
+(async () =&gt; {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto(&quot;https://docs.nestjs.cn/6/fundamentals&quot;, {waitUntil: &#39;networkidle2&#39;});
+  await page.pdf({
+    displayHeaderFooter: true,
+    path: &quot;assets/nest-doc.pdf&quot;,
+    headerTemplate: &#39;&lt;b style=&quot;font-size: 30px&quot;&gt;Nest Doc&lt;b/&gt;&#39;,
+    footerTemplate: &#39;&lt;b style=&quot;font-size: 30px&quot;&gt;End&lt;/b&gt;&#39;,
+  });
+  await browser.close();
+})();</code></pre>
+<h4 id="表单提交"><a href="#表单提交" class="headerlink" title="表单提交"></a>表单提交</h4><p>利用Puppeteer，可以模拟浏览器行为，比如一个表单提交。</p>
+<pre><code class="javascript">&quot;use strict&quot;;
+const puppeteer = require(&quot;puppeteer&quot;);
+
+(async () =&gt; {
+  const browser = await puppeteer.launch({
+    headless: false
+  });
+  const page = await browser.newPage();
+  await page.goto(&quot;https://github.com/login&quot;);
+  await page.waitFor(1000);
+  await page.type(&quot;#login_field&quot;, &quot;test&quot;); 
+  await page.type(&quot;#password&quot;, &quot;test&quot;, {
+    delay: 100
+  }); 
+  await page.click(&quot;input[type=submit]&quot;);
+})();
+</code></pre>
+<p>####性能分析</p>
+<p>利用Puppeteer，可以分析网站的性能，比如访问v2ex，来获取trace.json。</p>
+<pre><code class="javascript">&quot;use strict&quot;;
+const puppeteer = require(&quot;puppeteer&quot;);
+
+/**
+ * 会生成一个trace.json，直接拖入chrome Performance那里即可查看
+ */
+(async () =&gt; {
+  const broswer = await puppeteer.launch();
+  const page = await broswer.newPage();
+  await page.tracing.start({
+    path: &quot;assets/trace.json&quot;
+  });
+  await page.goto(&quot;https://www.v2ex.com&quot;);
+  await page.tracing.stop();
+  broswer.close();
+})();
+</code></pre>
+<p>然后Chrome导入trace.json，就可以查看到加载细节。</p>
+<h4 id="抓取SPA网站内容"><a href="#抓取SPA网站内容" class="headerlink" title="抓取SPA网站内容"></a>抓取SPA网站内容</h4><p>这也是我觉得最实用的一个地方了，由于目前网站开发都是SPA模式，普通爬虫能爬到的，都是JS代码，获取不到JS解析之后的页面代码。比如curl：</p>
+<pre><code class="shell">curl https://preview.pro.ant.design/dashboard/analysis</code></pre>
+<p>但是利用Puppeteer，可以获取到SPA的页面代码。</p>
+<pre><code class="javascript">&quot;use strict&quot;;
+const puppeteer = require(&quot;puppeteer&quot;);
+
+/**
+ * puppeteer可以抓取SPA站点内容
+ */
+(async () =&gt; {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto(&quot;https://preview.pro.ant.design/dashboard/analysis&quot;);
+  console.log(await page.content());
+})();
+</code></pre>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>上面只是Puppeteer的一些基础功能，Puppeteer其实更像是NodeJS和Chrome的整合，利用它，你可以完成一些自动化事务，以及一些基于浏览器的产品实现。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2020/01/07/puppeteer%E5%88%9D%E6%8E%A2/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+    <p class="footer-copyright">© 2020 iafine · Powered by Hexo</p> 
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    <!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>

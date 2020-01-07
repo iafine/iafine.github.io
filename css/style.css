@@ -322,7 +322,7 @@ pre code {
 }
 .post-list {
   padding-top: 50px;
-  padding-left: 150px;
+  padding-left: 100px;
   flex: 1;
   overflow-y: auto;
 }
@@ -369,7 +369,7 @@ pre code {
 }
 .archive-list {
   padding-top: 50px;
-  padding-left: 150px;
+  padding-left: 100px;
   flex: 1;
   overflow-y: auto;
 }
@@ -419,7 +419,7 @@ pre code {
 }
 .post-detail {
   padding-top: 50px;
-  padding-left: 150px;
+  padding-left: 100px;
   flex: 1;
   overflow-y: auto;
 }
@@ -445,6 +445,11 @@ pre code {
   margin: 2.2em 0 2.1em 0;
   border: none;
   border-top: 1px solid #ddd;
+}
+.footer-copyright {
+  margin-top: 50px;
+  color: #b3b3b3;
+  font-size: 0.8em;
 }
 @-moz-keyframes backOpacity {
   0% {
