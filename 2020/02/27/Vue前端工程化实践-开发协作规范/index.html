@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">盈而为虚，泰而为约</p>
+      <p class="content-title-description">专注于前端/Node/iOS领域</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2020-02-27</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">Vue前端工程化实践-Git协作规范</h1>
+    <p class="detail-content"><p>最近探索了下前端工程化的一些实践，所以想写这个系列文章，来记录下在这方面的这些探索。</p>
+<a id="more"></a>
+
+<h4 id="脚手架选择"><a href="#脚手架选择" class="headerlink" title="脚手架选择"></a>脚手架选择</h4><p>在开始一个项目之前，一般都会去考虑是否用一个脚手架来搭建项目，在Vue生态里面，能选择的脚手架并不是很多，一般都会从两种选择去尝试：</p>
+<ul>
+<li>官方提供的Vue CLI；</li>
+<li>自行搭建Vue脚手架。</li>
+</ul>
+<p>两种方式都有自己本身的优缺点。对于官方的Vue CLI来讲，其优点就是简单快速，并且集成了很多官方的插件，不要考虑一些配置细节；但缺点还是比较明显，对于自定义Webpack配置，多页支持和SSR等的支持，还远远不够。</p>
+<p>如果自行搭建Vue脚手架，其优点就是，所有配置都是透明化，对于项目上的一些特殊需求，可以直接暴露给开发者来进行配置；但是缺点可能也很明显，需要对各种脚手架周边的依赖配置比较熟悉，比如Webpack，ESLint等等，不太适合新手来做。</p>
+<p>所以，在考虑脚手架的时候，如果是没有特殊需求的单页应用，可以直接考虑使用官方提供的Vue CLI，如果是有些特殊的需求，可以自己来搭建Vue脚手架。</p>
+<p>基于上述原因，下面的实践都是基于官方提供的Vue CLI来实现。</p>
+<h4 id="周边依赖"><a href="#周边依赖" class="headerlink" title="周边依赖"></a>周边依赖</h4><p>对于周边依赖，每个人都会有自己偏好，仁者见仁。</p>
+<ul>
+<li>VSCode；</li>
+<li>Vue；</li>
+<li>Vue Router；</li>
+<li>Vuex；</li>
+<li>ESLint；</li>
+<li>SASS；</li>
+<li>Element UI；</li>
+<li>TypeScript；</li>
+</ul>
+<p>基本上，目前工作上的项目，或多或少都会涉及到这些工具，配置什么的，官方的Vue CLI都会提供，网络上也有很多可以参考的。</p>
+<h4 id="TypeScript"><a href="#TypeScript" class="headerlink" title="TypeScript"></a>TypeScript</h4><p>其实，目前在Vue项目里，使用TypeScript还是有点别扭的，模版里面的语法，需要做一层转换才行。</p>
+<p>所有我们的实践是，vue文件里的都先使用JavaScript来实现，对于公共类，比如util和api等，都可以使用TypeScript来实现。</p>
+<p>这么做的好处就是，假如有一天不想用Vue了，只要换掉vue相关代码就行，公共的部分代码都是通用的，可以无缝集成到TypeScript项目里；另外就是，可以将公共代码单独提取出来，作为一个依赖库来对外发布。</p>
+<h4 id="Git提交规范"><a href="#Git提交规范" class="headerlink" title="Git提交规范"></a>Git提交规范</h4><p>为了日后排查问题，以及自动生成CHANGELOG，需要团队统一Commit Msg格式，我们可以借助一些工具协助我们。</p>
+<p><strong><a href="https://github.com/leonardoanalista/cz-customizable" target="_blank" rel="noopener">cz-customizable</a></strong></p>
+<p><code>cz-customizable</code>是一个生成标准啊的Commit Msg参考的库，安装方式推荐本地安装就行。</p>
+<pre><code class="bash">yarn add cz-customizable -D</code></pre>
+<p>然后<code>package.json</code>添加一条script，来查看效果。</p>
+<pre><code class="json">&quot;scripts&quot;: {
+   &quot;commit&quot;: &quot;./node_modules/cz-customizable/standalone.js&quot;,
+ },</code></pre>
+<p>默认的提交规范就是Angular Commit Msg格式，并且提示都是英文的，我们可以根目录创建<code>.cz-config.js</code>，自定义相关信息。</p>
+<pre><code class="javascript">
+module.exports = {
+
+  types: [
+    {
+      value: &#39;feat&#39;,
+      name: &#39;✨  feat:     创建新功能或特性&#39;,
+    },
+    {
+      value: &#39;fix&#39;,
+      name: &#39;🐞  fix:      缺陷修复&#39;,
+    },
+    {
+      value: &#39;refactor&#39;,
+      name: &#39;🛠  refactor: 代码重构，原则上不涉及新功能和缺陷修复&#39;,
+    },
+    {
+      value: &#39;docs&#39;,
+      name: &#39;📚  docs:     文档修改&#39;,
+    },
+    {
+      value: &#39;test&#39;,
+      name: &#39;🏁  test:     增加或者修改缺陷&#39;,
+    },
+    {
+      value: &#39;chore&#39;,
+      name: &#39;🗯  chore:    不涉及业务逻辑，边缘的修改，如构建任务和工具&#39;,
+    },
+    {
+      value: &#39;style&#39;,
+      name: &#39;💅  style:    代码格式化&#39;,
+    },
+    {
+      value: &#39;revert&#39;,
+      name: &#39;⏪  revert:   回退到某个历史提交点&#39;,
+    },
+  ],
+
+  scopes: [],
+
+  allowCustomScopes: true,
+  allowBreakingChanges: [&#39;feat&#39;, &#39;fix&#39;],
+  // override the messages, defaults are as follows
+  messages: {
+    type: &#39;挑选一种需要提交修改的类型:&#39;,
+    scope: &#39;\n说明此次 commit 影响的范围（可选）:&#39;,
+    // used if allowCustomScopes is true
+    customScope: &#39;说明此次 commit 影响的范围:&#39;,
+    subject: &#39;对于此次修改，请写一段简短的，有意义的描述:\n&#39;,
+    body: &#39;对于此次修改，请相似描述修改内容（可选），用 &quot;|&quot; 来实现换行:\n&#39;,
+    breaking: &#39;修改如果导致版本不兼容，可以描述下变动理由和迁移方法（可选）:\n&#39;,
+    footer: &#39;修改如果解决了某些issue，请列举出来（可选），例如：#234, #125:\n&#39;,
+    confirmCommit: &#39;确定想提交上面描述的此次修改吗？&#39;,
+  },
+};
+</code></pre>
+<p>在实际的开发中，如果提交规范都是用Angular Commit Msg格式来弄的话，会显得很没有必要，绝大部分提交都是下面这种：</p>
+<pre><code class="bash">feat: 添加xx页面
+fix: 修复xx问题
+...</code></pre>
+<p>只用一句话，就囊括了本次提交的内容，所以，我们每次提交，不一定非得把所有的信息都携带上。</p>
+<p><strong>commitlint</strong></p>
+<p>定制好Git Commit Msg规范之后，我们需要在提交的时候去做校验。</p>
+<p>首先我们需要安装<code>commitlint</code>插件：</p>
+<pre><code class="bash">yarn add @commitlint/config-conventional @commitlint/cli -D</code></pre>
+<p>然后，我们需要自定义一些规则，来对每次提交进行校验，在根目录创建<code>.commitlintrc.js</code>，内容如下：</p>
+<pre><code class="javascript">module.exports = {
+  extends: [
+    &#39;@commitlint/config-conventional&#39;,
+  ],
+  rules: {
+    &#39;type-enum&#39;: [2, &#39;always&#39;, [
+      &#39;feat&#39;, &#39;fix&#39;, &#39;docs&#39;, &#39;style&#39;, &#39;refactor&#39;, &#39;perf&#39;, &#39;test&#39;, &#39;build&#39;, &#39;ci&#39;, &#39;chore&#39;, &#39;revert&#39;, &#39;version&#39;,
+    ]],
+  },
+};
+</code></pre>
+<p>上面的简单理解就是，Commit Msg是需要上面那些开头的就行。</p>
+<p>然后，我们需要本地每次校验去校验这个规则N ，安装<code>husky</code>：</p>
+<pre><code class="bash">yarn add husky -D</code></pre>
+<p><code>package.json</code>里面需要加一条新规则：</p>
+<pre><code class="json">&quot;husky&quot;: {
+   &quot;hooks&quot;: {
+     &quot;pre-commit&quot;: &quot;yarn lint&quot;,
+     &quot;commit-msg&quot;: &quot;commitlint -E HUSKY_GIT_PARAMS&quot;
+   }
+ }</code></pre>
+<p>这样，在每次提交的时候，我们首先会校验代码，然后校验Git Commit Msg信息。</p>
+<h4 id="CHANGELOG生成"><a href="#CHANGELOG生成" class="headerlink" title="CHANGELOG生成"></a>CHANGELOG生成</h4><p>有了规范的Git Commit Msg之后，我们就可以开发生成CHANGELOG了。</p>
+<pre><code class="bash">yarn add conventional-changelog-cli -D</code></pre>
+<p><code>conventional-changelog-cli</code>可以根据tag来自动生成<code>CHANGELOG.md</code>，我们需要在<code>package.json</code>里，增加一条<code>script</code>。</p>
+<pre><code class="json">&quot;scripts&quot;: {
+   &quot;changelog&quot;: &quot;conventional-changelog -p angular -i CHANGELOG.md -s&quot;,
+ },</code></pre>
+<p>这样就可以自动生成<code>CHANGELOG.md</code>了。</p>
+<h4 id="代码版本标准发布流程"><a href="#代码版本标准发布流程" class="headerlink" title="代码版本标准发布流程"></a>代码版本标准发布流程</h4><p>只有上面的CHANGELOG生成，并不能满足自动生成新版本，因为，在完成一个版本的开发工作之后，代码仓库需要做以下事情：</p>
+<ol>
+<li>从远程库拉取最新代码;</li>
+<li>修改package.json的version；</li>
+<li>打tag；</li>
+<li>生成CHANGELOG；</li>
+<li>提交代码。</li>
+</ol>
+<p>我们可以借助一个工具，来实现上面这些：</p>
+<pre><code class="bash">yarn add standard-version -D</code></pre>
+<p><code>standard-version</code>生成CHANGELOG的话，默认只会显示<code>feat, fix</code>的相关提交，所以我们需要在根目录新建<code>.versionrc.js</code>，来自定义我们需要的CHANGELOG格式。</p>
+<pre><code class="javascript">module.exports = {
+  header: &#39;&#39;,
+  types: [
+    { type: &#39;feat&#39;, section: &#39;Features&#39; },
+    { type: &#39;fix&#39;, section: &#39;Bug Fixes&#39; },
+    { type: &#39;chore&#39;, section: &#39;Chores&#39; },
+    { type: &#39;docs&#39;, section: &#39;Docs&#39; },
+    { type: &#39;style&#39;, section: &#39;Styles&#39; },
+    { type: &#39;refactor&#39;, section: &#39;Refactors&#39; },
+    { type: &#39;test&#39;, hidden: &#39;Tests&#39; },
+  ],
+};</code></pre>
+<p>然后，在<code>package.json</code>里加入新的<code>script</code>：</p>
+<pre><code class="json">&quot;scripts&quot;: {
+  &quot;standard-version&quot;: &quot;standard-version&quot;
+ },</code></pre>
+<p>这样，我们对于代码版本更新的问题，就剩下如下几步：</p>
+<ol>
+<li>拉取最新代码；</li>
+<li>执行<code>standard-version</code>；</li>
+<li>提交相关代码和tag。</li>
+</ol>
+<p>所以，我们用一个<code>publish-version.sh</code>脚本来实现：</p>
+<pre><code class="bash">#!/bin/bash
+# 代码版本发布
+
+git pull origin master
+yarn standard-version
+git push origin master --tags
+
+echo &#39;&#39;
+echo &#39;&lt;----- publish version finish&#39;</code></pre>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>基本上，关于Git协作上的规范，到此就结束了，主要是利用一些工具，约束我们规范Git Commit Msg，以及自动帮助我们处理一些相关事情。</p>
+<p>在实际的开发流程上，可能会出现一些变更，但是不影响整体的参考。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2020/02/27/Vue%E5%89%8D%E7%AB%AF%E5%B7%A5%E7%A8%8B%E5%8C%96%E5%AE%9E%E8%B7%B5-%E5%BC%80%E5%8F%91%E5%8D%8F%E4%BD%9C%E8%A7%84%E8%8C%83/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+    <p class="footer-copyright">© 2020 iafine · Powered by Hexo</p> 
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    <!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>
