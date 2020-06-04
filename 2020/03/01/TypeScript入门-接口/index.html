@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Iafine&#39;s Den</title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_1595143_h5ah3yq7nxj.css">
+  <meta name="generator" content="Hexo 4.2.0"></head>
+  
+  <body>
+    <div class="app">
+      <div class="side">
+        <div class="side-main">
+  <div class="side-main__content">
+      <img
+        src="/img/logo.png"
+        class="content-logo"
+        />
+      <h1 class="content-title"><a href="/" class="content-title__a">Iafine&#39;s Den</a></h1>
+      <p class="content-title-subtitle">盈而为虚，泰而为约</p>
+      <p class="content-title-description">专注于前端/Node/iOS领域</p>
+      <div class="content-nav">
+        <a href="/"><button class="content-nav__btn">博客</button></a>
+        <a href="/archives"><button class="content-nav__btn">归档</button></a>
+        <a href="/about"><button class="content-nav__btn">关于</button></a>
+      </div>
+      <div class="content-link">
+        <a href="https://github.com/iafine" target="view_window"><i class="iconfont icon-github content-link__icon"></i></a>
+        <a href="https://twitter.com/iafineden" target="view_window"><i class="iconfont icon-twitter content-link__icon"></i></a>
+        <a href="mailto:iafineden@gmail.com"><i class="iconfont icon-email content-link__icon"></i></a>
+        <a href="/rss"><i class="iconfont icon-rss content-link__icon"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+        <div class="post-detail">
+  <div class="post-detail-content">
+    
+    <div class="detail-meta">
+      <span class="detail-meta-item">2020-03-01</span>
+      <span class="detail-meta-item">•</span>
+      
+      <span class="detail-meta-item">JavaScript</span>
+      
+    </div>
+    
+    <h1 class="detail-title">TypeScript入门-接口</h1>
+    <p class="detail-content"><p>随着前端的技术迭代，TypeScript的使用价值也变得越来越重要，这个系列是想记录下学习TypeScript中的一些收获，如果是初学者的话，还是看官方文档好点。</p>
+<a id="more"></a>
+
+<h4 id="什么是接口"><a href="#什么是接口" class="headerlink" title="什么是接口"></a>什么是接口</h4><p>如果写过Java或者C#这样的语言，接口应该用的是比较多的。接口的作用就是为写的代码定义一层契约关系，来保证参数类型可靠。</p>
+<p>我们先写一个简单的例子看看：</p>
+<pre><code class="typescript">interface Person {
+  name: string;
+}
+
+const getPersonName = (person: Person) =&gt; {
+  console.log(person.name);
+};
+
+const per: Person = { name: &#39;topaz&#39; };
+getPersonName(per);</code></pre>
+<p>可以看出，我们利用interface来定义参数，来实现类型检查。</p>
+<h4 id="可选类型"><a href="#可选类型" class="headerlink" title="可选类型"></a>可选类型</h4><p>可选类型的好处就是，一般并不是所有的参数都不必须的。利用可选可以对可能存在的属性进行预定义，还有就是可以捕获到引用属性不存在时候的错误。</p>
+<pre><code class="typescript">interface Pet {
+  name?: string;
+}
+const getPetName = (pet: Pet) =&gt; {
+  console.log(pet.name || &#39;unknowed pet&#39;);
+};
+const pet: Pet = {};
+getPetName(pet);</code></pre>
+<h4 id="只读属性"><a href="#只读属性" class="headerlink" title="只读属性"></a>只读属性</h4><p>只读属性可以保证，只会在对象刚创建的时候预设个值，后面是不能修改的。</p>
+<pre><code class="typescript">interface Food {
+  readonly name: string;
+}
+const food: Food = { name: &#39;topaz&#39; };
+food.name = &#39;haha&#39;; // occur error because it is a read-only property</code></pre>
+<h4 id="函数类型"><a href="#函数类型" class="headerlink" title="函数类型"></a>函数类型</h4><p>接口除了可以定义带属性的普通对象，也可以定义函数类型。</p>
+<pre><code class="typescript">interface FindFunc {
+  (title: string, keyword: string): boolean;
+}
+// Type &#39;(title: string, keyword: string, name: string) =&gt; boolean&#39; is not assignable to type &#39;FindFunc&#39;.
+const find: FindFunc = (title: string, keyword: string, name: string) =&gt; {
+  console.log(title, keyword, name);
+  return true;
+};</code></pre>
+<p>如果函数参数和定义的不符合，会报下面的错误。</p>
+<pre><code class="typescript">Type &#39;(title: string, keyword: string, name: string) =&gt; boolean&#39; is not assignable to type &#39;FindFunc&#39;.</code></pre>
+<p>所以需要写成下面的样子。</p>
+<pre><code class="typescript">interface FindFunc {
+  (title: string, keyword: string): boolean;
+}
+const find: FindFunc = (title: string, keyword: string) =&gt; {
+  console.log(title, keyword);
+  return true;
+};
+find(&#39;topaz&#39;, &#39;t&#39;);</code></pre>
+<p>函数名不一定要和接口定义里面的一致，比如下面：</p>
+<pre><code class="typescript">interface FindFunc {
+  (title: string, keyword: string): boolean;
+}
+const find: FindFunc = (a: string, b: string) =&gt; {
+  console.log(a, b);
+  return true;
+};
+find(&#39;topaz&#39;, &#39;t&#39;);</code></pre>
+<h4 id="可索引类型"><a href="#可索引类型" class="headerlink" title="可索引类型"></a>可索引类型</h4><p>和函数类型接口差不多，多了个返回相应的索引。</p>
+<pre><code class="typescript">interface Animal {
+  [index: number]: string;
+}
+const animal: Animal = [&#39;dog&#39;, &#39;cat&#39;];
+console.log(animal[1]);</code></pre>
+<p>TypeScript支持两种签名，字符串和数字。</p>
+<h4 id="class类型接口"><a href="#class类型接口" class="headerlink" title="class类型接口"></a>class类型接口</h4><p>除了函数参数的约定，接口还可以对一个类的行为进行约定。</p>
+<pre><code class="typescript">interface TimerInterface {
+  current: Date;
+  setTime(date: Date): void;
+}
+
+class Timer implements TimerInterface {
+  current: Date;
+
+  setTime(date: Date): void {
+    this.current = date;
+  }
+
+  constructor() {
+    this.current = new Date();
+  }
+}</code></pre>
+<p>需要注意的是，接口描述的是类的公共部分，并不会帮助你检查类的私有部分。</p>
+<h4 id="类静态部分和实例部分的区别"><a href="#类静态部分和实例部分的区别" class="headerlink" title="类静态部分和实例部分的区别"></a>类静态部分和实例部分的区别</h4><p>类具有两种类型：静态类型和实例类型。当使用构造器去定义一个接口，并且在一个类中去实现这个接口时候，会得到一个错误。</p>
+<pre><code class="typescript">interface ClockInterface {
+  new (hour: number, minute: number);
+}
+
+class Clock implements ClockInterface {
+  currentTime: Date;
+  constructor(h: number, m: number) { }
+}</code></pre>
+<p>这样报出下面的错误：</p>
+<pre><code class="typescript">Class &#39;Clock&#39; incorrectly implements interface &#39;ClockInterface&#39;.
+  Type &#39;Clock&#39; provides no match for the signature &#39;new (hour: number, minute: number): any&#39;.</code></pre>
+<p>意思也是很明显，因为当类实现一个接口时，是会对其实例部分进行检查，constructor存在于类的静态部分，所以不在检查的范围内。</p>
+<h4 id="继承接口"><a href="#继承接口" class="headerlink" title="继承接口"></a>继承接口</h4><p>接口也可以和类一样，通过继承来扩展功能。比如：</p>
+<pre><code class="typescript">interface ColorInterface {
+  color: string;
+}
+interface PanelInterface extends ColorInterface {
+  type: string;
+}
+const panel = {} as PanelInterface;
+panel.color = &#39;#e4e4e4&#39;;
+panel.type = &#39;big&#39;;</code></pre>
+<p>也可以继承多个接口。</p>
+<pre><code class="typescript">interface ColorInterface {
+  color: string;
+}
+interface SizeInterface {
+  size: number;
+}
+
+interface PanelInterface extends ColorInterface, SizeInterface {
+  type: string;
+}
+const panel = {} as PanelInterface;
+panel.color = &#39;#e4e4e4&#39;;
+panel.size = 400;
+panel.type = &#39;big&#39;;</code></pre>
+<h4 id="接口继承类"><a href="#接口继承类" class="headerlink" title="接口继承类"></a>接口继承类</h4><p>上面的都是类继承了接口的特性，其实反过来，接口也可以继承类的private和protected成员。</p>
+<pre><code class="typescript">class Control {
+  private state: any;
+}
+
+interface SelectableControl extends Control {
+  select(): void;
+}
+
+class Button extends Control implements SelectableControl {
+    select() { }
+}
+
+class TextBox extends Control {
+    select() { }
+}
+
+// 错误：“Image”类型缺少“state”属性。
+class Image implements SelectableControl {
+    select() { }
+}
+
+class Location {
+
+}</code></pre>
+<p>在上面的例子里，<code>SelectableControl</code>包含了<code>Control</code>的所有成员，包括私有成员<code>state</code>。 因为 <code>state</code>是私有成员，所以只能够是<code>Control</code>的子类们才能实现<code>SelectableControl</code>接口。 因为只有 <code>Control</code>的子类才能够拥有一个声明于<code>Control</code>的私有成员<code>state</code>，这对私有成员的兼容性是必需的。</p>
+<p>在<code>Control</code>类内部，是允许通过<code>SelectableControl</code>的实例来访问私有成员<code>state</code>的。 实际上， <code>SelectableControl</code>接口和拥有<code>select</code>方法的<code>Control</code>类是一样的。 <code>Button</code>和<code>TextBox</code>类是<code>SelectableControl</code>的子类（因为它们都继承自<code>Control</code>并有<code>select</code>方法），但<code>Image</code>和<code>Location</code>类并不是这样的。</p>
+</p>
+    <hr class="detail-divider" />
+    
+  <section class="disqus-comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+    </div>
+  </section>
+
+  <script>
+    var disqus_shortname = 'iafineden';
+    
+    var disqus_url = 'http://blog.iafine.com/2020/03/01/TypeScript%E5%85%A5%E9%97%A8-%E6%8E%A5%E5%8F%A3/';
+    
+    (function(){
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+  <script id="dsq-count-scr" src="//iafineden.disqus.com/count.js" async></script>
+
+
+    <p class="footer-copyright">© 2020 iafine · Powered by Hexo</p> 
+  </div>
+</div>
+
+
+      </div>
+    </div>
+    <!-- Highlight.js -->
+<link href="https://cdn.bootcss.com/highlight.js/9.15.10/styles/darcula.min.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+</script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script> 
+  </body>
+</html>
